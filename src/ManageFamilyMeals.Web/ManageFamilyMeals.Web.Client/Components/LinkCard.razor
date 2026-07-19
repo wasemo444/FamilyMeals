@@ -1,0 +1,98 @@
+@inherits LocalizedComponentBase
+
+
+
+<article class="card link-card">
+
+    @if (!string.IsNullOrWhiteSpace(PreviewImageSource))
+
+    {
+
+        <img class="link-preview-image" src="@PreviewImageSource" alt="" loading="lazy" />
+
+    }
+
+    else
+
+    {
+
+        <div class="link-preview-placeholder" aria-hidden="true">
+
+            <span class="link-preview-icon">🔗</span>
+
+            <span class="muted">@L["PreviewUnavailable"]</span>
+
+        </div>
+
+    }
+
+
+
+    <div class="link-card-body">
+
+        <div class="card-header">
+
+            <div>
+
+                <h3 class="link-title">@DisplayTitle</h3>
+
+                @if (!string.IsNullOrWhiteSpace(Link.PreviewSiteName))
+
+                {
+
+                    <p class="muted site-name">@Link.PreviewSiteName</p>
+
+                }
+
+            </div>
+
+            <div class="card-actions">
+
+                <button type="button" class="icon-btn" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
+
+                    @(Link.IsFavorite ? "★" : "☆")
+
+                </button>
+
+                <button type="button" class="icon-btn danger" title="@L["Delete"]" @onclick="ArchiveAsync">✕</button>
+
+            </div>
+
+        </div>
+
+
+
+        @if (!string.IsNullOrWhiteSpace(Link.Note))
+
+        {
+
+            <p class="link-note">@Link.Note</p>
+
+        }
+
+
+
+        @if (!string.IsNullOrWhiteSpace(Link.PreviewDescription))
+
+        {
+
+            <p class="link-description">@Link.PreviewDescription</p>
+
+        }
+
+
+
+        <a class="link-url" href="@Link.Url" target="_blank" rel="noopener noreferrer">@Link.Url</a>
+
+
+
+        <a class="btn secondary" href="@Link.Url" target="_blank" rel="noopener noreferrer">
+
+            @L["Open"]
+
+        </a>
+
+    </div>
+
+</article>
+

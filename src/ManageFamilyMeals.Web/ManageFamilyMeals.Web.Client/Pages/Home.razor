@@ -1,0 +1,65 @@
+@page "/"
+@rendermode InteractiveAuto
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["AppTitle"]</PageTitle>
+
+<InteractiveShell>
+<section class="page">
+    <header class="page-header">
+        <h1>@L["AppTitle"]</h1>
+    </header>
+
+    <section class="panel">
+        <h2>@L["AddCategory"]</h2>
+        <EditForm Model="_form" OnValidSubmit="CreateCategoryAsync">
+            <div class="form-row">
+                <InputText class="input" @bind-Value="_form.Name" placeholder="@L["CategoryName"]" />
+                <button class="btn primary" type="submit">@L["Create"]</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="error">@_error</p>
+            }
+        </EditForm>
+    </section>
+
+    <section class="panel">
+        <h2>@L["SearchCategories"]</h2>
+        <InputText class="input search-input"
+                   @bind-Value="_searchTerm"
+                   @bind-Value:after="OnSearchChanged"
+                   placeholder="@L["SearchCategories"]" />
+    </section>
+
+    @if (_favoriteCategories.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["FavoriteCategories"]</h2>
+            <div class="card-grid">
+                @foreach (var category in _favoriteCategories)
+                {
+                    <CategoryCard Category="category" />
+                }
+            </div>
+        </section>
+    }
+
+    <section class="panel">
+        <h2>@L["AllCategories"]</h2>
+        @if (_allCategories.Count == 0)
+        {
+            <p class="muted">@(_hasAnyCategories ? L["NoCategorySearchResults"] : L["NoCategoriesYet"])</p>
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (var category in _allCategories)
+                {
+                    <CategoryCard Category="category" />
+                }
+            </div>
+        }
+    </section>
+</section>
+</InteractiveShell>

@@ -1,0 +1,81 @@
+@page "/category/{CategoryId:guid}"
+@rendermode InteractiveAuto
+@inherits LocalizedComponentBase
+
+<PageTitle>@_pageTitle</PageTitle>
+
+<InteractiveShell>
+<section class="page">
+    <a class="back-link" href="/">← @L["Back"]</a>
+
+    @if (_category is null)
+    {
+        <p class="error">@L["CategoryNotFound"]</p>
+    }
+    else
+    {
+        <header class="page-header">
+            <h1>@_category.Name</h1>
+        </header>
+
+        <section class="panel">
+            <h2>@L["AddLink"]</h2>
+            <EditForm Model="_form" OnValidSubmit="AddLinkAsync">
+                <div class="form-stack">
+                    <InputText class="input" @bind-Value="_form.TitleEn" placeholder="@L["LinkTitleEn"]" />
+                    <InputText class="input" @bind-Value="_form.TitleAr" placeholder="@L["LinkTitleAr"]" />
+                    <InputText class="input" @bind-Value="_form.Url" placeholder="@L["LinkUrl"]" />
+                    <InputTextArea class="input textarea" @bind-Value="_form.Note" placeholder="@L["LinkNote"]" rows="2" />
+                    <button class="btn primary" type="submit" disabled="@_isAdding">@L["AddLink"]</button>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="error">@_error</p>
+                }
+                @if (_isAdding)
+                {
+                    <p class="muted">@L["LoadingPreview"]</p>
+                }
+            </EditForm>
+        </section>
+
+        <section class="panel">
+            <h2>@L["SearchLinks"]</h2>
+            <InputText class="input search-input"
+                       @bind-Value="_searchTerm"
+                       @bind-Value:after="OnSearchChanged"
+                       placeholder="@L["SearchLinks"]" />
+        </section>
+
+        @if (_favoriteLinks.Count > 0)
+        {
+            <section class="panel">
+                <h2>@L["FavoriteLinks"]</h2>
+                <div class="card-grid">
+                    @foreach (var link in _favoriteLinks)
+                    {
+                        <LinkCard Link="link" />
+                    }
+                </div>
+            </section>
+        }
+
+        <section class="panel">
+            <h2>@L["AllLinks"]</h2>
+            @if (_allLinks.Count == 0)
+            {
+                <p class="muted">@(string.IsNullOrWhiteSpace(_searchTerm) ? L["NoLinksYet"] : L["NoSearchResults"])</p>
+            }
+            else
+            {
+                <div class="card-grid">
+                    @foreach (var link in _allLinks)
+                    {
+                        <LinkCard Link="link" />
+                    }
+                </div>
+            }
+        </section>
+    }
+</section>
+</InteractiveShell>

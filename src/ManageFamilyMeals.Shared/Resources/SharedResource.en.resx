@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Manage Family Meals</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+  <data name="FavoriteCategories" xml:space="preserve">
+    <value>Favorite Categories</value>
+  </data>
+  <data name="AllCategories" xml:space="preserve">
+    <value>All Categories</value>
+  </data>
+  <data name="AddCategory" xml:space="preserve">
+    <value>Add Category</value>
+  </data>
+  <data name="CategoryName" xml:space="preserve">
+    <value>Category name</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="Favorite" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="Unfavorite" xml:space="preserve">
+    <value>Unfavorite</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="FavoriteLinks" xml:space="preserve">
+    <value>Favorite Links</value>
+  </data>
+  <data name="AllLinks" xml:space="preserve">
+    <value>All Links</value>
+  </data>
+  <data name="AddLink" xml:space="preserve">
+    <value>Add Link</value>
+  </data>
+  <data name="LinkTitleEn" xml:space="preserve">
+    <value>Title (English, optional)</value>
+  </data>
+  <data name="LinkTitleAr" xml:space="preserve">
+    <value>Title (Arabic, optional)</value>
+  </data>
+  <data name="SearchLinks" xml:space="preserve">
+    <value>Search links by title or URL</value>
+  </data>
+  <data name="NoSearchResults" xml:space="preserve">
+    <value>No links match your search.</value>
+  </data>
+  <data name="LinkTitle" xml:space="preserve">
+    <value>Title (optional)</value>
+  </data>
+  <data name="LinkUrl" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="LoadingPreview" xml:space="preserve">
+    <value>Loading preview...</value>
+  </data>
+  <data name="PreviewUnavailable" xml:space="preserve">
+    <value>Preview unavailable</value>
+  </data>
+  <data name="ArchivedItems" xml:space="preserve">
+    <value>Archived Items</value>
+  </data>
+  <data name="ArchivedCategories" xml:space="preserve">
+    <value>Archived Categories</value>
+  </data>
+  <data name="ArchivedLinks" xml:space="preserve">
+    <value>Archived Links</value>
+  </data>
+  <data name="ArchiveRetentionNotice" xml:space="preserve">
+    <value>Items stay in archive for 7 days before permanent deletion.</value>
+  </data>
+  <data name="NoCategoriesYet" xml:space="preserve">
+    <value>No categories yet. Create your first meal category.</value>
+  </data>
+  <data name="NoLinksYet" xml:space="preserve">
+    <value>No links yet. Add your first link.</value>
+  </data>
+  <data name="NoArchivedItems" xml:space="preserve">
+    <value>No archived items.</value>
+  </data>
+  <data name="CategoryNotFound" xml:space="preserve">
+    <value>Category not found.</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguageArabic" xml:space="preserve">
+    <value>Arabic</value>
+  </data>
+  <data name="LinksCount" xml:space="preserve">
+    <value>{0} links</value>
+  </data>
+  <data name="InvalidUrl" xml:space="preserve">
+    <value>Please enter a valid URL.</value>
+  </data>
+  <data name="CategoryNameRequired" xml:space="preserve">
+    <value>Category name is required.</value>
+  </data>
+</root>

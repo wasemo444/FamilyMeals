@@ -1,0 +1,21 @@
+@inherits LocalizedComponentBase
+
+@if (IsReady)
+{
+    <CascadingValue Value="_cultureVersion" Name="CultureVersion">
+        <header class="app-header">
+            <a class="brand" href="/">@L["AppTitle"]</a>
+            <nav class="app-nav">
+                <a href="/">@L["Home"]</a>
+                <a href="/archive">@L["Archive"]</a>
+            </nav>
+            <LanguageSwitcher />
+        </header>
+
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    <p class="muted loading">@L["LoadingPreview"]</p>
+}
