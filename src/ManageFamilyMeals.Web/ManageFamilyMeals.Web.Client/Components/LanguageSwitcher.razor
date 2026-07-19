@@ -1,0 +1,14 @@
+@inherits LocalizedComponentBase
+
+<div class="language-switcher">
+    <button type="button"
+            class="@GetButtonClass("en")"
+            @onclick='() => SetCultureAsync("en")'>
+        @L["LanguageEnglish"]
+    </button>
+    <button type="button"
+            class="@GetButtonClass("ar")"
+            @onclick='() => SetCultureAsync("ar")'>
+        @L["LanguageArabic"]
+    </button>
+</div>

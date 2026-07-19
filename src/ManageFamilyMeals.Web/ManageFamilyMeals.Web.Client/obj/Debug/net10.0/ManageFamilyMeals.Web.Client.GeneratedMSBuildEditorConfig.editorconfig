@@ -1,0 +1,65 @@
+is_global = true
+build_property.EnableAotAnalyzer = 
+build_property.EnableSingleFileAnalyzer = 
+build_property.EnableTrimAnalyzer = false
+build_property.IncludeAllContentForSelfExtract = 
+build_property.VerifyReferenceTrimCompatibility = 
+build_property.VerifyReferenceAotCompatibility = 
+build_property.TargetFramework = net10.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v10.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = browser
+build_property.RootNamespace = ManageFamilyMeals.Web.Client
+build_property.RootNamespace = ManageFamilyMeals.Web.Client
+build_property.ProjectDir = c:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web.Client\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = false
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = c:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web.Client
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 10.0
+build_property.EnableCodeStyleSeverity = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Components/CategoryCard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xDYXRlZ29yeUNhcmQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Components/InteractiveShell.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xJbnRlcmFjdGl2ZVNoZWxsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Components/LanguageSwitcher.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYW5ndWFnZVN3aXRjaGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Components/LinkCard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMaW5rQ2FyZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Pages/Archive.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXJjaGl2ZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Pages/Category.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2F0ZWdvcnkucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/Pages/Share.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[c:/repos/GitHub/Test-ConsoleAPP/New DietApp/src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 

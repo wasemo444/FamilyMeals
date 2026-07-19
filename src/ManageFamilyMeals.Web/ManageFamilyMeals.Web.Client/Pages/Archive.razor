@@ -1,0 +1,57 @@
+@page "/archive"
+@rendermode InteractiveAuto
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["Archive"]</PageTitle>
+
+<InteractiveShell>
+<section class="page">
+    <header class="page-header">
+        <h1>@L["ArchivedItems"]</h1>
+        <p class="muted">@L["ArchiveRetentionNotice"]</p>
+    </header>
+
+    @if (_archivedCategories.Count == 0 && _archivedLinks.Count == 0)
+    {
+        <p class="muted">@L["NoArchivedItems"]</p>
+    }
+    else
+    {
+        @if (_archivedCategories.Count > 0)
+        {
+            <section class="panel">
+                <h2>@L["ArchivedCategories"]</h2>
+                <ul class="archive-list">
+                    @foreach (var category in _archivedCategories)
+                    {
+                        <li>
+                            <span>@category.Name</span>
+                            <button class="btn secondary" type="button" @onclick="() => RestoreCategoryAsync(category.Id)">
+                                @L["Restore"]
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (_archivedLinks.Count > 0)
+        {
+            <section class="panel">
+                <h2>@L["ArchivedLinks"]</h2>
+                <ul class="archive-list">
+                    @foreach (var link in _archivedLinks)
+                    {
+                        <li>
+                            <span>@GetLinkLabel(link)</span>
+                            <button class="btn secondary" type="button" @onclick="() => RestoreLinkAsync(link.Id)">
+                                @L["Restore"]
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    }
+</section>
+</InteractiveShell>

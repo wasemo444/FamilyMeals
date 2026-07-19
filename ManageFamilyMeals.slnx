@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ManageFamilyMeals.Shared/ManageFamilyMeals.Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/ManageFamilyMeals.Web/">
+    <Project Path="src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/ManageFamilyMeals.Web.Client.csproj" />
+    <Project Path="src/ManageFamilyMeals.Web/ManageFamilyMeals.Web/ManageFamilyMeals.Web.csproj" />
+  </Folder>
+</Solution>

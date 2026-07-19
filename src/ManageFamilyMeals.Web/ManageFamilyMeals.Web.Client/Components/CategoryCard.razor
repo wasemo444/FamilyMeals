@@ -1,0 +1,14 @@
+@inherits LocalizedComponentBase
+
+<article class="card category-card">
+    <div class="card-header">
+        <a class="card-title" href="@($"/category/{Category.Id}")">@Category.Name</a>
+        <div class="card-actions">
+            <button type="button" class="icon-btn" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
+                @(Category.IsFavorite ? "★" : "☆")
+            </button>
+            <button type="button" class="icon-btn danger" title="@L["Delete"]" @onclick="ArchiveAsync">✕</button>
+        </div>
+    </div>
+    <p class="muted">@L.Format("LinksCount", LinkCount)</p>
+</article>

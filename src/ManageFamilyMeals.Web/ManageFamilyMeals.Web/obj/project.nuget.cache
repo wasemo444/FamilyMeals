@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "pCfIecEaDHw=",
+  "success": true,
+  "projectFilePath": "C:\\repos\\GitHub\\Test-ConsoleAPP\\New DietApp\\src\\ManageFamilyMeals.Web\\ManageFamilyMeals.Web\\ManageFamilyMeals.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.2\\microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512",
+    "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly\\10.0.2\\microsoft.aspnetcore.components.webassembly.10.0.2.nupkg.sha512",
+    "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly.server\\10.0.2\\microsoft.aspnetcore.components.webassembly.server.10.0.2.nupkg.sha512",
+    "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.dotnet.hotreload.webassembly.browser\\10.0.102\\microsoft.dotnet.hotreload.webassembly.browser.10.0.102.nupkg.sha512",
+    "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.jsinterop.webassembly\\10.0.2\\microsoft.jsinterop.webassembly.10.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

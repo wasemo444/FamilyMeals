@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Manage Family Meals">
+  <rect width="192" height="192" rx="32" fill="#2f7d4b"/>
+  <path fill="#ffffff" d="M48 128V64h16v48c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V64h16v64c0 17.7-14.3 32-32 32H80c-17.7 0-32-14.3-32-32z"/>
+  <circle cx="76" cy="76" r="10" fill="#ffffff"/>
+  <circle cx="116" cy="76" r="10" fill="#ffffff"/>
+</svg>
