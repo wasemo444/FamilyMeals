@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ManageFamilyMeals.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cba7cb9f2ad4bce9c8af7a1577a8c2e8cb537190")]
 [assembly: System.Reflection.AssemblyProductAttribute("ManageFamilyMeals.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ManageFamilyMeals.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
