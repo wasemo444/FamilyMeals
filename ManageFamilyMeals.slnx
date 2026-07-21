@@ -1,5 +1,9 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/ManageFamilyMeals.Tests/ManageFamilyMeals.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/">
+    <Project Path="src/ManageFamilyMeals.Api/ManageFamilyMeals.Api.csproj" />
     <Project Path="src/ManageFamilyMeals.Shared/ManageFamilyMeals.Shared.csproj" />
   </Folder>
   <Folder Name="/src/ManageFamilyMeals.Web/">

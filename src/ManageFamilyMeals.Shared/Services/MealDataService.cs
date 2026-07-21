@@ -10,7 +10,10 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
 
     public event Action? DataChanged;
 
-    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    public Task InitializeAsync(CancellationToken cancellationToken = default) =>
+        EnsureLoadedAsync(cancellationToken);
+
+    public async Task EnsureLoadedAsync(CancellationToken cancellationToken = default)
     {
         if (_initialized)
         {
@@ -18,31 +21,49 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         }
 
         _data = await dataStore.LoadAsync(cancellationToken) ?? new AppData();
-        MigrateLegacyData();
-        PurgeExpiredArchive();
-        await PersistAsync(cancellationToken);
         _initialized = true;
     }
 
+    public async Task RunMaintenanceAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureLoadedAsync(cancellationToken);
+        MigrateLegacyData();
+        PurgeExpiredArchive();
+        await PersistAsync(cancellationToken);
+    }
+
+    public AppData GetSnapshot() => new()
+    {
+        Categories = _data.Categories.ToList(),
+        Links = _data.Links.ToList(),
+        Settings = new AppSettings { CultureCode = _data.Settings.CultureCode }
+    };
+
+    public void ApplySettings(AppSettings settings)
+    {
+        _data.Settings = new AppSettings { CultureCode = settings.CultureCode };
+        DataChanged?.Invoke();
+    }
+
     public IReadOnlyList<MealCategory> GetFavoriteCategories() =>
-        SortCategories(_data.Categories.Where(category => !category.IsDeleted && category.IsFavorite));
+        MealDataQueries.GetFavoriteCategories(_data);
 
     public IReadOnlyList<MealCategory> GetActiveCategories() =>
-        SortCategories(_data.Categories.Where(category => !category.IsDeleted));
+        MealDataQueries.GetActiveCategories(_data);
 
     public IReadOnlyList<MealCategory> GetArchivedCategories() =>
-        _data.Categories
-            .Where(category => category.IsDeleted)
-            .OrderByDescending(category => category.DeletedAtUtc)
-            .ToList();
+        MealDataQueries.GetArchivedCategories(_data);
 
     public MealCategory? GetCategory(Guid categoryId) =>
-        _data.Categories.FirstOrDefault(category => category.Id == categoryId && !category.IsDeleted);
+        MealDataQueries.GetCategory(_data, categoryId);
+
+    public MealLink? GetLink(Guid linkId) =>
+        MealDataQueries.GetLink(_data, linkId);
+
+    public AppSettings GetSettings() => _data.Settings;
 
     public bool IsCategoryNameTaken(string name) =>
-        _data.Categories.Any(category =>
-            !category.IsDeleted
-            && category.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
+        MealDataQueries.IsCategoryNameTaken(_data, name);
 
     public async Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default)
     {
@@ -63,12 +84,12 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         return category;
     }
 
-    public async Task ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    public async Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && !item.IsDeleted);
         if (category is null)
         {
-            return;
+            return false;
         }
 
         var deletedAt = DateTime.UtcNow;
@@ -82,14 +103,15 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         }
 
         await PersistAsync(cancellationToken);
+        return true;
     }
 
-    public async Task RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    public async Task<bool> RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && item.IsDeleted);
         if (category is null)
         {
-            return;
+            return false;
         }
 
         category.IsDeleted = false;
@@ -102,6 +124,7 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         }
 
         await PersistAsync(cancellationToken);
+        return true;
     }
 
     public async Task ToggleCategoryFavoriteAsync(Guid categoryId, CancellationToken cancellationToken = default)
@@ -117,22 +140,16 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
     }
 
     public IReadOnlyList<MealLink> GetFavoriteLinks(Guid categoryId) =>
-        SortLinks(_data.Links.Where(link => link.CategoryId == categoryId && !link.IsDeleted && link.IsFavorite));
+        MealDataQueries.GetFavoriteLinks(_data, categoryId);
 
     public IReadOnlyList<MealLink> GetActiveLinks(Guid categoryId) =>
-        SortLinks(_data.Links.Where(link => link.CategoryId == categoryId && !link.IsDeleted));
+        MealDataQueries.GetActiveLinks(_data, categoryId);
 
     public IReadOnlyList<MealLink> GetArchivedLinks(Guid categoryId) =>
-        _data.Links
-            .Where(link => link.CategoryId == categoryId && link.IsDeleted)
-            .OrderByDescending(link => link.DeletedAtUtc)
-            .ToList();
+        MealDataQueries.GetArchivedLinks(_data, categoryId);
 
     public IReadOnlyList<MealLink> GetAllArchivedLinks() =>
-        _data.Links
-            .Where(link => link.IsDeleted)
-            .OrderByDescending(link => link.DeletedAtUtc)
-            .ToList();
+        MealDataQueries.GetAllArchivedLinks(_data);
 
     public async Task<MealLink> AddLinkAsync(
         Guid categoryId,
@@ -142,6 +159,11 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         string? note = null,
         CancellationToken cancellationToken = default)
     {
+        if (GetCategory(categoryId) is null)
+        {
+            throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
+        }
+
         var link = new MealLink
         {
             CategoryId = categoryId,
@@ -156,30 +178,32 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         return link;
     }
 
-    public async Task ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
+    public async Task<bool> ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
         if (link is null)
         {
-            return;
+            return false;
         }
 
         link.IsDeleted = true;
         link.DeletedAtUtc = DateTime.UtcNow;
         await PersistAsync(cancellationToken);
+        return true;
     }
 
-    public async Task RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
+    public async Task<bool> RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && item.IsDeleted);
         if (link is null)
         {
-            return;
+            return false;
         }
 
         link.IsDeleted = false;
         link.DeletedAtUtc = null;
         await PersistAsync(cancellationToken);
+        return true;
     }
 
     public async Task ToggleLinkFavoriteAsync(Guid linkId, CancellationToken cancellationToken = default)
@@ -237,18 +261,6 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         _data.Links.RemoveAll(link =>
             link.IsDeleted && link.DeletedAtUtc is not null && link.DeletedAtUtc < threshold);
     }
-
-    private static IReadOnlyList<MealCategory> SortCategories(IEnumerable<MealCategory> categories) =>
-        categories
-            .OrderByDescending(category => category.IsFavorite)
-            .ThenBy(category => category.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
-
-    private static IReadOnlyList<MealLink> SortLinks(IEnumerable<MealLink> links) =>
-        links
-            .OrderByDescending(link => link.IsFavorite)
-            .ThenByDescending(link => link.CreatedAtUtc)
-            .ToList();
 
     private async Task PersistAsync(CancellationToken cancellationToken)
     {

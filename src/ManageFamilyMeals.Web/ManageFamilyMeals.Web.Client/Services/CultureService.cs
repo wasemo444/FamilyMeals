@@ -1,13 +1,20 @@
 using System.Globalization;
+using System.Net.Http.Json;
 using ManageFamilyMeals.Shared.Models;
+using ManageFamilyMeals.Shared.Services;
 using Microsoft.JSInterop;
 
 namespace ManageFamilyMeals.Web.Client.Services;
 
-public sealed class CultureService(IJSRuntime jsRuntime, CultureState cultureState)
+public sealed class CultureService(
+    IJSRuntime jsRuntime,
+    CultureState cultureState,
+    IHttpClientFactory httpClientFactory,
+    IMealDataService mealDataService)
 {
-    private const string CultureStorageKey = "manage-family-meals-culture";
     private IJSObjectReference? _module;
+
+    private HttpClient Http => httpClientFactory.CreateClient("MealDataApi");
 
     public event Action? CultureChanged
     {
@@ -22,11 +29,9 @@ public sealed class CultureService(IJSRuntime jsRuntime, CultureState cultureSta
     public async Task InitializeAsync(AppSettings settings)
     {
         var module = await GetModuleAsync();
-        var storedCulture = await module.InvokeAsync<string?>("getItem", CultureStorageKey);
         var browserCulture = await module.InvokeAsync<string?>("getBrowserLanguage");
 
-        var cultureCode = storedCulture
-            ?? settings.CultureCode
+        var cultureCode = settings.CultureCode
             ?? NormalizeCulture(browserCulture)
             ?? "en";
 
@@ -50,7 +55,15 @@ public sealed class CultureService(IJSRuntime jsRuntime, CultureState cultureSta
 
         if (persist)
         {
-            await module.InvokeVoidAsync("setItem", CultureStorageKey, cultureState.CultureCode);
+            var response = await Http.PutAsJsonAsync("/api/settings", new AppSettings
+            {
+                CultureCode = cultureState.CultureCode
+            });
+            response.EnsureSuccessStatusCode();
+
+            var settings = await response.Content.ReadFromJsonAsync<AppSettings>()
+                ?? new AppSettings { CultureCode = cultureState.CultureCode };
+            mealDataService.ApplySettings(settings);
         }
     }
 

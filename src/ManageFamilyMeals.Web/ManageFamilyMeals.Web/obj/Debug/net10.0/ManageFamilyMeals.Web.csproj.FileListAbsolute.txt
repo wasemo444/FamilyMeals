@@ -69,8 +69,9 @@ C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFami
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\ManageFamilyMeals.Web.genruntimeconfig.cache
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\ref\ManageFamilyMeals.Web.dll
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\24t9g2dzot-{0}-x5y9rkp8u4-x5y9rkp8u4.gz
-C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\fnqxe5vf3m-{0}-i1fej4kq3f-i1fej4kq3f.gz
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\cyzvecplgu-{0}-mh45lp5v9t-mh45lp5v9t.gz
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\z4s8z3hwlk-{0}-nnqyrwd980-nnqyrwd980.gz
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\98s8he0g3b-{0}-wgsmtw6xnj-wgsmtw6xnj.gz
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\7mgr7mup9g-{0}-i5l76nss60-i5l76nss60.gz
+C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\ManageFamilyMeals.Web.sourcelink.json
+C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Web\ManageFamilyMeals.Web\obj\Debug\net10.0\compressed\fnqxe5vf3m-{0}-qu8wwj3e5m-qu8wwj3e5m.gz

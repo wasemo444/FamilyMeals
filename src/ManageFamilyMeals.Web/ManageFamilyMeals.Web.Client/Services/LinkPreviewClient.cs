@@ -4,11 +4,13 @@ using ManageFamilyMeals.Shared.Services;
 
 namespace ManageFamilyMeals.Web.Client.Services;
 
-public sealed class LinkPreviewClient(HttpClient httpClient) : ILinkPreviewClient
+public sealed class LinkPreviewClient(IHttpClientFactory httpClientFactory) : ILinkPreviewClient
 {
+    private HttpClient Http => httpClientFactory.CreateClient("MealDataApi");
+
     public async Task<LinkPreviewData?> FetchAsync(string url, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync(
+        var response = await Http.GetAsync(
             $"/api/link-preview?url={Uri.EscapeDataString(url)}",
             cancellationToken);
 

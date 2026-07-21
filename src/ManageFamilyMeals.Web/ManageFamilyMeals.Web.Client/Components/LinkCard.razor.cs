@@ -1,8 +1,8 @@
 using ManageFamilyMeals.Shared.Extensions;
 using ManageFamilyMeals.Shared.Models;
 using ManageFamilyMeals.Shared.Services;
-using ManageFamilyMeals.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
@@ -14,11 +14,20 @@ public partial class LinkCard
     [Inject]
     private IMealDataService DataService { get; set; } = default!;
 
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+
     private string DisplayTitle => Link.GetLocalizedTitle(CultureService.CurrentCulture);
 
     private string? PreviewImageSource => string.IsNullOrWhiteSpace(Link.PreviewImageUrl)
         ? null
-        : $"/api/link-preview/image?url={Uri.EscapeDataString(Link.PreviewImageUrl)}";
+        : $"{GetApiBaseUrl()}/api/link-preview/image?url={Uri.EscapeDataString(Link.PreviewImageUrl)}";
+
+    private string GetApiBaseUrl()
+    {
+        var baseUrl = Configuration["ApiBaseUrl"] ?? "http://localhost:5280";
+        return baseUrl.TrimEnd('/');
+    }
 
     private string FavoriteLabel => Link.IsFavorite
         ? L["Unfavorite"]

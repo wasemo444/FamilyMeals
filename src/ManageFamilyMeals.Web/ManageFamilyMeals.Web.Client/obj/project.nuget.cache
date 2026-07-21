@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "A9qlN4ddRgA=",
+  "dgSpecHash": "eZs0pmrRsWc=",
   "success": true,
   "projectFilePath": "C:\\repos\\GitHub\\Test-ConsoleAPP\\New DietApp\\src\\ManageFamilyMeals.Web\\ManageFamilyMeals.Web.Client\\ManageFamilyMeals.Web.Client.csproj",
   "expectedPackageFiles": [
@@ -25,6 +25,7 @@
     "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.fileproviders.abstractions\\10.0.2\\microsoft.extensions.fileproviders.abstractions.10.0.2.nupkg.sha512",
     "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.fileproviders.physical\\10.0.2\\microsoft.extensions.fileproviders.physical.10.0.2.nupkg.sha512",
     "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.filesystemglobbing\\10.0.2\\microsoft.extensions.filesystemglobbing.10.0.2.nupkg.sha512",
+    "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.http\\10.0.0\\microsoft.extensions.http.10.0.0.nupkg.sha512",
     "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.localization\\10.0.2\\microsoft.extensions.localization.10.0.2.nupkg.sha512",
     "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.localization.abstractions\\10.0.2\\microsoft.extensions.localization.abstractions.10.0.2.nupkg.sha512",
     "C:\\Users\\m.al-kurdi\\.nuget\\packages\\microsoft.extensions.logging\\10.0.2\\microsoft.extensions.logging.10.0.2.nupkg.sha512",
