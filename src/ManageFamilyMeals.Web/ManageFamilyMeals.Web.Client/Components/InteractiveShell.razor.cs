@@ -25,7 +25,7 @@ public partial class InteractiveShell : IDisposable
         }
 
         await DataService.InitializeAsync();
-        await CultureService.InitializeAsync(new AppSettings());
+        await CultureService.InitializeAsync(DataService.GetSettings());
         IsReady = true;
         _initialized = true;
         StateHasChanged();

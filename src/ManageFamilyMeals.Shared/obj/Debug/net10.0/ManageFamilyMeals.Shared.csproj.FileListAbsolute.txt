@@ -17,6 +17,7 @@ C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Deb
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\ManageFamilyMeals.Shared.AssemblyInfoInputs.cache
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\ManageFamilyMeals.Shared.AssemblyInfo.cs
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\ManageFamilyMeals.Shared.csproj.CoreCompileInputs.cache
+C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\ManageFamilyMeals.Shared.sourcelink.json
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\ar\ManageFamilyMeals.Shared.resources.cs
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\ar\ManageFamilyMeals.Shared.resources.dll
 C:\repos\GitHub\Test-ConsoleAPP\New DietApp\src\ManageFamilyMeals.Shared\obj\Debug\net10.0\en\ManageFamilyMeals.Shared.resources.cs

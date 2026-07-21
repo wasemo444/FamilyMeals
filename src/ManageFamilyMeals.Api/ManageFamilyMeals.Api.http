@@ -1,0 +1,6 @@
+@ManageFamilyMeals.Api_HostAddress = http://localhost:5050
+
+GET {{ManageFamilyMeals.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

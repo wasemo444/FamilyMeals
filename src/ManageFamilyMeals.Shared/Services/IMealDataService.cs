@@ -8,6 +8,14 @@ public interface IMealDataService
 
     Task InitializeAsync(CancellationToken cancellationToken = default);
 
+    Task EnsureLoadedAsync(CancellationToken cancellationToken = default);
+
+    Task RunMaintenanceAsync(CancellationToken cancellationToken = default);
+
+    AppData GetSnapshot();
+
+    void ApplySettings(AppSettings settings);
+
     IReadOnlyList<MealCategory> GetFavoriteCategories();
 
     IReadOnlyList<MealCategory> GetActiveCategories();
@@ -16,13 +24,17 @@ public interface IMealDataService
 
     MealCategory? GetCategory(Guid categoryId);
 
+    MealLink? GetLink(Guid linkId);
+
+    AppSettings GetSettings();
+
     bool IsCategoryNameTaken(string name);
 
     Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default);
 
-    Task ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
 
-    Task RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
+    Task<bool> RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
 
     Task ToggleCategoryFavoriteAsync(Guid categoryId, CancellationToken cancellationToken = default);
 
@@ -42,9 +54,9 @@ public interface IMealDataService
         string? note = null,
         CancellationToken cancellationToken = default);
 
-    Task ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default);
 
-    Task RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default);
+    Task<bool> RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default);
 
     Task ToggleLinkFavoriteAsync(Guid linkId, CancellationToken cancellationToken = default);
 

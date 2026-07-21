@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "ManageFamilyMeals.Web.Client",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-ucSmQ1Ksa7u2iFEIkhvrqHUygGiQ/BM7QGlwFcMxC94=",
+    "hash": "sha256-SB5usGThbRz6RfwKQ5Z5bIf90v4dW1V1xlCixSSESbg=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.87vtjjdetb.js"
@@ -170,6 +170,12 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
         "virtualPath": "Microsoft.Extensions.FileSystemGlobbing.wasm",
         "name": "Microsoft.Extensions.FileSystemGlobbing.ky7o0248s6.wasm",
         "integrity": "sha256-TMY4PHVcLvYv10C5Ji01cnaqe03DzxjamHVYvBFvjIw=",
+        "cache": "force-cache"
+      },
+      {
+        "virtualPath": "Microsoft.Extensions.Http.wasm",
+        "name": "Microsoft.Extensions.Http.apre2arxjd.wasm",
+        "integrity": "sha256-QuJDErvDB3eoqucTTOd2qfeV220MJhQPa35gPi24h3g=",
         "cache": "force-cache"
       },
       {
@@ -1254,28 +1260,28 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "ManageFamilyMeals.Shared.wasm",
-        "name": "ManageFamilyMeals.Shared.xcbk9f4ym3.wasm",
-        "integrity": "sha256-f4QYjdplXCC7I8uXnaan4q0o/d9orsfhlNnVU8fNbSA=",
+        "name": "ManageFamilyMeals.Shared.urz4i502k1.wasm",
+        "integrity": "sha256-5msV50hJPHu21xaN3qGfKMwK1m9JJTHfhhdpRlCqhXw=",
         "cache": "force-cache"
       },
       {
         "virtualPath": "ManageFamilyMeals.Web.Client.wasm",
-        "name": "ManageFamilyMeals.Web.Client.qbdhl95pd7.wasm",
-        "integrity": "sha256-ShmhEhgxg2TCPa9c/9KJynJVsR1jrEQ2+a/FW+kHlGM=",
+        "name": "ManageFamilyMeals.Web.Client.tkgdsobgah.wasm",
+        "integrity": "sha256-LUFe7dkrnwBLkKR1qbisGC9LkNNbWqL5I6YuyOcLW4c=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "ManageFamilyMeals.Shared.pdb",
-        "name": "ManageFamilyMeals.Shared.xogsif4lcr.pdb",
-        "integrity": "sha256-gbGQ+oRNSpYrZ1gyOfrk5uhzNVuztbSSxG8U5cfp4Wo=",
+        "name": "ManageFamilyMeals.Shared.54vsmrnhly.pdb",
+        "integrity": "sha256-e6EekGtBIJPGLZOnsy/GMz7UrktbilCuQETUTZAGfwc=",
         "cache": "force-cache"
       },
       {
         "virtualPath": "ManageFamilyMeals.Web.Client.pdb",
-        "name": "ManageFamilyMeals.Web.Client.ippet8bo3g.pdb",
-        "integrity": "sha256-poYFXJj1jC19X/m/0cs266hcoW+CH912shSx7dBCzno=",
+        "name": "ManageFamilyMeals.Web.Client.ly38p7g7mq.pdb",
+        "integrity": "sha256-80QMPTvu29WLf9T+49k22krfzNvzcon4PkCNNQW7mKE=",
         "cache": "force-cache"
       }
     ],
@@ -1283,16 +1289,16 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       "ar": [
         {
           "virtualPath": "ManageFamilyMeals.Shared.resources.wasm",
-          "name": "ManageFamilyMeals.Shared.resources.i6qqr1cqss.wasm",
-          "integrity": "sha256-9hlrzO712xH+f495EsO2B58QTu21RNY6xAKN814Uba8=",
+          "name": "ManageFamilyMeals.Shared.resources.fppcdg8d2j.wasm",
+          "integrity": "sha256-IzoAzklPaURdzPGo+4MONL95Sq9Dcn5DUpOWarAraks=",
           "cache": "force-cache"
         }
       ],
       "en": [
         {
           "virtualPath": "ManageFamilyMeals.Shared.resources.wasm",
-          "name": "ManageFamilyMeals.Shared.resources.c1qwhnr3zu.wasm",
-          "integrity": "sha256-MNfDL+pfv2z4SDfyyGWTJ7nvf9LAESq3KnTXsjo+I2c=",
+          "name": "ManageFamilyMeals.Shared.resources.h2bppx5cdq.wasm",
+          "integrity": "sha256-t85C6SCXQKjnUtLfj2pZFH1rPxfFzztoxsQsTH0cIzQ=",
           "cache": "force-cache"
         }
       ]
@@ -1309,6 +1315,9 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
     ]
   },
   "debugLevel": -1,
+  "appsettings": [
+    "../appsettings.json"
+  ],
   "globalizationMode": "sharded",
   "extensions": {
     "blazor": {}
