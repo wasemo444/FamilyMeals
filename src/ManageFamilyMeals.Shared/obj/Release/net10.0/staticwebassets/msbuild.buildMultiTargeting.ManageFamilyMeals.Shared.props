@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\ManageFamilyMeals.Shared.props" />
-</Project>
