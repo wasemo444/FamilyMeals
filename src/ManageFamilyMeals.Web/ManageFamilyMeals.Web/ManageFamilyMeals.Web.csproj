@@ -9,7 +9,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ManageFamilyMeals.Web.Client\ManageFamilyMeals.Web.Client.csproj" />
+    <ProjectReference Include="..\..\ManageFamilyMeals.Api\ManageFamilyMeals.Api.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>

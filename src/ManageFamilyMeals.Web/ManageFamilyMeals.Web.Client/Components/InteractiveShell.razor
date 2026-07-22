@@ -9,6 +9,18 @@
                 <a href="/">@L["Home"]</a>
                 <a href="/archive">@L["Archive"]</a>
             </nav>
+            <div class="app-auth">
+                @if (_currentUser is not null)
+                {
+                    <span class="muted">@(_currentUser.DisplayName ?? _currentUser.Email)</span>
+                    <button class="btn" type="button" @onclick="LogoutAsync">@L["Logout"]</button>
+                }
+                else
+                {
+                    <a href="/login">@L["Login"]</a>
+                    <a href="/register">@L["Register"]</a>
+                }
+            </div>
             <LanguageSwitcher />
         </header>
 

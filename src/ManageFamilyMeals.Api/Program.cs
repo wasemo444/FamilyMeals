@@ -1,10 +1,14 @@
 using ManageFamilyMeals.Api.Data;
 using ManageFamilyMeals.Api.Endpoints;
+using ManageFamilyMeals.Api.Identity;
 using ManageFamilyMeals.Api.Middleware;
 using ManageFamilyMeals.Api.Services;
+using ManageFamilyMeals.Api.Startup;
 using ManageFamilyMeals.Shared.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +29,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     {
         options.UseNpgsql(connectionString);
     }
+});
+
+builder.Services.AddManageFamilyMealsIdentity(builder.Configuration, builder.Environment);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    {
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.PermitLimit = 20;
+        limiterOptions.QueueLimit = 0;
+    });
 });
 
 builder.Services.AddScoped<IAppDataStore, EfAppDataStore>();
@@ -51,50 +68,21 @@ builder.Services.AddCors(options =>
             "http://localhost:5084",
             "https://localhost:7039")
         .AllowAnyHeader()
-        .AllowAnyMethod());
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        if (dbContext.Database.IsRelational()
-            && dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.Ordinal) == true)
-        {
-            dbContext.Database.Migrate();
-        }
-        else
-        {
-            dbContext.Database.EnsureCreated();
-        }
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(
-            ex,
-            "Database migration failed. Ensure PostgreSQL is running (docker compose up) and the connection string is valid.");
-        throw;
-    }
-}
-else if (app.Environment.IsEnvironment("Testing"))
-{
-    using var scope = app.Services.CreateScope();
-    scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreated();
-}
-
-using (var scope = app.Services.CreateScope())
-{
-    var mealDataService = scope.ServiceProvider.GetRequiredService<IMealDataService>();
-    await mealDataService.RunMaintenanceAsync();
-}
+await app.InitializeDatabaseAsync();
 
 app.UseCors("WebClient");
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<MealDataLoadMiddleware>();
 
+app.MapAuthEndpoints();
 app.MapBootstrapEndpoints();
 app.MapCategoryEndpoints();
 app.MapLinkEndpoints();

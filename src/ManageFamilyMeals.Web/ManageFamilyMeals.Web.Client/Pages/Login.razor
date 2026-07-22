@@ -1,0 +1,37 @@
+@page "/login"
+@rendermode InteractiveAuto
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["Login"]</PageTitle>
+
+<section class="page auth-page">
+    <header class="page-header">
+        <h1>@L["Login"]</h1>
+    </header>
+
+    <section class="panel">
+        <EditForm Model="_form" OnValidSubmit="LoginAsync">
+            <div class="form-row">
+                <InputText class="input" @bind-Value="_form.Email" placeholder="@L["Email"]" />
+            </div>
+            <div class="form-row">
+                <InputText class="input" type="password" @bind-Value="_form.Password" placeholder="@L["Password"]" />
+            </div>
+            <div class="form-row">
+                <label>
+                    <InputCheckbox @bind-Value="_form.RememberMe" />
+                    @L["RememberMe"]
+                </label>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="error">@_error</p>
+            }
+            <div class="form-row">
+                <button class="btn primary" type="submit">@L["Login"]</button>
+                <a class="btn" href="/register">@L["Register"]</a>
+            </div>
+        </EditForm>
+    </section>
+</section>

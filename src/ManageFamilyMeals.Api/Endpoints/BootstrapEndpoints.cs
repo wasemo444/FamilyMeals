@@ -11,7 +11,8 @@ public static class BootstrapEndpoints
         {
             await dataService.EnsureLoadedAsync(cancellationToken);
             return Results.Ok(dataService.GetSnapshot());
-        });
+        })
+        .RequireAuthorization();
 
         return endpoints;
     }
