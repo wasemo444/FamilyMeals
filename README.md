@@ -39,7 +39,7 @@ dotnet run
 The API runs at **http://localhost:5280**.
 
 - There is no home page or Swagger UI at `/`.
-- To verify it is working, open **http://localhost:5280/api/bootstrap** (JSON snapshot of categories, links, and settings).
+- To verify it is working, log in at the Web app or POST to `/api/auth/login`, then open **http://localhost:5280/api/bootstrap** (requires auth cookie).
 - On first run in Development, EF Core applies migrations automatically.
 
 ### 3. Start the Web app
@@ -51,9 +51,18 @@ cd src/ManageFamilyMeals.Web/ManageFamilyMeals.Web
 dotnet run
 ```
 
+The Web client proxies API calls through the Web host at the same origin (`/api/*` → API). Start the **API first**, then the Web app.
+
 Open **http://localhost:5084** in your browser (or the HTTPS URL shown in the console).
 
-The Web client calls the API at `http://localhost:5280` (configured in `appsettings.json` / `ManageFamilyMeals.Web.Client/wwwroot/appsettings.json`).
+### Authentication (E2)
+
+- Register at `/register` or log in at `/login`.
+- Default dev user (seeded on first run): `dev@mfm.local` / `DevPassword1!`
+- Protected pages and `/api/*` data endpoints require a valid auth cookie; unauthenticated requests return **401**.
+- Log out from the shell header menu.
+- **DataProtection keys:** API and Web must share the same `DataProtection:KeysPath` (default: `.managefamilymeals/dataprotection-keys` under each host’s content root). Use an absolute shared path or volume in multi-instance deployments.
+- **E2 bridge:** meal data has no ownership columns yet; all authenticated users see the same global dataset until E3 adds per-user scoping.
 
 ### Build the whole solution (optional)
 

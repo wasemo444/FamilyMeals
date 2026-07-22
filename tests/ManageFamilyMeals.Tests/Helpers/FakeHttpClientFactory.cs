@@ -11,6 +11,9 @@ internal sealed class FakeHttpMessageHandler : HttpMessageHandler
     public FakeHttpMessageHandler MapGet(string path, object responseBody) =>
         Map(HttpMethod.Get, path, _ => JsonResponse(responseBody));
 
+    public FakeHttpMessageHandler MapGet(string path, HttpResponseMessage response) =>
+        Map(HttpMethod.Get, path, _ => response);
+
     public FakeHttpMessageHandler MapGetSequence(string path, params object[] responses)
     {
         var index = 0;
@@ -28,6 +31,9 @@ internal sealed class FakeHttpMessageHandler : HttpMessageHandler
 
     public FakeHttpMessageHandler MapPost(string path, Func<HttpRequestMessage, object> responseFactory) =>
         Map(HttpMethod.Post, path, request => JsonResponse(responseFactory(request)));
+
+    public FakeHttpMessageHandler MapPost(string path, Func<HttpRequestMessage, HttpResponseMessage> responseFactory) =>
+        Map(HttpMethod.Post, path, responseFactory);
 
     public FakeHttpMessageHandler MapPut(string path, HttpStatusCode statusCode = HttpStatusCode.NoContent) =>
         Map(HttpMethod.Put, path, _ => new HttpResponseMessage(statusCode));

@@ -57,6 +57,16 @@ public static class LocalizationCatalog
             ["ShareCreateCategoryHint"] = "Create a category below to save this link.",
             ["QuickCreateCategory"] = "Quick create category",
             ["SelectCategoryRequired"] = "Please select a category.",
+            ["Login"] = "Log in",
+            ["Register"] = "Register",
+            ["Logout"] = "Log out",
+            ["Email"] = "Email",
+            ["Password"] = "Password",
+            ["DisplayName"] = "Display name",
+            ["RememberMe"] = "Remember me",
+            ["InvalidCredentials"] = "Invalid email or password.",
+            ["LoginFailed"] = "Login failed. Please try again.",
+            ["RegisterFailed"] = "Registration failed. Please try again.",
         },
         ["ar"] = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -111,6 +121,16 @@ public static class LocalizationCatalog
             ["ShareCreateCategoryHint"] = "أنشئ فئة أدناه لحفظ هذا الرابط.",
             ["QuickCreateCategory"] = "إنشاء فئة سريع",
             ["SelectCategoryRequired"] = "يرجى اختيار فئة.",
+            ["Login"] = "تسجيل الدخول",
+            ["Register"] = "إنشاء حساب",
+            ["Logout"] = "تسجيل الخروج",
+            ["Email"] = "البريد الإلكتروني",
+            ["Password"] = "كلمة المرور",
+            ["DisplayName"] = "الاسم المعروض",
+            ["RememberMe"] = "تذكرني",
+            ["InvalidCredentials"] = "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+            ["LoginFailed"] = "فشل تسجيل الدخول. حاول مرة أخرى.",
+            ["RegisterFailed"] = "فشل إنشاء الحساب. حاول مرة أخرى.",
         },
     };
 

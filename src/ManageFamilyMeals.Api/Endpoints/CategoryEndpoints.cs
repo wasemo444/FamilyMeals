@@ -7,7 +7,7 @@ public static class CategoryEndpoints
 {
     public static IEndpointRouteBuilder MapCategoryEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/categories");
+        var group = endpoints.MapGroup("/api/categories").RequireAuthorization();
 
         group.MapGet("/", (IMealDataService dataService) => Results.Ok(dataService.GetActiveCategories()));
         group.MapGet("/favorites", (IMealDataService dataService) => Results.Ok(dataService.GetFavoriteCategories()));
