@@ -4,10 +4,26 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace ManageFamilyMeals.Api.Identity;
 
+/// <summary>
+/// Registers ASP.NET Identity, cookie authentication, and data protection for the API host.
+/// </summary>
+/// <remarks>
+/// API cookie events return <c>401 Unauthorized</c> for unauthenticated API requests (not redirects)
+/// and <c>403 Forbidden</c> for access-denied scenarios.
+/// </remarks>
 public static class IdentityServiceExtensions
 {
+    /// <summary>Application authentication cookie name shared with the web host.</summary>
     public const string ApplicationCookieName = ".ManageFamilyMeals.Auth";
 
+    /// <summary>
+    /// Adds Identity, cookie auth, data protection, and related services to the DI container.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Application configuration (Auth, IdentitySeed, DataProtection sections).</param>
+    /// <param name="environment">Host environment for cookie security and key path defaults.</param>
+    /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when data protection keys are misconfigured outside development.</exception>
     public static IServiceCollection AddManageFamilyMealsIdentity(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -89,6 +105,12 @@ public static class IdentityServiceExtensions
         return services;
     }
 
+    /// <summary>
+    /// Validates that a shared data protection key path is configured for non-development environments.
+    /// </summary>
+    /// <param name="configuredPath">Raw path from configuration (may contain environment variables).</param>
+    /// <param name="environment">Host environment.</param>
+    /// <exception cref="InvalidOperationException">Thrown when production/testing requires a key path but none is valid.</exception>
     public static void EnsureDataProtectionKeysConfigured(string? configuredPath, IHostEnvironment environment)
     {
         if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
@@ -111,6 +133,12 @@ public static class IdentityServiceExtensions
         }
     }
 
+    /// <summary>
+    /// Resolves the filesystem directory used to persist data protection keys.
+    /// </summary>
+    /// <param name="configuredPath">Optional path from configuration; uses local app data when null in development.</param>
+    /// <param name="environment">Host environment for content-root-relative paths.</param>
+    /// <returns>Absolute directory path for the key ring.</returns>
     public static string ResolveDataProtectionPath(string? configuredPath, IHostEnvironment environment)
     {
         if (string.IsNullOrWhiteSpace(configuredPath))

@@ -2,6 +2,9 @@ using System.Globalization;
 
 namespace ManageFamilyMeals.Web.Client.Services;
 
+/// <summary>
+/// Singleton holder for the active UI culture code and thread culture instances.
+/// </summary>
 public sealed class CultureState
 {
     private string _cultureCode = "en";

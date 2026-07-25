@@ -3,8 +3,18 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Shared.Extensions;
 
+/// <summary>
+/// Culture-aware display and search helpers for <see cref="MealLink"/> instances.
+/// </summary>
 public static class MealLinkExtensions
 {
+    /// <summary>
+    /// Returns the best available title for the given UI culture, falling back across languages,
+    /// legacy storage, preview metadata, and the raw URL.
+    /// </summary>
+    /// <param name="link">Link whose titles are evaluated.</param>
+    /// <param name="culture">Active UI culture determining primary language preference.</param>
+    /// <returns>A non-empty display string suitable for list and card rendering.</returns>
     public static string GetLocalizedTitle(this MealLink link, CultureInfo culture)
     {
         var isArabic = culture.TwoLetterISOLanguageName.Equals("ar", StringComparison.OrdinalIgnoreCase);
@@ -28,6 +38,12 @@ public static class MealLinkExtensions
         return link.PreviewTitle ?? link.Url;
     }
 
+    /// <summary>
+    /// Determines whether the link matches a case-insensitive search across titles, notes, and URL.
+    /// </summary>
+    /// <param name="link">Link to test.</param>
+    /// <param name="searchTerm">User-entered filter text; empty or whitespace matches all links.</param>
+    /// <returns><see langword="true"/> when the link should appear in filtered results.</returns>
     public static bool MatchesSearch(this MealLink link, string? searchTerm)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))

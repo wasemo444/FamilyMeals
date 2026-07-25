@@ -3,8 +3,16 @@ using Microsoft.AspNetCore.Diagnostics;
 
 namespace ManageFamilyMeals.Api.Middleware;
 
+/// <summary>
+/// Maps <see cref="ConcurrencyConflictException"/> to HTTP <c>409 Conflict</c> with a JSON error body.
+/// </summary>
+/// <remarks>
+/// Used for optimistic concurrency failures from <see cref="Data.EfAppDataStore"/> and related services.
+/// </remarks>
 public sealed class ConcurrencyConflictExceptionHandler(ILogger<ConcurrencyConflictExceptionHandler> logger) : IExceptionHandler
 {
+    /// <inheritdoc />
+    /// <returns><see langword="true"/> when the exception was handled; otherwise <see langword="false"/>.</returns>
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,

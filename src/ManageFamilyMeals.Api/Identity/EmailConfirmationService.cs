@@ -3,11 +3,21 @@ using Microsoft.Extensions.Options;
 
 namespace ManageFamilyMeals.Api.Identity;
 
+/// <summary>
+/// Builds confirmation links and sends email confirmation messages for newly registered users.
+/// </summary>
 public sealed class EmailConfirmationService(
     UserManager<ApplicationUser> userManager,
     IEmailSender emailSender,
     IOptions<AuthOptions> authOptions)
 {
+    /// <summary>
+    /// Generates a confirmation token and sends a confirmation email to the user.
+    /// </summary>
+    /// <param name="user">The user to confirm.</param>
+    /// <param name="cancellationToken">Token used to cancel the send operation.</param>
+    /// <returns>A task that completes when the email has been dispatched.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the user has no email or username.</exception>
     public async Task SendConfirmationEmailAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         var email = user.Email ?? user.UserName
@@ -27,6 +37,12 @@ public sealed class EmailConfirmationService(
             cancellationToken);
     }
 
+    /// <summary>
+    /// Builds the absolute confirmation URL pointing at the web host's confirm-email page.
+    /// </summary>
+    /// <param name="userId">The user's unique identifier.</param>
+    /// <param name="token">The URL-encoded confirmation token from Identity.</param>
+    /// <returns>The full confirmation link.</returns>
     public string BuildConfirmationLink(Guid userId, string token)
     {
         var webBaseUrl = authOptions.Value.WebBaseUrl.TrimEnd('/');

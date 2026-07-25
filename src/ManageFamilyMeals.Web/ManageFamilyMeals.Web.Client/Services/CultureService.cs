@@ -6,8 +6,14 @@ using Microsoft.JSInterop;
 
 namespace ManageFamilyMeals.Web.Client.Services;
 
-public sealed class CultureService(
-    IJSRuntime jsRuntime,
+/// <summary>
+/// Applies culture changes in the browser and persists the selected culture to the API.
+/// </summary>
+/// <remarks>
+/// Culture initialization requires an interactive render pass because it invokes JavaScript
+/// interop to read the browser language and update document direction (LTR/RTL).
+/// </remarks>
+public sealed class CultureService(    IJSRuntime jsRuntime,
     CultureState cultureState,
     IHttpClientFactory httpClientFactory,
     IMealDataService mealDataService)

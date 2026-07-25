@@ -5,6 +5,13 @@ using Microsoft.Extensions.Configuration;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Registration page that creates a new account through <see cref="IAuthClient"/>.
+/// </summary>
+/// <remarks>
+/// On success, redirects to the login page with query parameters indicating whether email
+/// confirmation is required. Uses a full page load so auth state is reset cleanly.
+/// </remarks>
 public partial class Register
 {
     [Inject]

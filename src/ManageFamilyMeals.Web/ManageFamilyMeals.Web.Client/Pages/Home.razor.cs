@@ -4,6 +4,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Home page for browsing, filtering, and creating meal categories and groups.
+/// </summary>
+/// <remarks>
+/// Rendered in interactive WebAssembly mode. Subscribes to meal data change notifications
+/// to refresh category lists when content is added or modified elsewhere.
+/// </remarks>
 public partial class Home : IDisposable
 {
     [Inject]

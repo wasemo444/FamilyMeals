@@ -5,8 +5,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManageFamilyMeals.Web.Endpoints;
 
+/// <summary>
+/// Minimal API endpoints for browser-based Identity sign-in, sign-out, and email confirmation.
+/// </summary>
+/// <remarks>
+/// Login and logout use form posts with antiforgery disabled so Blazor pages can submit HTML forms
+/// directly. Logout validates same-origin via Origin or Referer headers before signing out.
+/// </remarks>
 public static class AccountEndpoints
 {
+    /// <summary>
+    /// Maps <c>/account/login</c>, <c>/account/logout</c>, and <c>/account/confirm-email</c> routes.
+    /// </summary>
+    /// <param name="endpoints">The endpoint route builder to extend.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/account/login", LoginAsync).DisableAntiforgery();

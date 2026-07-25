@@ -3,6 +3,17 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Shared.Services;
 
+/// <summary>
+/// Local in-process implementation of <see cref="IMealDataService"/> that persists through
+/// <see cref="IAppDataStore"/> and enforces ownership via <see cref="IOwnershipAuthorization"/>.
+/// </summary>
+/// <param name="dataStore">Persistence layer for the full <see cref="AppData"/> aggregate.</param>
+/// <param name="currentUser">Source of the authenticated user id for ownership assignment.</param>
+/// <param name="ownershipAuthorization">Validates create and mutate permissions before writes.</param>
+/// <remarks>
+/// Each mutation reloads data from the store after save so optimistic concurrency tokens stay current.
+/// Archiving a category cascades to all active links in that category.
+/// </remarks>
 public sealed class MealDataService(
     IAppDataStore dataStore,
     ICurrentUserContext currentUser,
@@ -11,11 +22,14 @@ public sealed class MealDataService(
     private AppData _data = new();
     private bool _initialized;
 
+    /// <inheritdoc />
     public event Action? DataChanged;
 
+    /// <inheritdoc />
     public Task InitializeAsync(CancellationToken cancellationToken = default) =>
         EnsureLoadedAsync(cancellationToken);
 
+    /// <inheritdoc />
     public async Task EnsureLoadedAsync(CancellationToken cancellationToken = default)
     {
         if (_initialized)
@@ -27,6 +41,7 @@ public sealed class MealDataService(
         _initialized = true;
     }
 
+    /// <inheritdoc />
     public async Task RunMaintenanceAsync(CancellationToken cancellationToken = default)
     {
         await EnsureLoadedAsync(cancellationToken);
@@ -35,6 +50,7 @@ public sealed class MealDataService(
         await PersistAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public AppData GetSnapshot() => new()
     {
         Categories = _data.Categories.ToList(),
@@ -42,32 +58,41 @@ public sealed class MealDataService(
         Settings = new AppSettings { CultureCode = _data.Settings.CultureCode }
     };
 
+    /// <inheritdoc />
     public void ApplySettings(AppSettings settings)
     {
         _data.Settings = new AppSettings { CultureCode = settings.CultureCode };
         DataChanged?.Invoke();
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<MealCategory> GetFavoriteCategories(HomeContentFilter filter = HomeContentFilter.All) =>
         MealDataQueries.GetFavoriteCategories(_data, filter);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealCategory> GetActiveCategories(HomeContentFilter filter = HomeContentFilter.All) =>
         MealDataQueries.GetActiveCategories(_data, filter);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealCategory> GetArchivedCategories() =>
         MealDataQueries.GetArchivedCategories(_data);
 
+    /// <inheritdoc />
     public MealCategory? GetCategory(Guid categoryId) =>
         MealDataQueries.GetCategory(_data, categoryId);
 
+    /// <inheritdoc />
     public MealLink? GetLink(Guid linkId) =>
         MealDataQueries.GetLink(_data, linkId);
 
+    /// <inheritdoc />
     public AppSettings GetSettings() => _data.Settings;
 
+    /// <inheritdoc />
     public bool IsCategoryNameTaken(string name, ContentOwner owner) =>
         MealDataQueries.IsCategoryNameTaken(_data, name, owner);
 
+    /// <inheritdoc />
     public async Task<MealCategory> AddCategoryAsync(
         string name,
         ContentOwner owner,
@@ -96,6 +121,7 @@ public sealed class MealDataService(
         return GetCategory(category.Id) ?? category;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && !item.IsDeleted);
@@ -127,6 +153,7 @@ public sealed class MealDataService(
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && item.IsDeleted);
@@ -157,6 +184,7 @@ public sealed class MealDataService(
         return true;
     }
 
+    /// <inheritdoc />
     public async Task ToggleCategoryFavoriteAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && !item.IsDeleted);
@@ -170,18 +198,23 @@ public sealed class MealDataService(
         await PersistAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetFavoriteLinks(Guid categoryId) =>
         MealDataQueries.GetFavoriteLinks(_data, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetActiveLinks(Guid categoryId) =>
         MealDataQueries.GetActiveLinks(_data, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetArchivedLinks(Guid categoryId) =>
         MealDataQueries.GetArchivedLinks(_data, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetAllArchivedLinks() =>
         MealDataQueries.GetAllArchivedLinks(_data);
 
+    /// <inheritdoc />
     public async Task<MealLink> AddLinkAsync(
         Guid categoryId,
         string titleEn,
@@ -213,6 +246,7 @@ public sealed class MealDataService(
         return link;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
@@ -236,6 +270,7 @@ public sealed class MealDataService(
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && item.IsDeleted);
@@ -259,6 +294,7 @@ public sealed class MealDataService(
         return true;
     }
 
+    /// <inheritdoc />
     public async Task ToggleLinkFavoriteAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
@@ -272,6 +308,7 @@ public sealed class MealDataService(
         await PersistAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task UpdateLinkPreviewAsync(Guid linkId, LinkPreviewData preview, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);

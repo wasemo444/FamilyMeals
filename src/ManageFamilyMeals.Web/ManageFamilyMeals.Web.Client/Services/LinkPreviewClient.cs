@@ -4,6 +4,9 @@ using ManageFamilyMeals.Shared.Services;
 
 namespace ManageFamilyMeals.Web.Client.Services;
 
+/// <summary>
+/// HTTP client wrapper that fetches Open Graph link preview metadata from the API.
+/// </summary>
 public sealed class LinkPreviewClient(IHttpClientFactory httpClientFactory) : ILinkPreviewClient
 {
     private HttpClient Http => httpClientFactory.CreateClient("MealDataApi");

@@ -3,8 +3,21 @@ using ManageFamilyMeals.Shared.Services;
 
 namespace ManageFamilyMeals.Api.Endpoints;
 
+/// <summary>
+/// CRUD-style minimal API routes for meal categories, including archive, restore, and favorite actions.
+/// </summary>
+/// <remarks>
+/// All routes require authentication. Ownership violations are surfaced as <c>404 Not Found</c>
+/// (not <c>403 Forbidden</c>) to avoid leaking existence of resources the caller cannot access.
+/// Duplicate names within the same owner scope return <c>409 Conflict</c>.
+/// </remarks>
 public static class CategoryEndpoints
 {
+    /// <summary>
+    /// Maps <c>/api/categories</c> endpoints for listing, creating, and mutating categories.
+    /// </summary>
+    /// <param name="endpoints">The application endpoint builder.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
     public static IEndpointRouteBuilder MapCategoryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/categories").RequireAuthorization();

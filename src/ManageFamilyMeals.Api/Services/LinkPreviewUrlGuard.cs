@@ -3,8 +3,20 @@ using System.Net.Sockets;
 
 namespace ManageFamilyMeals.Api.Services;
 
+/// <summary>
+/// SSRF mitigation helper that allows only HTTP(S) URLs resolving to public IP addresses.
+/// </summary>
+/// <remarks>
+/// Blocks loopback, link-local, private, and metadata-range addresses. Used before outbound fetches in <see cref="LinkPreviewService"/>.
+/// </remarks>
 public static class LinkPreviewUrlGuard
 {
+    /// <summary>
+    /// Determines whether a URI is safe to fetch from the server (public host, resolvable, non-private IPs).
+    /// </summary>
+    /// <param name="uri">The URI to validate (scheme must be HTTP or HTTPS).</param>
+    /// <param name="cancellationToken">Token used to cancel DNS resolution.</param>
+    /// <returns><see langword="true"/> if all resolved addresses are public; otherwise <see langword="false"/>.</returns>
     public static async Task<bool> IsAllowedPublicUrlAsync(Uri uri, CancellationToken cancellationToken = default)
     {
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)

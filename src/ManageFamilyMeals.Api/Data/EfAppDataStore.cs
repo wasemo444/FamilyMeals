@@ -22,6 +22,14 @@ namespace ManageFamilyMeals.Api.Data;
 
 
 
+/// <summary>
+/// EF Core implementation of <see cref="IAppDataStore"/> that loads and persists meal data with ownership filtering.
+/// </summary>
+/// <remarks>
+/// <para>Load and save operations scope categories and links to the current user and their group memberships.</para>
+/// <para>Updates require a client <c>RowVersion</c>; missing or stale tokens throw <see cref="ConcurrencyConflictException"/> (HTTP 409).</para>
+/// <para>Entities the caller cannot mutate are skipped on delete/update rather than throwing.</para>
+/// </remarks>
 public sealed class EfAppDataStore(
 
     AppDbContext dbContext,
@@ -32,6 +40,8 @@ public sealed class EfAppDataStore(
 
 {
 
+    /// <inheritdoc />
+    /// <exception cref="UnauthorizedAccessException">Thrown when the HTTP context has no authenticated user.</exception>
     public async Task<AppData?> LoadAsync(CancellationToken cancellationToken = default)
 
     {
@@ -118,6 +128,9 @@ public sealed class EfAppDataStore(
 
 
 
+    /// <inheritdoc />
+    /// <exception cref="UnauthorizedAccessException">Thrown when the HTTP context has no authenticated user.</exception>
+    /// <exception cref="ConcurrencyConflictException">Thrown when a row version is missing or stale.</exception>
     public async Task SaveAsync(AppData data, CancellationToken cancellationToken = default)
 
     {

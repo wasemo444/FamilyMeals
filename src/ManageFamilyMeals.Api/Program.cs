@@ -103,4 +103,5 @@ app.MapLinkPreviewEndpoints();
 
 app.Run();
 
+/// <summary>Marker type for WebApplicationFactory and integration test host discovery.</summary>
 public partial class Program;

@@ -5,6 +5,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Target page for the Web Share Target API and manual link saving from shared URLs.
+/// </summary>
+/// <remarks>
+/// Reads optional <c>url</c>, <c>title</c>, and <c>text</c> query parameters to pre-fill the form.
+/// Initializes meal data on first interactive render because prerendering has no authenticated API context.
+/// </remarks>
 public partial class Share
 {
     [Inject]

@@ -4,8 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageFamilyMeals.Api.Services;
 
+/// <summary>
+/// Purges archived categories and links past the retention threshold and migrates legacy title fields.
+/// </summary>
+/// <remarks>
+/// Invoked at application startup. Hard-deletes soft-deleted records older than <see cref="ManageFamilyMeals.Shared.Constants.ArchivePolicy.ExpirationThresholdUtc"/>.
+/// </remarks>
 public sealed class ArchiveMaintenanceService(AppDbContext dbContext)
 {
+    /// <summary>
+    /// Removes expired archived categories (and their links) and expired archived links; backfills legacy titles.
+    /// </summary>
+    /// <param name="cancellationToken">Token used to cancel the database operations.</param>
+    /// <returns>A task that completes when maintenance finishes (no-op if nothing to clean).</returns>
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         var threshold = ArchivePolicy.ExpirationThresholdUtc;

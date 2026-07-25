@@ -1,5 +1,13 @@
 namespace ManageFamilyMeals.Shared.Resources;
 
+/// <summary>
+/// In-memory English and Arabic UI string catalog used by Blazor WebAssembly when
+/// <see cref="Microsoft.Extensions.Localization.IStringLocalizer"/> resources are unavailable.
+/// </summary>
+/// <remarks>
+/// Keys mirror entries in <c>SharedResource.resx</c>. English is the fallback when a key
+/// or culture is missing.
+/// </remarks>
 public static class LocalizationCatalog
 {
     private static readonly Dictionary<string, Dictionary<string, string>> Strings = new(StringComparer.OrdinalIgnoreCase)
@@ -174,6 +182,12 @@ public static class LocalizationCatalog
         },
     };
 
+    /// <summary>
+    /// Looks up a localized string for the given culture, falling back to English then the key itself.
+    /// </summary>
+    /// <param name="cultureCode">BCP 47 culture code; Arabic variants map to <c>ar</c>, all others to <c>en</c>.</param>
+    /// <param name="key">Resource key defined in the string tables.</param>
+    /// <returns>The localized value, English fallback, or <paramref name="key"/> when not found.</returns>
     public static string Get(string cultureCode, string key)
     {
         var culture = NormalizeCulture(cultureCode);
@@ -191,6 +205,13 @@ public static class LocalizationCatalog
         return key;
     }
 
+    /// <summary>
+    /// Looks up a localized format string and applies culture-aware composite formatting.
+    /// </summary>
+    /// <param name="cultureCode">BCP 47 culture code used for both lookup and formatting.</param>
+    /// <param name="key">Resource key whose value is a composite format string.</param>
+    /// <param name="arguments">Values substituted into the format string.</param>
+    /// <returns>The formatted localized string.</returns>
     public static string Format(string cultureCode, string key, params object[] arguments)
     {
         var format = Get(cultureCode, key);

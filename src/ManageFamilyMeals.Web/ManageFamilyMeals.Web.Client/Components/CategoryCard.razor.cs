@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
+/// <summary>
+/// Card component displaying a meal category with favorite and archive actions.
+/// </summary>
 public partial class CategoryCard
 {
     [Parameter, EditorRequired]

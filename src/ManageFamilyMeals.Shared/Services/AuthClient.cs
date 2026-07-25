@@ -5,6 +5,11 @@ using ManageFamilyMeals.Shared.Auth;
 
 namespace ManageFamilyMeals.Shared.Services;
 
+/// <summary>
+/// HTTP client implementation of <see cref="IAuthClient"/> that maps API error responses
+/// to <see cref="Auth.AuthValidationException"/> and <see cref="UnauthorizedAccessException"/>.
+/// </summary>
+/// <param name="httpClientFactory">Factory for the named <c>MealDataApi</c> HTTP client.</param>
 public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -14,6 +19,7 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
 
     private HttpClient Http => httpClientFactory.CreateClient("MealDataApi");
 
+    /// <inheritdoc />
     public async Task<AuthUserInfo> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsJsonAsync("/api/auth/register", request, cancellationToken);
@@ -22,6 +28,7 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
             ?? throw new InvalidOperationException("Failed to deserialize registered user.");
     }
 
+    /// <inheritdoc />
     public async Task<AuthUserInfo> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsJsonAsync("/api/auth/login", request, cancellationToken);
@@ -30,12 +37,14 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
             ?? throw new InvalidOperationException("Failed to deserialize logged-in user.");
     }
 
+    /// <inheritdoc />
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync("/api/auth/logout", null, cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
+    /// <inheritdoc />
     public async Task<AuthUserInfo?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         var response = await Http.GetAsync("/api/auth/me", cancellationToken);

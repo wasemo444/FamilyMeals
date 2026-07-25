@@ -6,8 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageFamilyMeals.Api.Startup;
 
+/// <summary>
+/// Applies database migrations, seeds identity data, and runs startup maintenance tasks.
+/// </summary>
 public static class DatabaseStartupExtensions
 {
+    /// <summary>
+    /// Migrates or creates the database, seeds the default user, backfills ownership, and purges expired archives.
+    /// </summary>
+    /// <param name="app">The built web application.</param>
+    /// <returns>A task that completes when initialization finishes.</returns>
+    /// <exception cref="Exception">Re-thrown when development migration fails (logged with connection guidance).</exception>
     public static async Task InitializeDatabaseAsync(this WebApplication app)
     {
         if (app.Environment.IsDevelopment())

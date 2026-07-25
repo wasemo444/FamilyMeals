@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ManageFamilyMeals.Api.Data.Configurations;
 
+/// <summary>
+/// EF Core fluent configuration for <see cref="GroupMembershipEntity"/> with composite unique index on group and user.
+/// </summary>
 public sealed class GroupMembershipEntityConfiguration : IEntityTypeConfiguration<GroupMembershipEntity>
 {
     public void Configure(EntityTypeBuilder<GroupMembershipEntity> builder)

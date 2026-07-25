@@ -3,6 +3,9 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Api.Mapping;
 
+/// <summary>
+/// Maps between EF Core entity types and shared domain models for API responses and persistence.
+/// </summary>
 public static class EntityMappingExtensions
 {
     public static MealCategory ToModel(this MealCategoryEntity entity, IReadOnlyDictionary<Guid, string>? groupNames = null) =>

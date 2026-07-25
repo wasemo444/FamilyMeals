@@ -5,6 +5,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Category detail page for viewing, searching, and adding meal links within a category.
+/// </summary>
+/// <remarks>
+/// Rendered in interactive WebAssembly mode. Backfills missing link preview images on first
+/// interactive render after the category loads.
+/// </remarks>
 public partial class Category : IDisposable
 {
     [Parameter]

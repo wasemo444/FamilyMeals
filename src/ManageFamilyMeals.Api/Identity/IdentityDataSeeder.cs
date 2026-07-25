@@ -6,12 +6,24 @@ using Microsoft.Extensions.Options;
 
 namespace ManageFamilyMeals.Api.Identity;
 
+/// <summary>
+/// Ensures a default development user exists for local and migrated databases.
+/// </summary>
+/// <remarks>
+/// Skips creation when the well-known user id or email already exists. Refuses the default dev password in production.
+/// </remarks>
 public sealed class IdentityDataSeeder(
     UserManager<ApplicationUser> userManager,
     IOptions<IdentitySeedOptions> seedOptions,
     IHostEnvironment environment,
     ILogger<IdentityDataSeeder> logger)
 {
+    /// <summary>
+    /// Creates or repairs the default user account when missing or passwordless.
+    /// </summary>
+    /// <param name="cancellationToken">Token used to cancel Identity operations.</param>
+    /// <returns>A task that completes when seeding finishes.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when production uses the dev password or Identity operations fail.</exception>
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var options = seedOptions.Value;

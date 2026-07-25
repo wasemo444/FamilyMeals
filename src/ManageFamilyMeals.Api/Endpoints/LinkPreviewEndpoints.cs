@@ -2,8 +2,19 @@ using ManageFamilyMeals.Api.Services;
 
 namespace ManageFamilyMeals.Api.Endpoints;
 
+/// <summary>
+/// Minimal API routes for fetching Open Graph metadata and preview images for external URLs.
+/// </summary>
+/// <remarks>
+/// Requires authentication. Blocked or unreachable URLs return <c>404 Not Found</c> (SSRF guard via <see cref="Services.LinkPreviewUrlGuard"/>).
+/// </remarks>
 public static class LinkPreviewEndpoints
 {
+    /// <summary>
+    /// Maps <c>/api/link-preview</c> and <c>/api/link-preview/image</c> endpoints.
+    /// </summary>
+    /// <param name="endpoints">The application endpoint builder.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
     public static IEndpointRouteBuilder MapLinkPreviewEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/api/link-preview", async (string url, LinkPreviewService service, CancellationToken cancellationToken) =>

@@ -6,18 +6,24 @@ using Microsoft.AspNetCore.Identity;
 namespace ManageFamilyMeals.Web.Auth;
 
 /// <summary>
-/// Uses Identity sign-in on the Web host when an HTTP context is available so auth
-/// cookies are issued to the browser. Falls back to the HTTP API client otherwise.
+/// <see cref="IAuthClient"/> implementation that signs in through ASP.NET Core Identity on the Web host.
 /// </summary>
+/// <remarks>
+/// When an HTTP context is available, login and logout mutate Identity cookies on the Web host.
+/// Registration and other operations without a browser context delegate to the shared
+/// <see cref="AuthClient"/> API client. Used during interactive server rendering and form-based login.
+/// </remarks>
 public sealed class WebHostAuthClient(
     IHttpContextAccessor httpContextAccessor,
     SignInManager<ApplicationUser> signInManager,
     UserManager<ApplicationUser> userManager,
     AuthClient apiAuthClient) : IAuthClient
 {
+    /// <inheritdoc />
     public Task<AuthUserInfo> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default) =>
         apiAuthClient.RegisterAsync(request, cancellationToken);
 
+    /// <inheritdoc />
     public async Task<AuthUserInfo> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         if (httpContextAccessor.HttpContext is null)
@@ -64,6 +70,7 @@ public sealed class WebHostAuthClient(
         return ToAuthUserInfo(user);
     }
 
+    /// <inheritdoc />
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
         if (httpContextAccessor.HttpContext is not null)
@@ -75,6 +82,7 @@ public sealed class WebHostAuthClient(
         await apiAuthClient.LogoutAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<AuthUserInfo?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         if (httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true)

@@ -4,8 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ManageFamilyMeals.Api.Data.Configurations;
 
+/// <summary>
+/// EF Core fluent configuration for the singleton <see cref="AppSettingsEntity"/> table and seed row.
+/// </summary>
 public sealed class AppSettingsEntityConfiguration : IEntityTypeConfiguration<AppSettingsEntity>
 {
+    /// <summary>Primary key value for the single application settings row.</summary>
     public const int SingletonId = 1;
 
     public void Configure(EntityTypeBuilder<AppSettingsEntity> builder)

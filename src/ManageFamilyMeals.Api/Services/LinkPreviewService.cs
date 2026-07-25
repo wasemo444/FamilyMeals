@@ -4,6 +4,12 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Api.Services;
 
+/// <summary>
+/// Fetches Open Graph and HTML metadata from external URLs for link preview display.
+/// </summary>
+/// <remarks>
+/// URLs must pass <see cref="LinkPreviewUrlGuard"/> (public addresses only). Failures return <see langword="null"/> rather than throwing.
+/// </remarks>
 public sealed class LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger)
 {
     private const int MaxHtmlBytes = 256 * 1024;
@@ -21,6 +27,12 @@ public sealed class LinkPreviewService(IHttpClientFactory httpClientFactory, ILo
         "<link[^>]+rel\\s*=\\s*[\"'](?:image_src|apple-touch-icon|icon)[\"'][^>]+href\\s*=\\s*[\"'](?<href>[^\"']+)[\"']",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    /// <summary>
+    /// Downloads a page and extracts title, description, image, and site name metadata.
+    /// </summary>
+    /// <param name="url">Absolute HTTP or HTTPS URL to fetch.</param>
+    /// <param name="cancellationToken">Token used to cancel the outbound request.</param>
+    /// <returns>Parsed preview data, or <see langword="null"/> if the URL is invalid, blocked, or unreachable.</returns>
     public async Task<LinkPreviewData?> FetchAsync(string url, CancellationToken cancellationToken = default)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
@@ -77,6 +89,12 @@ public sealed class LinkPreviewService(IHttpClientFactory httpClientFactory, ILo
         }
     }
 
+    /// <summary>
+    /// Downloads an image from a URL for inline preview serving.
+    /// </summary>
+    /// <param name="url">Absolute HTTP or HTTPS image URL.</param>
+    /// <param name="cancellationToken">Token used to cancel the outbound request.</param>
+    /// <returns>Image bytes and content type, or <see langword="null"/> if blocked, too large, or not an image.</returns>
     public async Task<(byte[] Bytes, string ContentType)?> FetchImageAsync(
         string url,
         CancellationToken cancellationToken = default)

@@ -2,6 +2,9 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Api.Data.Entities;
 
+/// <summary>
+/// Persistence model for a collaboration group with a unique invite code and creator reference.
+/// </summary>
 public sealed class GroupEntity
 {
     public Guid Id { get; set; }

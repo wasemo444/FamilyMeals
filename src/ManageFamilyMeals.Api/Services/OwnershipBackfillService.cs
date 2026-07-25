@@ -5,8 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageFamilyMeals.Api.Services;
 
+/// <summary>
+/// One-time migration helper that assigns ownership to legacy categories and links created before ownership was enforced.
+/// </summary>
+/// <remarks>
+/// Invoked at application startup after identity seeding. Unowned categories receive the default or earliest user;
+/// unowned links inherit ownership from their parent category.
+/// </remarks>
 public sealed class OwnershipBackfillService(AppDbContext dbContext)
 {
+    /// <summary>
+    /// Backfills <see cref="OwnerType"/> and owner foreign keys on rows with null ownership columns.
+    /// </summary>
+    /// <param name="cancellationToken">Token used to cancel database operations.</param>
+    /// <returns>A task that completes when backfill finishes (no-op if no unowned rows exist).</returns>
     public async Task BackfillUnownedMealDataAsync(CancellationToken cancellationToken = default)
     {
         var hasUnownedCategories = await dbContext.Categories
