@@ -80,6 +80,12 @@ Use Release so tests do not conflict with a running Debug API:
 dotnet test tests/ManageFamilyMeals.Tests/ManageFamilyMeals.Tests.csproj -c Release
 ```
 
+E2E tests (Playwright; first run installs Chromium):
+
+```powershell
+dotnet test tests/ManageFamilyMeals.E2E.Tests/ManageFamilyMeals.E2E.Tests.csproj -c Release
+```
+
 ## Troubleshooting
 
 **`MSB3027` / file locked by `ManageFamilyMeals.Api`**

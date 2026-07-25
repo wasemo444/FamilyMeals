@@ -10,7 +10,8 @@ public static class ClientServiceCollectionExtensions
     public static IServiceCollection AddManageFamilyMealsClientServices(
         this IServiceCollection services,
         IConfiguration configuration,
-        string? baseAddress = null)
+        string? baseAddress = null,
+        Action<IHttpClientBuilder>? configureMealDataApi = null)
     {
         services.AddLocalization();
         services.AddSingleton<CultureState>();
@@ -26,10 +27,12 @@ public static class ClientServiceCollectionExtensions
             apiBaseUrl += "/";
         }
 
-        services.AddHttpClient("MealDataApi", client =>
+        var mealDataApiBuilder = services.AddHttpClient("MealDataApi", client =>
         {
             client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
         });
+
+        configureMealDataApi?.Invoke(mealDataApiBuilder);
 
         services.AddScoped<IMealDataService, ApiMealDataService>();
         services.AddScoped<IAuthClient, AuthClient>();

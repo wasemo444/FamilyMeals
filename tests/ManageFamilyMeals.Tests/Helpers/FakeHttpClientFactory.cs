@@ -35,6 +35,9 @@ internal sealed class FakeHttpMessageHandler : HttpMessageHandler
     public FakeHttpMessageHandler MapPost(string path, Func<HttpRequestMessage, HttpResponseMessage> responseFactory) =>
         Map(HttpMethod.Post, path, responseFactory);
 
+    public FakeHttpMessageHandler MapPost(string path, HttpResponseMessage response) =>
+        Map(HttpMethod.Post, path, _ => response);
+
     public FakeHttpMessageHandler MapPut(string path, HttpStatusCode statusCode = HttpStatusCode.NoContent) =>
         Map(HttpMethod.Put, path, _ => new HttpResponseMessage(statusCode));
 

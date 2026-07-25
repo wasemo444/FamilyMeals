@@ -24,6 +24,7 @@ public static class AuthEndpoints
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request,
         UserManager<ApplicationUser> userManager,
+        EmailConfirmationService emailConfirmationService,
         IOptions<AuthOptions> authOptions,
         IHostEnvironment environment)
     {
@@ -37,12 +38,20 @@ public static class AuthEndpoints
             return Results.BadRequest(new { error = "Email and password are required." });
         }
 
+        if (!string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["ConfirmPassword"] = ["Passwords do not match."]
+            });
+        }
+
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
             UserName = request.Email.Trim(),
             Email = request.Email.Trim(),
-            EmailConfirmed = true,
+            EmailConfirmed = !authOptions.Value.RequireConfirmedEmail,
             DisplayName = string.IsNullOrWhiteSpace(request.DisplayName)
                 ? request.Email.Trim()
                 : request.DisplayName.Trim(),
@@ -55,6 +64,11 @@ public static class AuthEndpoints
             return Results.ValidationProblem(result.Errors.ToDictionary(
                 error => error.Code,
                 error => new[] { error.Description }));
+        }
+
+        if (authOptions.Value.RequireConfirmedEmail)
+        {
+            await emailConfirmationService.SendConfirmationEmailAsync(user);
         }
 
         return Results.Created(
@@ -71,8 +85,11 @@ public static class AuthEndpoints
             return Results.BadRequest(new { error = "Email and password are required." });
         }
 
+        var normalizedEmail = request.Email.Trim();
+        var user = await signInManager.UserManager.FindByEmailAsync(normalizedEmail);
+
         var result = await signInManager.PasswordSignInAsync(
-            request.Email.Trim(),
+            user?.UserName ?? normalizedEmail,
             request.Password,
             request.RememberMe,
             lockoutOnFailure: true);
@@ -84,17 +101,12 @@ public static class AuthEndpoints
                 statusCode: StatusCodes.Status429TooManyRequests);
         }
 
-        if (result.IsNotAllowed)
+        if (result.IsNotAllowed || !result.Succeeded)
         {
             return Results.Unauthorized();
         }
 
-        if (!result.Succeeded)
-        {
-            return Results.Unauthorized();
-        }
-
-        var user = await signInManager.UserManager.FindByEmailAsync(request.Email.Trim());
+        user = await signInManager.UserManager.FindByEmailAsync(normalizedEmail);
         return user is null
             ? Results.Unauthorized()
             : Results.Ok(ToAuthUserInfo(user));

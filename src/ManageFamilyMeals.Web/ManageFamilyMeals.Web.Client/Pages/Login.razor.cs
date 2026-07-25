@@ -1,40 +1,53 @@
-using ManageFamilyMeals.Shared.Auth;
-using ManageFamilyMeals.Shared.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
 public partial class Login
 {
-    [Inject]
-    private IAuthClient AuthClient { get; set; } = default!;
-
-    [Inject]
-    private NavigationManager NavigationManager { get; set; } = default!;
-
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
-    private readonly LoginRequest _form = new();
+    [SupplyParameterFromQuery(Name = "registered")]
+    public bool Registered { get; set; }
+
+    [SupplyParameterFromQuery(Name = "confirmEmail")]
+    public bool ConfirmEmail { get; set; }
+
+    [SupplyParameterFromQuery(Name = "confirmed")]
+    public bool EmailConfirmed { get; set; }
+
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? RegisteredEmail { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
     private string? _error;
+    private string? _success;
 
-    private async Task LoginAsync()
+    protected string EmailValue =>
+        string.IsNullOrWhiteSpace(RegisteredEmail) ? string.Empty : RegisteredEmail;
+
+    protected bool RememberMeChecked => false;
+
+    protected override void OnParametersSet()
     {
-        _error = null;
+        _error = Error switch
+        {
+            "invalid" => L["InvalidCredentials"],
+            "unconfirmed" => L["EmailNotConfirmed"],
+            "locked" => L["LoginFailed"],
+            "required" => L["LoginFailed"],
+            "invalidToken" => L["EmailConfirmationFailed"],
+            _ => null
+        };
 
-        try
-        {
-            await AuthClient.LoginAsync(_form);
-            var destination = AuthNavigation.GetSafeReturnUrl(ReturnUrl);
-            NavigationManager.NavigateTo(destination, forceLoad: true);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            _error = L["InvalidCredentials"];
-        }
-        catch (Exception)
-        {
-            _error = L["LoginFailed"];
-        }
+        _success = EmailConfirmed
+            ? L["EmailConfirmedSuccess"]
+            : Registered && ConfirmEmail
+                ? L["RegistrationConfirmEmail"]
+                : Registered
+                    ? L["RegistrationSuccessful"]
+                    : null;
     }
 }

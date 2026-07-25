@@ -74,7 +74,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-await app.InitializeDatabaseAsync();
+if (!app.Configuration.GetValue<bool>("Database:SkipInitialization"))
+{
+    await app.InitializeDatabaseAsync();
+}
 
 app.UseCors("WebClient");
 app.UseRateLimiter();

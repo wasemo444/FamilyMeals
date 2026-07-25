@@ -16,8 +16,11 @@ public static class IdentityServiceExtensions
         services.Configure<IdentitySeedOptions>(configuration.GetSection(IdentitySeedOptions.SectionName));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.AddScoped<IdentityDataSeeder>();
+        services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        services.AddScoped<EmailConfirmationService>();
 
         var configuredPath = configuration["DataProtection:KeysPath"];
+        EnsureDataProtectionKeysConfigured(configuredPath, environment);
         var dataProtectionPath = ResolveDataProtectionPath(configuredPath, environment);
 
         Directory.CreateDirectory(dataProtectionPath);
@@ -36,6 +39,7 @@ public static class IdentityServiceExtensions
                 options.Lockout.AllowedForNewUsers = true;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
                 options.Lockout.MaxFailedAccessAttempts = 5;
+                options.SignIn.RequireConfirmedEmail = configuration.GetValue<bool>($"{AuthOptions.SectionName}:RequireConfirmedEmail", true);
             })
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<Data.AppDbContext>()
@@ -53,6 +57,7 @@ public static class IdentityServiceExtensions
                 options.Cookie.Name = ApplicationCookieName;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.Path = "/";
                 options.Cookie.SecurePolicy = environment.IsDevelopment() || environment.IsEnvironment("Testing")
                     ? CookieSecurePolicy.SameAsRequest
                     : CookieSecurePolicy.Always;
@@ -60,6 +65,15 @@ public static class IdentityServiceExtensions
                 options.ExpireTimeSpan = TimeSpan.FromDays(14);
                 options.Events.OnRedirectToLogin = context =>
                 {
+                    if (HttpMethods.IsGet(context.Request.Method)
+                        && !context.Request.Path.StartsWithSegments("/api"))
+                    {
+                        var returnUrl = Uri.EscapeDataString(
+                            context.Request.Path + context.Request.QueryString);
+                        context.Response.Redirect($"/login?returnUrl={returnUrl}");
+                        return Task.CompletedTask;
+                    }
+
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return Task.CompletedTask;
                 };
@@ -75,6 +89,28 @@ public static class IdentityServiceExtensions
         return services;
     }
 
+    public static void EnsureDataProtectionKeysConfigured(string? configuredPath, IHostEnvironment environment)
+    {
+        if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            throw new InvalidOperationException(
+                "DataProtection:KeysPath must be configured in non-development environments so API and Web hosts share the same key ring.");
+        }
+
+        var expandedPath = Environment.ExpandEnvironmentVariables(configuredPath);
+        if (string.IsNullOrWhiteSpace(expandedPath) || expandedPath.Contains('%'))
+        {
+            throw new InvalidOperationException(
+                "DataProtection:KeysPath is set but its environment variables are unresolved. " +
+                "Set MFM_DATA_PROTECTION_KEYS_PATH to a shared directory accessible by both API and Web hosts.");
+        }
+    }
+
     public static string ResolveDataProtectionPath(string? configuredPath, IHostEnvironment environment)
     {
         if (string.IsNullOrWhiteSpace(configuredPath))
@@ -85,8 +121,11 @@ public static class IdentityServiceExtensions
                 "DataProtection-Keys");
         }
 
-        return Path.IsPathRooted(configuredPath)
-            ? configuredPath
-            : Path.Combine(environment.ContentRootPath, configuredPath);
+        var expandedPath = Environment.ExpandEnvironmentVariables(configuredPath)
+            .Replace('/', Path.DirectorySeparatorChar);
+
+        return Path.IsPathRooted(expandedPath)
+            ? expandedPath
+            : Path.Combine(environment.ContentRootPath, expandedPath);
     }
 }

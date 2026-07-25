@@ -57,26 +57,66 @@ public class AuthEndpointsTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Register_WithValidCredentials_CreatesUser()
+    public async Task Register_WithValidCredentials_CreatesUserWithoutSigningIn()
     {
         // Arrange
         var email = $"user-{Guid.NewGuid():N}@example.com";
-        using var client = _factory.CreateClient();
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true
+        });
 
         // Act
         var response = await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest
         {
             Email = email,
             Password = "RegisterPass1!",
+            ConfirmPassword = "RegisterPass1!",
             DisplayName = "New User"
         });
         var user = await response.Content.ReadFromJsonAsync<AuthUserInfo>();
+        var meResponse = await client.GetAsync("/api/auth/me");
+        var loginBeforeConfirm = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = email,
+            Password = "RegisterPass1!"
+        });
 
         // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(user);
         Assert.Equal(email, user!.Email);
-        Assert.Equal("New User", user.DisplayName);
+        Assert.Equal(HttpStatusCode.Unauthorized, meResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, loginBeforeConfirm.StatusCode);
+
+        await AuthTestHelpers.ConfirmEmailAsync(_factory.Services, email);
+
+        var loginAfterConfirm = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = email,
+            Password = "RegisterPass1!"
+        });
+
+        loginAfterConfirm.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task Register_WithMismatchedPasswords_ReturnsValidationProblem()
+    {
+        // Arrange
+        using var client = _factory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest
+        {
+            Email = $"user-{Guid.NewGuid():N}@example.com",
+            Password = "RegisterPass1!",
+            ConfirmPassword = "DifferentPass1!",
+            DisplayName = "New User"
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

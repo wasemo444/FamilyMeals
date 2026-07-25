@@ -8,7 +8,8 @@ namespace ManageFamilyMeals.Web.Auth;
 
 public sealed class PersistingRevalidatingAuthenticationStateProvider(
     ILoggerFactory loggerFactory,
-    IServiceScopeFactory scopeFactory)
+    IServiceScopeFactory scopeFactory,
+    IHttpContextAccessor httpContextAccessor)
     : RevalidatingServerAuthenticationStateProvider(loggerFactory), IHostEnvironmentAuthenticationStateProvider
 {
     private Task<AuthenticationState>? _authenticationStateTask;
@@ -27,7 +28,21 @@ public sealed class PersistingRevalidatingAuthenticationStateProvider(
             return authenticationState;
         }
 
-        return await base.GetAuthenticationStateAsync();
+        var httpContextUser = httpContextAccessor.HttpContext?.User;
+        if (httpContextUser?.Identity?.IsAuthenticated == true)
+        {
+            return new AuthenticationState(httpContextUser);
+        }
+
+        try
+        {
+            return await base.GetAuthenticationStateAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            var user = httpContextUser ?? new ClaimsPrincipal(new ClaimsIdentity());
+            return new AuthenticationState(user);
+        }
     }
 
     protected override async Task<bool> ValidateAuthenticationStateAsync(

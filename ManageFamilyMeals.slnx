@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/tests/">
     <Project Path="tests/ManageFamilyMeals.Tests/ManageFamilyMeals.Tests.csproj" />
+    <Project Path="tests/ManageFamilyMeals.E2E.Tests/ManageFamilyMeals.E2E.Tests.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ManageFamilyMeals.Api/ManageFamilyMeals.Api.csproj" />

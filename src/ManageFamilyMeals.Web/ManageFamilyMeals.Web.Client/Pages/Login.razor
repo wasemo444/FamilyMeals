@@ -1,5 +1,4 @@
 @page "/login"
-@rendermode InteractiveAuto
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @inherits LocalizedComponentBase
 
@@ -11,27 +10,35 @@
     </header>
 
     <section class="panel">
-        <EditForm Model="_form" OnValidSubmit="LoginAsync">
+        <form method="post" action="/account/login">
+            @if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+            }
             <div class="form-row">
-                <InputText class="input" @bind-Value="_form.Email" placeholder="@L["Email"]" />
+                <input class="input" data-testid="login-email" name="email" value="@EmailValue" placeholder="@L["Email"]" autocomplete="username" />
             </div>
             <div class="form-row">
-                <InputText class="input" type="password" @bind-Value="_form.Password" placeholder="@L["Password"]" />
+                <input class="input" data-testid="login-password" name="password" type="password" placeholder="@L["Password"]" autocomplete="current-password" />
             </div>
             <div class="form-row">
                 <label>
-                    <InputCheckbox @bind-Value="_form.RememberMe" />
+                    <input type="checkbox" name="rememberMe" value="true" checked="@RememberMeChecked" />
                     @L["RememberMe"]
                 </label>
             </div>
+            @if (!string.IsNullOrWhiteSpace(_success))
+            {
+                <p class="success" data-testid="login-success">@_success</p>
+            }
             @if (!string.IsNullOrWhiteSpace(_error))
             {
-                <p class="error">@_error</p>
+                <p class="error" data-testid="login-error">@_error</p>
             }
             <div class="form-row">
-                <button class="btn primary" type="submit">@L["Login"]</button>
+                <button class="btn primary" type="submit" data-testid="login-submit">@L["Login"]</button>
                 <a class="btn" href="/register">@L["Register"]</a>
             </div>
-        </EditForm>
+        </form>
     </section>
 </section>
