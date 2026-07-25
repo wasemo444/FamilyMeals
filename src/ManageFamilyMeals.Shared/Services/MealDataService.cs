@@ -3,7 +3,10 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Shared.Services;
 
-public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext currentUser) : IMealDataService
+public sealed class MealDataService(
+    IAppDataStore dataStore,
+    ICurrentUserContext currentUser,
+    IOwnershipAuthorization ownershipAuthorization) : IMealDataService
 {
     private AppData _data = new();
     private bool _initialized;
@@ -45,11 +48,11 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         DataChanged?.Invoke();
     }
 
-    public IReadOnlyList<MealCategory> GetFavoriteCategories() =>
-        MealDataQueries.GetFavoriteCategories(_data);
+    public IReadOnlyList<MealCategory> GetFavoriteCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetFavoriteCategories(_data, filter);
 
-    public IReadOnlyList<MealCategory> GetActiveCategories() =>
-        MealDataQueries.GetActiveCategories(_data);
+    public IReadOnlyList<MealCategory> GetActiveCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetActiveCategories(_data, filter);
 
     public IReadOnlyList<MealCategory> GetArchivedCategories() =>
         MealDataQueries.GetArchivedCategories(_data);
@@ -62,35 +65,50 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
 
     public AppSettings GetSettings() => _data.Settings;
 
-    public bool IsCategoryNameTaken(string name) =>
-        MealDataQueries.IsCategoryNameTaken(_data, name);
+    public bool IsCategoryNameTaken(string name, ContentOwner owner) =>
+        MealDataQueries.IsCategoryNameTaken(_data, name, owner);
 
-    public async Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<MealCategory> AddCategoryAsync(
+        string name,
+        ContentOwner owner,
+        CancellationToken cancellationToken = default)
     {
         var trimmedName = name.Trim();
 
-        if (IsCategoryNameTaken(trimmedName))
+        if (IsCategoryNameTaken(trimmedName, owner))
         {
             throw new InvalidOperationException("Category name already exists.");
         }
+
+        await ownershipAuthorization.ValidateCreateOwnerAsync(owner, cancellationToken);
 
         var userId = currentUser.GetRequiredUserId();
         var category = new MealCategory
         {
             Name = trimmedName,
-            OwnerType = OwnerType.User,
-            OwnerUserId = userId
+            OwnerType = owner.OwnerType,
+            OwnerUserId = owner.OwnerType == OwnerType.User ? userId : null,
+            OwnerGroupId = owner.OwnerGroupId
         };
 
         _data.Categories.Add(category);
         await PersistAsync(cancellationToken);
-        return category;
+        return GetCategory(category.Id) ?? category;
     }
 
     public async Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && !item.IsDeleted);
         if (category is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
@@ -117,6 +135,15 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             return false;
         }
 
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+
         category.IsDeleted = false;
         category.DeletedAtUtc = null;
 
@@ -138,6 +165,7 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             return;
         }
 
+        await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
         category.IsFavorite = !category.IsFavorite;
         await PersistAsync(cancellationToken);
     }
@@ -165,6 +193,8 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         var category = GetCategory(categoryId)
             ?? throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
 
+        await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
+
         var userId = currentUser.GetRequiredUserId();
         var link = new MealLink
         {
@@ -173,8 +203,9 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             TitleAr = titleAr.Trim(),
             Url = url.Trim(),
             Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
-            OwnerType = OwnerType.User,
-            OwnerUserId = userId
+            OwnerType = category.OwnerType,
+            OwnerUserId = category.OwnerType == OwnerType.User ? userId : null,
+            OwnerGroupId = category.OwnerGroupId
         };
 
         _data.Links.Add(link);
@@ -186,6 +217,15 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
         if (link is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
@@ -204,6 +244,15 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             return false;
         }
 
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+
         link.IsDeleted = false;
         link.DeletedAtUtc = null;
         await PersistAsync(cancellationToken);
@@ -218,6 +267,7 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             return;
         }
 
+        await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
         link.IsFavorite = !link.IsFavorite;
         await PersistAsync(cancellationToken);
     }
@@ -229,6 +279,8 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         {
             return;
         }
+
+        await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
 
         link.PreviewTitle = preview.Title;
         link.PreviewDescription = preview.Description;

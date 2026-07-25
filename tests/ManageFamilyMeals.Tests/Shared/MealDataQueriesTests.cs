@@ -50,6 +50,53 @@ public class MealDataQueriesTests
     }
 
     [Fact]
+    public void IsCategoryNameTaken_IsScopedPerOwner()
+    {
+        var groupId = Guid.NewGuid();
+        var data = new AppData
+        {
+            Categories =
+            [
+                new MealCategory { Name = "Breakfast", OwnerType = OwnerType.User, IsDeleted = false },
+                new MealCategory
+                {
+                    Name = "Breakfast",
+                    OwnerType = OwnerType.Group,
+                    OwnerGroupId = groupId,
+                    IsDeleted = false
+                }
+            ]
+        };
+
+        Assert.True(MealDataQueries.IsCategoryNameTaken(data, "Breakfast", ContentOwner.Personal));
+        Assert.True(MealDataQueries.IsCategoryNameTaken(data, "Breakfast", ContentOwner.ForGroup(groupId)));
+        Assert.False(MealDataQueries.IsCategoryNameTaken(data, "Breakfast", ContentOwner.ForGroup(Guid.NewGuid())));
+    }
+
+    [Fact]
+    public void GetActiveCategories_FiltersByHomeContentFilter()
+    {
+        var data = new AppData
+        {
+            Categories =
+            [
+                new MealCategory { Name = "Personal", OwnerType = OwnerType.User, IsDeleted = false },
+                new MealCategory
+                {
+                    Name = "Shared",
+                    OwnerType = OwnerType.Group,
+                    OwnerGroupId = Guid.NewGuid(),
+                    IsDeleted = false
+                }
+            ]
+        };
+
+        Assert.Equal(2, MealDataQueries.GetActiveCategories(data, HomeContentFilter.All).Count);
+        Assert.Single(MealDataQueries.GetActiveCategories(data, HomeContentFilter.Mine));
+        Assert.Single(MealDataQueries.GetActiveCategories(data, HomeContentFilter.Shared));
+    }
+
+    [Fact]
     public void IsCategoryNameTaken_IsCaseInsensitiveAndIgnoresArchived()
     {
         // Arrange
@@ -63,9 +110,9 @@ public class MealDataQueriesTests
         };
 
         // Act
-        var activeDuplicate = MealDataQueries.IsCategoryNameTaken(data, "breakfast");
-        var archivedName = MealDataQueries.IsCategoryNameTaken(data, "lunch");
-        var available = MealDataQueries.IsCategoryNameTaken(data, "Dinner");
+        var activeDuplicate = MealDataQueries.IsCategoryNameTaken(data, "breakfast", ContentOwner.Personal);
+        var archivedName = MealDataQueries.IsCategoryNameTaken(data, "lunch", ContentOwner.Personal);
+        var available = MealDataQueries.IsCategoryNameTaken(data, "Dinner", ContentOwner.Personal);
 
         // Assert
         Assert.True(activeDuplicate);

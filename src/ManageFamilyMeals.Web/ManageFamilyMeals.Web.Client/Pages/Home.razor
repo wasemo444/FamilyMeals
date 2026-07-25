@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @attribute [Authorize]
 @inherits LocalizedComponentBase
+@using ManageFamilyMeals.Shared.Models
 
 <PageTitle>@L["AppTitle"]</PageTitle>
 
@@ -11,12 +12,61 @@
         <h1>@L["AppTitle"]</h1>
     </header>
 
+    @if (_groups.Count == 0)
+    {
+        <section class="panel">
+            <h2>@L["CreateGroup"]</h2>
+            <p class="muted">@L["NoGroupsYet"]</p>
+            <EditForm Model="_groupForm" OnValidSubmit="CreateGroupAsync">
+                <div class="form-row">
+                    <InputText class="input" @bind-Value="_groupForm.Name" placeholder="@L["GroupName"]" />
+                    <button class="btn primary" type="submit">@L["Create"]</button>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_groupError))
+                {
+                    <p class="error">@_groupError</p>
+                }
+            </EditForm>
+        </section>
+    }
+
+    @if (_groups.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["ViewFilter"]</h2>
+            <div class="filter-toggle" role="group" aria-label="@L["ViewFilter"]">
+                <button type="button" class="@FilterClass(HomeContentFilter.All)" @onclick="() => SetFilter(HomeContentFilter.All)">
+                    @L["FilterAll"]
+                </button>
+                <button type="button" class="@FilterClass(HomeContentFilter.Mine)" @onclick="() => SetFilter(HomeContentFilter.Mine)">
+                    @L["FilterMine"]
+                </button>
+                <button type="button" class="@FilterClass(HomeContentFilter.Shared)" @onclick="() => SetFilter(HomeContentFilter.Shared)">
+                    @L["FilterShared"]
+                </button>
+            </div>
+        </section>
+    }
+
     <section class="panel">
         <h2>@L["AddCategory"]</h2>
         <EditForm Model="_form" OnValidSubmit="CreateCategoryAsync">
-            <div class="form-row">
-                <InputText class="input" @bind-Value="_form.Name" placeholder="@L["CategoryName"]" />
-                <button class="btn primary" type="submit">@L["Create"]</button>
+            <div class="form-stack">
+                @if (_groups.Count > 0)
+                {
+                    <label class="field-label" for="category-owner">@L["SaveTo"]</label>
+                    <InputSelect id="category-owner" class="input" @bind-Value="_selectedOwnerKey">
+                        <option value="personal">@L["Personal"]</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group.Id">@L.Format("GroupLabel", group.Name)</option>
+                        }
+                    </InputSelect>
+                }
+                <div class="form-row">
+                    <InputText class="input" @bind-Value="_form.Name" placeholder="@L["CategoryName"]" />
+                    <button class="btn primary" type="submit">@L["Create"]</button>
+                </div>
             </div>
             @if (!string.IsNullOrWhiteSpace(_error))
             {

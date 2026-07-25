@@ -18,6 +18,10 @@ public partial class CategoryCard
         ? L["Unfavorite"]
         : L["Favorite"];
 
+    private string SharedLabel => string.IsNullOrWhiteSpace(Category.OwnerGroupName)
+        ? L["Shared"]
+        : L.Format("SharedWithGroup", Category.OwnerGroupName);
+
     private async Task ToggleFavoriteAsync()
     {
         await DataService.ToggleCategoryFavoriteAsync(Category.Id);

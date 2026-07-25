@@ -10,6 +10,7 @@ public static class AccountEndpoints
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/account/login", LoginAsync).DisableAntiforgery();
+        endpoints.MapPost("/account/logout", LogoutAsync).DisableAntiforgery();
         endpoints.MapGet("/account/confirm-email", ConfirmEmailAsync);
 
         return endpoints;
@@ -76,6 +77,41 @@ public static class AccountEndpoints
 
         var destination = AuthNavigation.GetSafeReturnUrl(returnUrl);
         return Results.LocalRedirect(destination);
+    }
+
+    private static async Task<IResult> LogoutAsync(HttpContext httpContext, SignInManager<ApplicationUser> signInManager)
+    {
+        if (!IsSameOriginFormPost(httpContext.Request))
+        {
+            return Results.BadRequest();
+        }
+
+        await signInManager.SignOutAsync();
+        return Results.LocalRedirect("/login");
+    }
+
+    private static bool IsSameOriginFormPost(HttpRequest request)
+    {
+        if (!HttpMethods.IsPost(request.Method))
+        {
+            return false;
+        }
+
+        var origin = request.Headers.Origin.ToString();
+        if (!string.IsNullOrWhiteSpace(origin)
+            && Uri.TryCreate(origin, UriKind.Absolute, out var originUri))
+        {
+            return string.Equals(originUri.Host, request.Host.Host, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var referer = request.Headers.Referer.ToString();
+        if (!string.IsNullOrWhiteSpace(referer)
+            && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri))
+        {
+            return string.Equals(refererUri.Host, request.Host.Host, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
     }
 
     private static IResult RedirectToLogin(string? returnUrl, string? email, string error)

@@ -1,6 +1,7 @@
 using ManageFamilyMeals.Api.Data;
 using ManageFamilyMeals.Api.Data.Entities;
 using ManageFamilyMeals.Api.Identity;
+using ManageFamilyMeals.Api.Services;
 using ManageFamilyMeals.Shared.Constants;
 using ManageFamilyMeals.Shared.Models;
 using ManageFamilyMeals.Shared.Services;
@@ -16,7 +17,7 @@ public class OwnershipIntegrityTests
     {
         await using var context = SqliteDbContextFactory.CreateWithForeignKeys(
             nameof(SaveAsync_WithStaleRowVersion_ThrowsConcurrencyConflictException));
-        var store = new EfAppDataStore(context, new TestCurrentUserContext());
+        var store = TestServiceFactory.CreateEfAppDataStore(context);
         var categoryId = Guid.NewGuid();
         var category = new MealCategory { Id = categoryId, Name = "Breakfast" };
         TestOwnershipDefaults.ApplyUserOwnership(category);
@@ -92,7 +93,7 @@ public class OwnershipIntegrityTests
             });
         await context.SaveChangesAsync();
 
-        var store = new EfAppDataStore(context, new TestCurrentUserContext());
+        var store = TestServiceFactory.CreateEfAppDataStore(context);
         var data = await store.LoadAsync();
 
         Assert.NotNull(data);
@@ -124,7 +125,7 @@ public class OwnershipIntegrityTests
     {
         await using var context = SqliteDbContextFactory.CreateWithForeignKeys(
             nameof(SaveAsync_WithEmptyRowVersionOnUpdate_ThrowsConcurrencyConflictException));
-        var store = new EfAppDataStore(context, new TestCurrentUserContext());
+        var store = TestServiceFactory.CreateEfAppDataStore(context);
         var categoryId = Guid.NewGuid();
         var category = new MealCategory { Id = categoryId, Name = "Breakfast" };
         TestOwnershipDefaults.ApplyUserOwnership(category);
@@ -165,7 +166,7 @@ public class OwnershipIntegrityTests
         });
         await context.SaveChangesAsync();
 
-        var store = new EfAppDataStore(context, new TestCurrentUserContext());
+        var store = TestServiceFactory.CreateEfAppDataStore(context);
         var category = new MealCategory
         {
             Id = Guid.NewGuid(),
@@ -200,6 +201,79 @@ public class OwnershipIntegrityTests
         context.Users.Remove(user);
 
         await Assert.ThrowsAnyAsync<DbUpdateException>(() => context.SaveChangesAsync());
+    }
+
+    [Fact]
+    public async Task SaveAsync_WhenLinkMovesCategory_RealignsOwnership()
+    {
+        await using var context = SqliteDbContextFactory.CreateWithForeignKeys(
+            nameof(SaveAsync_WhenLinkMovesCategory_RealignsOwnership));
+        var userContext = new TestCurrentUserContext();
+        var store = new EfAppDataStore(
+            context,
+            userContext,
+            new OwnershipAuthorizationService(context, userContext));
+        var groupId = Guid.NewGuid();
+        var personalCategoryId = Guid.NewGuid();
+        var groupCategoryId = Guid.NewGuid();
+        var linkId = Guid.NewGuid();
+
+        context.Groups.Add(new GroupEntity
+        {
+            Id = groupId,
+            Name = "Family",
+            InviteCode = "TESTCODE",
+            CreatedByUserId = WellKnownUsers.DefaultUserId,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        context.GroupMemberships.Add(new GroupMembershipEntity
+        {
+            Id = Guid.NewGuid(),
+            GroupId = groupId,
+            UserId = WellKnownUsers.DefaultUserId,
+            Role = GroupRole.Admin,
+            JoinedAtUtc = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var personalCategory = new MealCategory { Id = personalCategoryId, Name = "Personal" };
+        TestOwnershipDefaults.ApplyUserOwnership(personalCategory);
+        var groupCategory = new MealCategory
+        {
+            Id = groupCategoryId,
+            Name = "Shared",
+            OwnerType = OwnerType.Group,
+            OwnerGroupId = groupId
+        };
+        var link = new MealLink
+        {
+            Id = linkId,
+            CategoryId = personalCategoryId,
+            TitleEn = "Recipe",
+            Url = "https://example.com/recipe"
+        };
+        TestOwnershipDefaults.ApplyUserOwnership(link);
+
+        await store.SaveAsync(new AppData
+        {
+            Categories = [personalCategory, groupCategory],
+            Links = [link]
+        });
+
+        var loaded = await store.LoadAsync();
+        var movedLink = loaded!.Links.Single(item => item.Id == linkId);
+        movedLink.CategoryId = groupCategoryId;
+
+        await store.SaveAsync(new AppData
+        {
+            Categories = loaded.Categories,
+            Links = [movedLink]
+        });
+
+        var entity = await context.Links.SingleAsync(item => item.Id == linkId);
+        Assert.Equal(OwnerType.Group, entity.OwnerType);
+        Assert.Equal(groupId, entity.OwnerGroupId);
+        Assert.Null(entity.OwnerUserId);
     }
 
     [Fact]

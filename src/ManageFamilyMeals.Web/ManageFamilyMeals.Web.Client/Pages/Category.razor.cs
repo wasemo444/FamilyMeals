@@ -26,6 +26,10 @@ public partial class Category : IDisposable
     private IReadOnlyList<MealLink> _favoriteLinks = [];
     private IReadOnlyList<MealLink> _allLinks = [];
 
+    private string SharedLabel => string.IsNullOrWhiteSpace(_category?.OwnerGroupName)
+        ? L["Shared"]
+        : L.Format("SharedWithGroup", _category!.OwnerGroupName!);
+
     protected override void OnInitialized()
     {
         base.OnInitialized();

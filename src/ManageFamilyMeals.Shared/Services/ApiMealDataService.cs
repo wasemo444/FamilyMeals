@@ -49,11 +49,11 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         NotifyChanged();
     }
 
-    public IReadOnlyList<MealCategory> GetFavoriteCategories() =>
-        MealDataQueries.GetFavoriteCategories(_cache);
+    public IReadOnlyList<MealCategory> GetFavoriteCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetFavoriteCategories(_cache, filter);
 
-    public IReadOnlyList<MealCategory> GetActiveCategories() =>
-        MealDataQueries.GetActiveCategories(_cache);
+    public IReadOnlyList<MealCategory> GetActiveCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetActiveCategories(_cache, filter);
 
     public IReadOnlyList<MealCategory> GetArchivedCategories() =>
         MealDataQueries.GetArchivedCategories(_cache);
@@ -66,12 +66,22 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
 
     public AppSettings GetSettings() => _cache.Settings;
 
-    public bool IsCategoryNameTaken(string name) =>
-        MealDataQueries.IsCategoryNameTaken(_cache, name);
+    public bool IsCategoryNameTaken(string name, ContentOwner owner) =>
+        MealDataQueries.IsCategoryNameTaken(_cache, name, owner);
 
-    public async Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<MealCategory> AddCategoryAsync(
+        string name,
+        ContentOwner owner,
+        CancellationToken cancellationToken = default)
     {
-        var response = await Http.PostAsJsonAsync("/api/categories", new { name }, cancellationToken);
+        var payload = new
+        {
+            name,
+            ownerType = owner.OwnerType == OwnerType.Group ? OwnerType.Group : (OwnerType?)null,
+            ownerGroupId = owner.OwnerGroupId
+        };
+
+        var response = await Http.PostAsJsonAsync("/api/categories", payload, cancellationToken);
         await EnsureAuthorizedAsync(response);
         EnsureSuccess(response);
         var category = await response.Content.ReadFromJsonAsync<MealCategory>(cancellationToken)
@@ -84,7 +94,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/archive", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -98,7 +108,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task<bool> RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/restore", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -142,7 +152,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             new { titleEn, titleAr, url, note },
             cancellationToken);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
         }
@@ -159,7 +169,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task<bool> ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/archive", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -173,7 +183,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task<bool> RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/restore", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -223,6 +233,9 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
 
         await Task.CompletedTask;
     }
+
+    private static bool IsMissingResource(HttpStatusCode statusCode) =>
+        statusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden;
 
     private static void EnsureSuccess(HttpResponseMessage response)
     {

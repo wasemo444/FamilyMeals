@@ -20,5 +20,9 @@ public sealed class MealCategory
 
     public Guid? OwnerGroupId { get; set; }
 
+    public string? OwnerGroupName { get; set; }
+
     public byte[] RowVersion { get; set; } = [0, 0, 0, 0, 0, 0, 0, 1];
+
+    public bool IsShared => OwnerType == OwnerType.Group;
 }

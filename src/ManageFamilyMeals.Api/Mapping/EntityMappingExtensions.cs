@@ -5,7 +5,7 @@ namespace ManageFamilyMeals.Api.Mapping;
 
 public static class EntityMappingExtensions
 {
-    public static MealCategory ToModel(this MealCategoryEntity entity) =>
+    public static MealCategory ToModel(this MealCategoryEntity entity, IReadOnlyDictionary<Guid, string>? groupNames = null) =>
         new()
         {
             Id = entity.Id,
@@ -17,6 +17,10 @@ public static class EntityMappingExtensions
             OwnerType = entity.OwnerType,
             OwnerUserId = entity.OwnerUserId,
             OwnerGroupId = entity.OwnerGroupId,
+            OwnerGroupName = entity.OwnerGroupId is not null && groupNames is not null
+                && groupNames.TryGetValue(entity.OwnerGroupId.Value, out var groupName)
+                    ? groupName
+                    : null,
             RowVersion = entity.RowVersion
         };
 

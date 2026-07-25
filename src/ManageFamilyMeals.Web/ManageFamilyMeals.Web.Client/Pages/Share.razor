@@ -24,9 +24,22 @@
                 <h2>@L["QuickCreateCategory"]</h2>
                 <p class="muted">@L["ShareCreateCategoryHint"]</p>
                 <EditForm Model="_categoryForm" OnValidSubmit="CreateCategoryAsync">
-                    <div class="form-row">
-                        <InputText class="input" @bind-Value="_categoryForm.Name" placeholder="@L["CategoryName"]" />
-                        <button class="btn primary" type="submit">@L["Create"]</button>
+                    <div class="form-stack">
+                        @if (_groups.Count > 0)
+                        {
+                            <label class="field-label" for="share-category-owner">@L["SaveTo"]</label>
+                            <InputSelect id="share-category-owner" class="input" @bind-Value="_selectedOwnerKey">
+                                <option value="personal">@L["Personal"]</option>
+                                @foreach (var group in _groups)
+                                {
+                                    <option value="@group.Id">@L.Format("GroupLabel", group.Name)</option>
+                                }
+                            </InputSelect>
+                        }
+                        <div class="form-row">
+                            <InputText class="input" @bind-Value="_categoryForm.Name" placeholder="@L["CategoryName"]" />
+                            <button class="btn primary" type="submit">@L["Create"]</button>
+                        </div>
                     </div>
                     @if (!string.IsNullOrWhiteSpace(_categoryError))
                     {
@@ -45,7 +58,9 @@
                         <InputSelect class="input" @bind-Value="_form.CategoryId">
                             @foreach (var category in _categories)
                             {
-                                <option value="@category.Id">@category.Name</option>
+                                <option value="@category.Id">
+                                    @category.Name@(category.IsShared && !string.IsNullOrWhiteSpace(category.OwnerGroupName) ? $" ({category.OwnerGroupName})" : category.IsShared ? $" ({L["Shared"]})" : "")
+                                </option>
                             }
                         </InputSelect>
                     }

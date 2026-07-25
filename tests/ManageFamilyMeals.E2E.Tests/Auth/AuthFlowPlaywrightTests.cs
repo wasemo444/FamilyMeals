@@ -85,7 +85,7 @@ public class AuthFlowPlaywrightTests(FullStackApplicationFixture fixture)
             });
         Assert.True(loginResponse.Ok);
 
-        // Act
+        // Act — API logout clears the shared cookie jar for this browser context
         var logoutResponse = await context.APIRequest.PostAsync($"{fixture.WebBaseUrl}/api/auth/logout");
         var meResponse = await context.APIRequest.GetAsync($"{fixture.WebBaseUrl}/api/auth/me");
         await page.GotoAsync($"{fixture.WebBaseUrl}/login", GotoOptions);

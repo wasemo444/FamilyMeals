@@ -132,17 +132,6 @@ public partial class InteractiveShell : IDisposable
         return Task.CompletedTask;
     }
 
-    private Task LogoutAsync()
-    {
-        return LogoutInternalAsync();
-    }
-
-    private async Task LogoutInternalAsync()
-    {
-        await AuthClient.LogoutAsync();
-        NavigationManager.NavigateTo("/login", forceLoad: true);
-    }
-
     protected override void OnCultureChanged()
     {
         _cultureVersion++;

@@ -35,6 +35,7 @@ public static class ClientServiceCollectionExtensions
         configureMealDataApi?.Invoke(mealDataApiBuilder);
 
         services.AddScoped<IMealDataService, ApiMealDataService>();
+        services.AddScoped<IGroupService, GroupClient>();
         services.AddScoped<IAuthClient, AuthClient>();
         services.AddScoped<CultureService>();
         services.AddScoped<ILinkPreviewClient, LinkPreviewClient>();

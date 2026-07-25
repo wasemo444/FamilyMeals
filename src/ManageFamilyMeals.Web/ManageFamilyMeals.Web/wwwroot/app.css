@@ -55,6 +55,11 @@ html, body {
     text-decoration: none;
 }
 
+.logout-form {
+    display: inline;
+    margin: 0;
+}
+
 .app-main {
     max-width: 1100px;
     margin: 0 auto;
@@ -304,6 +309,53 @@ html[dir="rtl"] .app-header {
 
 html[dir="rtl"] .app-nav {
     justify-content: flex-end;
+}
+
+.card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.shared-badge {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(47, 125, 75, 0.12);
+    color: var(--primary-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.filter-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    font: inherit;
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.field-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
 }
 
 #blazor-error-ui {
