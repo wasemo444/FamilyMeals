@@ -1,5 +1,12 @@
 namespace ManageFamilyMeals.Web.ReverseProxy;
 
+/// <summary>
+/// Copies the incoming browser cookie header onto outbound <see cref="HttpClient"/> requests.
+/// </summary>
+/// <remarks>
+/// Registered on the <c>MealDataApi</c> HTTP client so server-side Blazor code can call the
+/// same-origin <c>/api</c> proxy with the user's authentication cookies.
+/// </remarks>
 public sealed class CookieForwardingHandler(IHttpContextAccessor httpContextAccessor) : DelegatingHandler
 {
     protected override Task<HttpResponseMessage> SendAsync(

@@ -34,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddManageFamilyMealsIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
+builder.Services.AddScoped<IOwnershipAuthorization, OwnershipAuthorizationService>();
 builder.Services.AddScoped<ArchiveMaintenanceService>();
 builder.Services.AddScoped<OwnershipBackfillService>();
 builder.Services.AddExceptionHandler<ConcurrencyConflictExceptionHandler>();
@@ -45,7 +46,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter("auth", limiterOptions =>
     {
         limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.PermitLimit = 20;
+        limiterOptions.PermitLimit = useSqliteForTesting ? 1000 : 20;
         limiterOptions.QueueLimit = 0;
     });
 });
@@ -102,4 +103,5 @@ app.MapLinkPreviewEndpoints();
 
 app.Run();
 
+/// <summary>Marker type for WebApplicationFactory and integration test host discovery.</summary>
 public partial class Program;

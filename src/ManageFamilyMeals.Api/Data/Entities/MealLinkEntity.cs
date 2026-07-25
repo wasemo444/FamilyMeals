@@ -2,6 +2,12 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Api.Data.Entities;
 
+/// <summary>
+/// Persistence model for a meal link within a category, including preview metadata and ownership.
+/// </summary>
+/// <remarks>
+/// <see cref="RowVersion"/> is an EF concurrency token. Ownership mirrors the parent category or is set explicitly on create/move.
+/// </remarks>
 public sealed class MealLinkEntity
 {
     public Guid Id { get; set; }

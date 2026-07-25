@@ -2,6 +2,13 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Api.Data.Entities;
 
+/// <summary>
+/// Persistence model for a meal category with soft-delete, ownership, and optimistic concurrency.
+/// </summary>
+/// <remarks>
+/// <see cref="RowVersion"/> is an EF concurrency token; clients must send the current value on updates.
+/// Ownership is either user-scoped (<see cref="OwnerUserId"/>) or group-scoped (<see cref="OwnerGroupId"/>), enforced by a database check constraint.
+/// </remarks>
 public sealed class MealCategoryEntity
 {
     public Guid Id { get; set; }

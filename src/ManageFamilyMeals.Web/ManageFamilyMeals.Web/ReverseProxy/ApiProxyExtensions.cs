@@ -3,6 +3,13 @@ using Yarp.ReverseProxy.Forwarder;
 
 namespace ManageFamilyMeals.Web.ReverseProxy;
 
+/// <summary>
+/// Registers and maps a YARP forwarder that proxies <c>/api/**</c> requests to the meal-data API.
+/// </summary>
+/// <remarks>
+/// The Web host exposes a same-origin <c>/api</c> path so Blazor WebAssembly clients avoid CORS.
+/// Antiforgery is disabled on the proxy route because API calls use cookie authentication.
+/// </remarks>
 public static class ApiProxyExtensions
 {
     private static readonly ForwarderRequestConfig ForwarderConfig = new()
@@ -10,6 +17,11 @@ public static class ApiProxyExtensions
         ActivityTimeout = TimeSpan.FromSeconds(100)
     };
 
+    /// <summary>
+    /// Adds the HTTP forwarder and a dedicated <see cref="HttpMessageInvoker"/> for API proxying.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
     public static IServiceCollection AddMealDataApiProxy(this IServiceCollection services)
     {
         services.AddHttpForwarder();
@@ -24,6 +36,15 @@ public static class ApiProxyExtensions
         return services;
     }
 
+    /// <summary>
+    /// Maps the catch-all forwarder at <c>/api/{**catch-all}</c>.
+    /// </summary>
+    /// <param name="app">The web application whose pipeline receives the proxy route.</param>
+    /// <returns>The endpoint convention builder for the proxy route.</returns>
+    /// <remarks>
+    /// Destination base address is read from configuration key <c>ReverseProxy:ApiBaseAddress</c>
+    /// (default <c>http://localhost:5280</c>).
+    /// </remarks>
     public static IEndpointConventionBuilder MapMealDataApiProxy(this WebApplication app)
     {
         var apiBaseAddress = app.Configuration["ReverseProxy:ApiBaseAddress"]

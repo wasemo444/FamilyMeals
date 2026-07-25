@@ -5,10 +5,20 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Target page for the Web Share Target API and manual link saving from shared URLs.
+/// </summary>
+/// <remarks>
+/// Reads optional <c>url</c>, <c>title</c>, and <c>text</c> query parameters to pre-fill the form.
+/// Initializes meal data on first interactive render because prerendering has no authenticated API context.
+/// </remarks>
 public partial class Share
 {
     [Inject]
     private IMealDataService DataService { get; set; } = default!;
+
+    [Inject]
+    private IGroupService GroupService { get; set; } = default!;
 
     [Inject]
     private ILinkPreviewClient LinkPreviewClient { get; set; } = default!;
@@ -28,6 +38,8 @@ public partial class Share
     private readonly ShareForm _form = new();
     private readonly CategoryForm _categoryForm = new();
     private IReadOnlyList<MealCategory> _categories = [];
+    private IReadOnlyList<GroupSummary> _groups = [];
+    private string _selectedOwnerKey = "personal";
     private string? _error;
     private string? _categoryError;
     private string? _success;
@@ -48,6 +60,7 @@ public partial class Share
         }
 
         await DataService.InitializeAsync();
+        _groups = await GroupService.GetMyGroupsAsync();
         ApplySharedPayload();
         RefreshCategories();
         _isReady = true;
@@ -90,6 +103,16 @@ public partial class Share
         }
     }
 
+    private ContentOwner GetSelectedOwner()
+    {
+        if (_selectedOwnerKey != "personal" && Guid.TryParse(_selectedOwnerKey, out var groupId))
+        {
+            return ContentOwner.ForGroup(groupId);
+        }
+
+        return ContentOwner.Personal;
+    }
+
     private async Task CreateCategoryAsync()
     {
         _categoryError = null;
@@ -100,13 +123,15 @@ public partial class Share
             return;
         }
 
-        if (DataService.IsCategoryNameTaken(_categoryForm.Name))
+        var owner = GetSelectedOwner();
+
+        if (DataService.IsCategoryNameTaken(_categoryForm.Name, owner))
         {
             _categoryError = L["CategoryNameDuplicate"];
             return;
         }
 
-        var category = await DataService.AddCategoryAsync(_categoryForm.Name);
+        var category = await DataService.AddCategoryAsync(_categoryForm.Name, owner);
         _form.CategoryId = category.Id.ToString();
         _categoryForm.Name = string.Empty;
         RefreshCategories();

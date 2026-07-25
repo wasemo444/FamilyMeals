@@ -6,6 +6,14 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
+/// <summary>
+/// Authenticated application shell that initializes meal data and culture for child content.
+/// </summary>
+/// <remarks>
+/// Wraps interactive pages in WebAssembly render mode. Defers culture and data initialization
+/// until <see cref="RendererInfo.IsInteractive"/> is true because prerendering cannot call
+/// JavaScript or authenticated API endpoints. Redirects to login on 401 responses from the API.
+/// </remarks>
 public partial class InteractiveShell : IDisposable
 {
     [Parameter]
@@ -130,17 +138,6 @@ public partial class InteractiveShell : IDisposable
 
         NavigationManager.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
         return Task.CompletedTask;
-    }
-
-    private Task LogoutAsync()
-    {
-        return LogoutInternalAsync();
-    }
-
-    private async Task LogoutInternalAsync()
-    {
-        await AuthClient.LogoutAsync();
-        NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 
     protected override void OnCultureChanged()

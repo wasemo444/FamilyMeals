@@ -12,12 +12,12 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
         await service.InitializeAsync();
-        await service.AddCategoryAsync("Breakfast");
+        await service.AddCategoryAsync("Breakfast", ContentOwner.Personal);
 
         // Act
-        var act = () => service.AddCategoryAsync("breakfast");
+        var act = () => service.AddCategoryAsync("breakfast", ContentOwner.Personal);
 
         // Assert
         await Assert.ThrowsAsync<InvalidOperationException>(act);
@@ -28,9 +28,9 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
         await service.InitializeAsync();
-        var category = await service.AddCategoryAsync("Breakfast");
+        var category = await service.AddCategoryAsync("Breakfast", ContentOwner.Personal);
         await service.AddLinkAsync(category.Id, "Pancakes", "فطائر", "https://example.com/pancakes");
 
         // Act
@@ -64,7 +64,7 @@ public class MealDataServiceTests
                 }
             ]
         });
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
 
         // Act
         await service.RunMaintenanceAsync();
@@ -93,7 +93,7 @@ public class MealDataServiceTests
                 }
             ]
         });
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
 
         // Act
         await service.RunMaintenanceAsync();
@@ -110,9 +110,9 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
         await service.InitializeAsync();
-        var category = await service.AddCategoryAsync("Breakfast");
+        var category = await service.AddCategoryAsync("Breakfast", ContentOwner.Personal);
 
         // Act
         await service.ToggleCategoryFavoriteAsync(category.Id);
@@ -140,7 +140,7 @@ public class MealDataServiceTests
                 }
             ]
         });
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
 
         // Act
         await service.EnsureLoadedAsync();
@@ -154,7 +154,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
         await service.EnsureLoadedAsync();
 
         // Act
@@ -169,7 +169,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
         await service.EnsureLoadedAsync();
 
         // Act
@@ -184,9 +184,9 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store, new TestCurrentUserContext());
+        var service = TestServiceFactory.CreateMealDataService(store);
         await service.InitializeAsync();
-        var category = await service.AddCategoryAsync("Breakfast");
+        var category = await service.AddCategoryAsync("Breakfast", ContentOwner.Personal);
         var link = await service.AddLinkAsync(category.Id, string.Empty, string.Empty, "https://example.com");
 
         // Act

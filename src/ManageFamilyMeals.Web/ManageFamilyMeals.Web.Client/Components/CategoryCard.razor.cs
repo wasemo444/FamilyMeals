@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
+/// <summary>
+/// Card component displaying a meal category with favorite and archive actions.
+/// </summary>
 public partial class CategoryCard
 {
     [Parameter, EditorRequired]
@@ -17,6 +20,10 @@ public partial class CategoryCard
     private string FavoriteLabel => Category.IsFavorite
         ? L["Unfavorite"]
         : L["Favorite"];
+
+    private string SharedLabel => string.IsNullOrWhiteSpace(Category.OwnerGroupName)
+        ? L["Shared"]
+        : L.Format("SharedWithGroup", Category.OwnerGroupName);
 
     private async Task ToggleFavoriteAsync()
     {

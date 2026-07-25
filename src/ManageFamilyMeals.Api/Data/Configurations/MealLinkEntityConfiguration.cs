@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ManageFamilyMeals.Api.Data.Configurations;
 
+/// <summary>
+/// EF Core fluent configuration for <see cref="MealLinkEntity"/> including ownership check constraint and concurrency token.
+/// </summary>
 public sealed class MealLinkEntityConfiguration : IEntityTypeConfiguration<MealLinkEntity>
 {
     public void Configure(EntityTypeBuilder<MealLinkEntity> builder)

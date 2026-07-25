@@ -6,8 +6,21 @@ using Microsoft.Extensions.Options;
 
 namespace ManageFamilyMeals.Api.Endpoints;
 
+/// <summary>
+/// Minimal API routes for user registration, login, logout, and current-user profile.
+/// </summary>
+/// <remarks>
+/// Registration returns <c>404 Not Found</c> when disabled outside development (not <c>403</c>).
+/// Login failures and unauthenticated access to protected routes return <c>401 Unauthorized</c>.
+/// Account lockout returns <c>429 Too Many Requests</c>.
+/// </remarks>
 public static class AuthEndpoints
 {
+    /// <summary>
+    /// Maps <c>/api/auth</c> endpoints with rate limiting applied to the group.
+    /// </summary>
+    /// <param name="endpoints">The application endpoint builder.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/auth")

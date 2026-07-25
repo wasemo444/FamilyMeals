@@ -6,6 +6,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
+/// <summary>
+/// Card component displaying a meal link with preview image, favorite, and archive actions.
+/// </summary>
+/// <remarks>
+/// Preview images are loaded through the API proxy to avoid cross-origin image restrictions.
+/// </remarks>
 public partial class LinkCard
 {
     [Parameter, EditorRequired]

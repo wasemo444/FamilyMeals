@@ -4,17 +4,31 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Shared.Services;
 
+/// <summary>
+/// Remote HTTP implementation of <see cref="IMealDataService"/> that caches bootstrap data
+/// from the API and reloads after each mutation.
+/// </summary>
+/// <param name="httpClientFactory">Factory for the named <c>MealDataApi</c> HTTP client.</param>
+/// <remarks>
+/// Maps HTTP 401 to <see cref="UnauthorizedAccessException"/> and optionally invokes
+/// <see cref="Unauthorized"/>. HTTP 409 becomes <see cref="ConcurrencyConflictException"/>.
+/// </remarks>
 public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : IMealDataService
 {
     private AppData _cache = new();
     private bool _initialized;
 
+    /// <inheritdoc />
     public event Action? DataChanged;
 
+    /// <summary>
+    /// Optional handler invoked when the API returns 401 Unauthorized, typically to redirect to login.
+    /// </summary>
     public event Func<Task>? Unauthorized;
 
     private HttpClient Http => httpClientFactory.CreateClient("MealDataApi");
 
+    /// <inheritdoc />
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         if (_initialized)
@@ -30,12 +44,15 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         NotifyChanged();
     }
 
+    /// <inheritdoc />
     public Task EnsureLoadedAsync(CancellationToken cancellationToken = default) =>
         InitializeAsync(cancellationToken);
 
+    /// <inheritdoc />
     public Task RunMaintenanceAsync(CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 
+    /// <inheritdoc />
     public AppData GetSnapshot() => new()
     {
         Categories = _cache.Categories.ToList(),
@@ -43,35 +60,54 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         Settings = new AppSettings { CultureCode = _cache.Settings.CultureCode }
     };
 
+    /// <inheritdoc />
     public void ApplySettings(AppSettings settings)
     {
         _cache.Settings = new AppSettings { CultureCode = settings.CultureCode };
         NotifyChanged();
     }
 
-    public IReadOnlyList<MealCategory> GetFavoriteCategories() =>
-        MealDataQueries.GetFavoriteCategories(_cache);
+    /// <inheritdoc />
+    public IReadOnlyList<MealCategory> GetFavoriteCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetFavoriteCategories(_cache, filter);
 
-    public IReadOnlyList<MealCategory> GetActiveCategories() =>
-        MealDataQueries.GetActiveCategories(_cache);
+    /// <inheritdoc />
+    public IReadOnlyList<MealCategory> GetActiveCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetActiveCategories(_cache, filter);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealCategory> GetArchivedCategories() =>
         MealDataQueries.GetArchivedCategories(_cache);
 
+    /// <inheritdoc />
     public MealCategory? GetCategory(Guid categoryId) =>
         MealDataQueries.GetCategory(_cache, categoryId);
 
+    /// <inheritdoc />
     public MealLink? GetLink(Guid linkId) =>
         MealDataQueries.GetLink(_cache, linkId);
 
+    /// <inheritdoc />
     public AppSettings GetSettings() => _cache.Settings;
 
-    public bool IsCategoryNameTaken(string name) =>
-        MealDataQueries.IsCategoryNameTaken(_cache, name);
+    /// <inheritdoc />
+    public bool IsCategoryNameTaken(string name, ContentOwner owner) =>
+        MealDataQueries.IsCategoryNameTaken(_cache, name, owner);
 
-    public async Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public async Task<MealCategory> AddCategoryAsync(
+        string name,
+        ContentOwner owner,
+        CancellationToken cancellationToken = default)
     {
-        var response = await Http.PostAsJsonAsync("/api/categories", new { name }, cancellationToken);
+        var payload = new
+        {
+            name,
+            ownerType = owner.OwnerType == OwnerType.Group ? OwnerType.Group : (OwnerType?)null,
+            ownerGroupId = owner.OwnerGroupId
+        };
+
+        var response = await Http.PostAsJsonAsync("/api/categories", payload, cancellationToken);
         await EnsureAuthorizedAsync(response);
         EnsureSuccess(response);
         var category = await response.Content.ReadFromJsonAsync<MealCategory>(cancellationToken)
@@ -81,10 +117,11 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         return category;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/archive", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -95,10 +132,11 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/restore", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -109,6 +147,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         return true;
     }
 
+    /// <inheritdoc />
     public async Task ToggleCategoryFavoriteAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/favorite", null, cancellationToken);
@@ -117,18 +156,23 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         await ReloadFromServerAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetFavoriteLinks(Guid categoryId) =>
         MealDataQueries.GetFavoriteLinks(_cache, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetActiveLinks(Guid categoryId) =>
         MealDataQueries.GetActiveLinks(_cache, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetArchivedLinks(Guid categoryId) =>
         MealDataQueries.GetArchivedLinks(_cache, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetAllArchivedLinks() =>
         MealDataQueries.GetAllArchivedLinks(_cache);
 
+    /// <inheritdoc />
     public async Task<MealLink> AddLinkAsync(
         Guid categoryId,
         string titleEn,
@@ -142,7 +186,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             new { titleEn, titleAr, url, note },
             cancellationToken);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
         }
@@ -156,10 +200,11 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         return link;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/archive", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -170,10 +215,11 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/restore", null, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (IsMissingResource(response.StatusCode))
         {
             return false;
         }
@@ -184,6 +230,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         return true;
     }
 
+    /// <inheritdoc />
     public async Task ToggleLinkFavoriteAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/favorite", null, cancellationToken);
@@ -192,6 +239,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         await ReloadFromServerAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task UpdateLinkPreviewAsync(Guid linkId, LinkPreviewData preview, CancellationToken cancellationToken = default)
     {
         var response = await Http.PutAsJsonAsync($"/api/links/{linkId}/preview", preview, cancellationToken);
@@ -223,6 +271,9 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
 
         await Task.CompletedTask;
     }
+
+    private static bool IsMissingResource(HttpStatusCode statusCode) =>
+        statusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden;
 
     private static void EnsureSuccess(HttpResponseMessage response)
     {

@@ -2,7 +2,13 @@
 
 <article class="card category-card">
     <div class="card-header">
-        <a class="card-title" href="@($"/category/{Category.Id}")">@Category.Name</a>
+        <div class="card-title-group">
+            <a class="card-title" href="@($"/category/{Category.Id}")">@Category.Name</a>
+            @if (Category.IsShared)
+            {
+                <span class="shared-badge" title="@SharedLabel">@SharedLabel</span>
+            }
+        </div>
         <div class="card-actions">
             <button type="button" class="icon-btn" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
                 @(Category.IsFavorite ? "★" : "☆")

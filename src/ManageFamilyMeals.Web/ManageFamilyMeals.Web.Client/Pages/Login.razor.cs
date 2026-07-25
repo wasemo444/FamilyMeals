@@ -2,6 +2,14 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Login page that displays validation messages and submits credentials via an HTML form post.
+/// </summary>
+/// <remarks>
+/// Authentication is handled by <see cref="ManageFamilyMeals.Web.Endpoints.AccountEndpoints"/> on the
+/// Web host so Identity cookies are issued to the browser. Query parameters carry return URLs,
+/// registration success, email confirmation, and error codes from redirects.
+/// </remarks>
 public partial class Login
 {
     [SupplyParameterFromQuery(Name = "returnUrl")]

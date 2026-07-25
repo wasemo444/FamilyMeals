@@ -2,6 +2,9 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Api.Data.Entities;
 
+/// <summary>
+/// Persistence model linking a user to a group with a role (for example, admin or member).
+/// </summary>
 public sealed class GroupMembershipEntity
 {
     public Guid Id { get; set; }

@@ -1,7 +1,11 @@
 namespace ManageFamilyMeals.Api.Identity;
 
+/// <summary>
+/// Development <see cref="IEmailSender"/> implementation that writes email content to the application log.
+/// </summary>
 public sealed class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEmailSender
 {
+    /// <inheritdoc />
     public Task SendEmailAsync(
         string to,
         string subject,

@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
+/// <summary>
+/// Toggle buttons for switching between English and Arabic UI cultures.
+/// </summary>
 public partial class LanguageSwitcher
 {
     [Inject]

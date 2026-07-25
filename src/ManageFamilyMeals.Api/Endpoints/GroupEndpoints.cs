@@ -8,10 +8,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageFamilyMeals.Api.Endpoints;
 
+/// <summary>
+/// Minimal API routes for creating and listing groups the current user belongs to.
+/// </summary>
+/// <remarks>
+/// All routes require authentication. Group creation assigns the creator as <see cref="GroupRole.Admin"/>.
+/// Invite codes are generated with retry on unique-constraint conflicts (up to five attempts).
+/// </remarks>
 public static class GroupEndpoints
 {
     private const string InviteCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+    /// <summary>
+    /// Maps <c>/api/groups</c> endpoints for group creation and listing.
+    /// </summary>
+    /// <param name="endpoints">The application endpoint builder.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
     public static IEndpointRouteBuilder MapGroupEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/groups").RequireAuthorization();

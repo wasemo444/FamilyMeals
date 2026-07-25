@@ -3,8 +3,20 @@ using ManageFamilyMeals.Shared.Services;
 
 namespace ManageFamilyMeals.Api.Endpoints;
 
+/// <summary>
+/// Minimal API routes for meal links within categories, including archive, restore, favorite, and preview updates.
+/// </summary>
+/// <remarks>
+/// All routes require authentication. Ownership violations return <c>404 Not Found</c> (not <c>403</c>).
+/// Missing categories when creating a link return <c>404</c> with an error payload.
+/// </remarks>
 public static class LinkEndpoints
 {
+    /// <summary>
+    /// Maps <c>/api/categories/{categoryId}/links</c> and <c>/api/links</c> endpoints.
+    /// </summary>
+    /// <param name="endpoints">The application endpoint builder.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
     public static IEndpointRouteBuilder MapLinkEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var categoryLinks = endpoints.MapGroup("/api/categories/{categoryId:guid}/links").RequireAuthorization();
@@ -38,34 +50,62 @@ public static class LinkEndpoints
                 return Results.NotFound(new { error = "Category not found." });
             }
 
-            var link = await dataService.AddLinkAsync(
-                categoryId,
-                request.TitleEn ?? string.Empty,
-                request.TitleAr ?? string.Empty,
-                request.Url,
-                request.Note,
-                cancellationToken);
+            try
+            {
+                var link = await dataService.AddLinkAsync(
+                    categoryId,
+                    request.TitleEn ?? string.Empty,
+                    request.TitleAr ?? string.Empty,
+                    request.Url,
+                    request.Note,
+                    cancellationToken);
 
-            return Results.Created($"/api/links/{link.Id}", link);
+                return Results.Created($"/api/links/{link.Id}", link);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
         });
 
         links.MapPost("/{id:guid}/archive", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
         {
-            var archived = await dataService.ArchiveLinkAsync(id, cancellationToken);
-            return archived ? Results.NoContent() : Results.NotFound();
+            try
+            {
+                var archived = await dataService.ArchiveLinkAsync(id, cancellationToken);
+                return archived ? Results.NoContent() : Results.NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
         });
 
         links.MapPost("/{id:guid}/restore", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
         {
-            var restored = await dataService.RestoreLinkAsync(id, cancellationToken);
-            return restored ? Results.NoContent() : Results.NotFound();
+            try
+            {
+                var restored = await dataService.RestoreLinkAsync(id, cancellationToken);
+                return restored ? Results.NoContent() : Results.NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
         });
 
         links.MapPost("/{id:guid}/favorite", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
         {
-            await dataService.ToggleLinkFavoriteAsync(id, cancellationToken);
-            var link = dataService.GetLink(id);
-            return link is null ? Results.NotFound() : Results.Ok(link);
+            try
+            {
+                await dataService.ToggleLinkFavoriteAsync(id, cancellationToken);
+                var link = dataService.GetLink(id);
+                return link is null ? Results.NotFound() : Results.Ok(link);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
         });
 
         links.MapPut("/{id:guid}/preview", async (
@@ -74,8 +114,15 @@ public static class LinkEndpoints
             IMealDataService dataService,
             CancellationToken cancellationToken) =>
         {
-            await dataService.UpdateLinkPreviewAsync(id, preview, cancellationToken);
-            return Results.NoContent();
+            try
+            {
+                await dataService.UpdateLinkPreviewAsync(id, preview, cancellationToken);
+                return Results.NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
         });
 
         return endpoints;

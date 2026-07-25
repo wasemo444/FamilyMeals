@@ -3,6 +3,13 @@ using ManageFamilyMeals.Web.Client.Services;
 
 namespace ManageFamilyMeals.Web.Client;
 
+/// <summary>
+/// Base class for interactive components that react to culture and localization changes.
+/// </summary>
+/// <remarks>
+/// Subscribes to <see cref="CultureService"/> and <see cref="ILocalizedText"/> change events
+/// and triggers a re-render. Used by pages and components rendered in interactive WebAssembly mode.
+/// </remarks>
 public abstract class LocalizedComponentBase : ComponentBase, IDisposable
 {
     [Inject]

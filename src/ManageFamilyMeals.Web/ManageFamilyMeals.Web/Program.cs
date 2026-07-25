@@ -104,4 +104,7 @@ app.MapRazorComponents<App>()
 
 app.Run();
 
+/// <summary>
+/// Entry-point type exposed for integration and E2E test hosts.
+/// </summary>
 public partial class Program;

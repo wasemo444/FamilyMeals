@@ -62,7 +62,7 @@ public class ApiMealDataServiceTests
         await service.InitializeAsync();
 
         // Act
-        var result = await service.AddCategoryAsync("Lunch");
+        var result = await service.AddCategoryAsync("Lunch", ContentOwner.Personal);
 
         // Assert
         Assert.Equal("Lunch", result.Name);

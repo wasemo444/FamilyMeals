@@ -5,6 +5,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Category detail page for viewing, searching, and adding meal links within a category.
+/// </summary>
+/// <remarks>
+/// Rendered in interactive WebAssembly mode. Backfills missing link preview images on first
+/// interactive render after the category loads.
+/// </remarks>
 public partial class Category : IDisposable
 {
     [Parameter]
@@ -25,6 +32,10 @@ public partial class Category : IDisposable
     private string _searchTerm = string.Empty;
     private IReadOnlyList<MealLink> _favoriteLinks = [];
     private IReadOnlyList<MealLink> _allLinks = [];
+
+    private string SharedLabel => string.IsNullOrWhiteSpace(_category?.OwnerGroupName)
+        ? L["Shared"]
+        : L.Format("SharedWithGroup", _category!.OwnerGroupName!);
 
     protected override void OnInitialized()
     {

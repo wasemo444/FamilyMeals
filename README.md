@@ -2,6 +2,17 @@
 
 Blazor web app with a PostgreSQL-backed API for storing meal categories and links.
 
+## Documentation
+
+Start here for architecture, navigation, and class-level reference:
+
+- **[docs/agents.md](docs/agents.md)** — entry point for developers and AI agents (architecture map, edit guide, guardrails)
+- [docs/L1.md](docs/L1.md) — system context and module overview
+- [docs/L2.md](docs/L2.md) — implementation flows (auth, data, ownership, API, Blazor)
+- [docs/L3.md](docs/L3.md) — deep class reference and edge cases
+
+Product requirements: [docs/PRDV2.md](docs/PRDV2.md)
+
 ## Prerequisites
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download)
@@ -133,5 +144,3 @@ Main tables: `meal_categories`, `meal_links`, `app_settings`.
 - **Bilingual EN/AR** with RTL support
 - **Soft delete** with 7-day archive and restore
 - **Link previews** via server-side Open Graph metadata fetch
-
-See [docs/PRDV2.md](docs/PRDV2.md) for full requirements and epic breakdown.

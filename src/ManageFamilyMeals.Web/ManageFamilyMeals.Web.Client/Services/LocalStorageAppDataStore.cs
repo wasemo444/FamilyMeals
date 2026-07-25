@@ -4,6 +4,13 @@ using Microsoft.JSInterop;
 
 namespace ManageFamilyMeals.Web.Client.Services;
 
+/// <summary>
+/// Browser local-storage implementation of <see cref="ManageFamilyMeals.Shared.Services.IAppDataStore"/>.
+/// </summary>
+/// <remarks>
+/// Legacy/unused: the app now persists data through the API-backed <see cref="ManageFamilyMeals.Shared.Services.ApiMealDataService"/>.
+/// Retained for reference; not registered in dependency injection.
+/// </remarks>
 public sealed class LocalStorageAppDataStore(IJSRuntime jsRuntime) : ManageFamilyMeals.Shared.Services.IAppDataStore
 {
     private const string StorageKey = "manage-family-meals-data";

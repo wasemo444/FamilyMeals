@@ -3,16 +3,33 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Shared.Services;
 
-public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext currentUser) : IMealDataService
+/// <summary>
+/// Local in-process implementation of <see cref="IMealDataService"/> that persists through
+/// <see cref="IAppDataStore"/> and enforces ownership via <see cref="IOwnershipAuthorization"/>.
+/// </summary>
+/// <param name="dataStore">Persistence layer for the full <see cref="AppData"/> aggregate.</param>
+/// <param name="currentUser">Source of the authenticated user id for ownership assignment.</param>
+/// <param name="ownershipAuthorization">Validates create and mutate permissions before writes.</param>
+/// <remarks>
+/// Each mutation reloads data from the store after save so optimistic concurrency tokens stay current.
+/// Archiving a category cascades to all active links in that category.
+/// </remarks>
+public sealed class MealDataService(
+    IAppDataStore dataStore,
+    ICurrentUserContext currentUser,
+    IOwnershipAuthorization ownershipAuthorization) : IMealDataService
 {
     private AppData _data = new();
     private bool _initialized;
 
+    /// <inheritdoc />
     public event Action? DataChanged;
 
+    /// <inheritdoc />
     public Task InitializeAsync(CancellationToken cancellationToken = default) =>
         EnsureLoadedAsync(cancellationToken);
 
+    /// <inheritdoc />
     public async Task EnsureLoadedAsync(CancellationToken cancellationToken = default)
     {
         if (_initialized)
@@ -24,6 +41,7 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         _initialized = true;
     }
 
+    /// <inheritdoc />
     public async Task RunMaintenanceAsync(CancellationToken cancellationToken = default)
     {
         await EnsureLoadedAsync(cancellationToken);
@@ -32,6 +50,7 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         await PersistAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public AppData GetSnapshot() => new()
     {
         Categories = _data.Categories.ToList(),
@@ -39,58 +58,83 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         Settings = new AppSettings { CultureCode = _data.Settings.CultureCode }
     };
 
+    /// <inheritdoc />
     public void ApplySettings(AppSettings settings)
     {
         _data.Settings = new AppSettings { CultureCode = settings.CultureCode };
         DataChanged?.Invoke();
     }
 
-    public IReadOnlyList<MealCategory> GetFavoriteCategories() =>
-        MealDataQueries.GetFavoriteCategories(_data);
+    /// <inheritdoc />
+    public IReadOnlyList<MealCategory> GetFavoriteCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetFavoriteCategories(_data, filter);
 
-    public IReadOnlyList<MealCategory> GetActiveCategories() =>
-        MealDataQueries.GetActiveCategories(_data);
+    /// <inheritdoc />
+    public IReadOnlyList<MealCategory> GetActiveCategories(HomeContentFilter filter = HomeContentFilter.All) =>
+        MealDataQueries.GetActiveCategories(_data, filter);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealCategory> GetArchivedCategories() =>
         MealDataQueries.GetArchivedCategories(_data);
 
+    /// <inheritdoc />
     public MealCategory? GetCategory(Guid categoryId) =>
         MealDataQueries.GetCategory(_data, categoryId);
 
+    /// <inheritdoc />
     public MealLink? GetLink(Guid linkId) =>
         MealDataQueries.GetLink(_data, linkId);
 
+    /// <inheritdoc />
     public AppSettings GetSettings() => _data.Settings;
 
-    public bool IsCategoryNameTaken(string name) =>
-        MealDataQueries.IsCategoryNameTaken(_data, name);
+    /// <inheritdoc />
+    public bool IsCategoryNameTaken(string name, ContentOwner owner) =>
+        MealDataQueries.IsCategoryNameTaken(_data, name, owner);
 
-    public async Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public async Task<MealCategory> AddCategoryAsync(
+        string name,
+        ContentOwner owner,
+        CancellationToken cancellationToken = default)
     {
         var trimmedName = name.Trim();
 
-        if (IsCategoryNameTaken(trimmedName))
+        if (IsCategoryNameTaken(trimmedName, owner))
         {
             throw new InvalidOperationException("Category name already exists.");
         }
+
+        await ownershipAuthorization.ValidateCreateOwnerAsync(owner, cancellationToken);
 
         var userId = currentUser.GetRequiredUserId();
         var category = new MealCategory
         {
             Name = trimmedName,
-            OwnerType = OwnerType.User,
-            OwnerUserId = userId
+            OwnerType = owner.OwnerType,
+            OwnerUserId = owner.OwnerType == OwnerType.User ? userId : null,
+            OwnerGroupId = owner.OwnerGroupId
         };
 
         _data.Categories.Add(category);
         await PersistAsync(cancellationToken);
-        return category;
+        return GetCategory(category.Id) ?? category;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ArchiveCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && !item.IsDeleted);
         if (category is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
@@ -109,10 +153,20 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> RestoreCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && item.IsDeleted);
         if (category is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
@@ -130,6 +184,7 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         return true;
     }
 
+    /// <inheritdoc />
     public async Task ToggleCategoryFavoriteAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var category = _data.Categories.FirstOrDefault(item => item.Id == categoryId && !item.IsDeleted);
@@ -138,22 +193,28 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             return;
         }
 
+        await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
         category.IsFavorite = !category.IsFavorite;
         await PersistAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetFavoriteLinks(Guid categoryId) =>
         MealDataQueries.GetFavoriteLinks(_data, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetActiveLinks(Guid categoryId) =>
         MealDataQueries.GetActiveLinks(_data, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetArchivedLinks(Guid categoryId) =>
         MealDataQueries.GetArchivedLinks(_data, categoryId);
 
+    /// <inheritdoc />
     public IReadOnlyList<MealLink> GetAllArchivedLinks() =>
         MealDataQueries.GetAllArchivedLinks(_data);
 
+    /// <inheritdoc />
     public async Task<MealLink> AddLinkAsync(
         Guid categoryId,
         string titleEn,
@@ -165,6 +226,8 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         var category = GetCategory(categoryId)
             ?? throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
 
+        await ownershipAuthorization.EnsureCanMutateCategoryAsync(category, cancellationToken);
+
         var userId = currentUser.GetRequiredUserId();
         var link = new MealLink
         {
@@ -173,8 +236,9 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             TitleAr = titleAr.Trim(),
             Url = url.Trim(),
             Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
-            OwnerType = OwnerType.User,
-            OwnerUserId = userId
+            OwnerType = category.OwnerType,
+            OwnerUserId = category.OwnerType == OwnerType.User ? userId : null,
+            OwnerGroupId = category.OwnerGroupId
         };
 
         _data.Links.Add(link);
@@ -182,10 +246,20 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         return link;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ArchiveLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
         if (link is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
@@ -196,10 +270,20 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> RestoreLinkAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && item.IsDeleted);
         if (link is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
@@ -210,6 +294,7 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         return true;
     }
 
+    /// <inheritdoc />
     public async Task ToggleLinkFavoriteAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
@@ -218,10 +303,12 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
             return;
         }
 
+        await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
         link.IsFavorite = !link.IsFavorite;
         await PersistAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task UpdateLinkPreviewAsync(Guid linkId, LinkPreviewData preview, CancellationToken cancellationToken = default)
     {
         var link = _data.Links.FirstOrDefault(item => item.Id == linkId && !item.IsDeleted);
@@ -229,6 +316,8 @@ public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext
         {
             return;
         }
+
+        await ownershipAuthorization.EnsureCanMutateLinkAsync(link, cancellationToken);
 
         link.PreviewTitle = preview.Title;
         link.PreviewDescription = preview.Description;

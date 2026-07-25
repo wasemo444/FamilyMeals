@@ -1,5 +1,13 @@
 namespace ManageFamilyMeals.Shared.Resources;
 
+/// <summary>
+/// In-memory English and Arabic UI string catalog used by Blazor WebAssembly when
+/// <see cref="Microsoft.Extensions.Localization.IStringLocalizer"/> resources are unavailable.
+/// </summary>
+/// <remarks>
+/// Keys mirror entries in <c>SharedResource.resx</c>. English is the fallback when a key
+/// or culture is missing.
+/// </remarks>
 public static class LocalizationCatalog
 {
     private static readonly Dictionary<string, Dictionary<string, string>> Strings = new(StringComparer.OrdinalIgnoreCase)
@@ -74,6 +82,19 @@ public static class LocalizationCatalog
             ["RegisterFailed"] = "Registration failed. Please try again.",
             ["RegistrationSuccessful"] = "Account created. Sign in to continue.",
             ["RegistrationConfirmEmail"] = "Account created. Check your email to confirm your address before signing in.",
+            ["Personal"] = "Personal",
+            ["Shared"] = "Shared",
+            ["FilterAll"] = "All",
+            ["FilterMine"] = "Mine",
+            ["FilterShared"] = "Shared",
+            ["ViewFilter"] = "Show",
+            ["SaveTo"] = "Save to",
+            ["GroupLabel"] = "{0}",
+            ["SharedWithGroup"] = "Shared · {0}",
+            ["CreateGroup"] = "Create a group",
+            ["GroupName"] = "Group name",
+            ["GroupNameRequired"] = "Group name is required.",
+            ["NoGroupsYet"] = "Create a group to share meal categories with family members.",
         },
         ["ar"] = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -145,9 +166,28 @@ public static class LocalizationCatalog
             ["RegisterFailed"] = "فشل إنشاء الحساب. حاول مرة أخرى.",
             ["RegistrationSuccessful"] = "تم إنشاء الحساب. سجّل الدخول للمتابعة.",
             ["RegistrationConfirmEmail"] = "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيد العنوان قبل تسجيل الدخول.",
+            ["Personal"] = "شخصي",
+            ["Shared"] = "مشترك",
+            ["FilterAll"] = "الكل",
+            ["FilterMine"] = "خاص بي",
+            ["FilterShared"] = "مشترك",
+            ["ViewFilter"] = "عرض",
+            ["SaveTo"] = "حفظ في",
+            ["GroupLabel"] = "{0}",
+            ["SharedWithGroup"] = "مشترك · {0}",
+            ["CreateGroup"] = "إنشاء مجموعة",
+            ["GroupName"] = "اسم المجموعة",
+            ["GroupNameRequired"] = "اسم المجموعة مطلوب.",
+            ["NoGroupsYet"] = "أنشئ مجموعة لمشاركة فئات الوجبات مع أفراد العائلة.",
         },
     };
 
+    /// <summary>
+    /// Looks up a localized string for the given culture, falling back to English then the key itself.
+    /// </summary>
+    /// <param name="cultureCode">BCP 47 culture code; Arabic variants map to <c>ar</c>, all others to <c>en</c>.</param>
+    /// <param name="key">Resource key defined in the string tables.</param>
+    /// <returns>The localized value, English fallback, or <paramref name="key"/> when not found.</returns>
     public static string Get(string cultureCode, string key)
     {
         var culture = NormalizeCulture(cultureCode);
@@ -165,6 +205,13 @@ public static class LocalizationCatalog
         return key;
     }
 
+    /// <summary>
+    /// Looks up a localized format string and applies culture-aware composite formatting.
+    /// </summary>
+    /// <param name="cultureCode">BCP 47 culture code used for both lookup and formatting.</param>
+    /// <param name="key">Resource key whose value is a composite format string.</param>
+    /// <param name="arguments">Values substituted into the format string.</param>
+    /// <returns>The formatted localized string.</returns>
     public static string Format(string cultureCode, string key, params object[] arguments)
     {
         var format = Get(cultureCode, key);

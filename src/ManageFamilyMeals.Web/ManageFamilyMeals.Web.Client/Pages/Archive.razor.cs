@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Components;
 
 namespace ManageFamilyMeals.Web.Client.Pages;
 
+/// <summary>
+/// Archive page for viewing and restoring archived categories and links.
+/// </summary>
+/// <remarks>
+/// Rendered in interactive WebAssembly mode. Link titles are localized using the active culture.
+/// </remarks>
 public partial class Archive : IDisposable
 {
     [Inject]
