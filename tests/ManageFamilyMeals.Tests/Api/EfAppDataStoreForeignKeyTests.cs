@@ -12,7 +12,7 @@ public class EfAppDataStoreForeignKeyTests
     {
         // Arrange
         await using var context = SqliteDbContextFactory.CreateWithForeignKeys(nameof(SaveAsync_DeletesLinksBeforeCategoriesWhenBothAreRemoved));
-        var store = new EfAppDataStore(context);
+        var store = new EfAppDataStore(context, new TestCurrentUserContext());
         var categoryId = Guid.NewGuid();
         var linkId = Guid.NewGuid();
 

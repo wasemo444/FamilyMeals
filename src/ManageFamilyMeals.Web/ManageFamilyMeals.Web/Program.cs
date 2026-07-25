@@ -1,5 +1,6 @@
 using ManageFamilyMeals.Api.Data;
 using ManageFamilyMeals.Api.Identity;
+using ManageFamilyMeals.Api.Services;
 using ManageFamilyMeals.Api.Startup;
 using ManageFamilyMeals.Web.Auth;
 using ManageFamilyMeals.Web.Client;
@@ -34,6 +35,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddManageFamilyMealsIdentity(builder.Configuration, builder.Environment);
+builder.Services.AddScoped<ArchiveMaintenanceService>();
+builder.Services.AddScoped<OwnershipBackfillService>();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
 

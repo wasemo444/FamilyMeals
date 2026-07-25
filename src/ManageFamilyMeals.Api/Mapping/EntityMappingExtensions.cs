@@ -13,7 +13,11 @@ public static class EntityMappingExtensions
             IsFavorite = entity.IsFavorite,
             CreatedAtUtc = entity.CreatedAtUtc,
             IsDeleted = entity.IsDeleted,
-            DeletedAtUtc = entity.DeletedAtUtc
+            DeletedAtUtc = entity.DeletedAtUtc,
+            OwnerType = entity.OwnerType,
+            OwnerUserId = entity.OwnerUserId,
+            OwnerGroupId = entity.OwnerGroupId,
+            RowVersion = entity.RowVersion
         };
 
     public static MealLink ToModel(this MealLinkEntity entity) =>
@@ -33,7 +37,11 @@ public static class EntityMappingExtensions
             PreviewTitle = entity.PreviewTitle,
             PreviewDescription = entity.PreviewDescription,
             PreviewImageUrl = entity.PreviewImageUrl,
-            PreviewSiteName = entity.PreviewSiteName
+            PreviewSiteName = entity.PreviewSiteName,
+            OwnerType = entity.OwnerType,
+            OwnerUserId = entity.OwnerUserId,
+            OwnerGroupId = entity.OwnerGroupId,
+            RowVersion = entity.RowVersion
         };
 
     public static MealCategoryEntity ToEntity(this MealCategory model) =>
@@ -44,7 +52,11 @@ public static class EntityMappingExtensions
             IsFavorite = model.IsFavorite,
             CreatedAtUtc = model.CreatedAtUtc,
             IsDeleted = model.IsDeleted,
-            DeletedAtUtc = model.DeletedAtUtc
+            DeletedAtUtc = model.DeletedAtUtc,
+            OwnerType = model.OwnerType,
+            OwnerUserId = model.OwnerUserId,
+            OwnerGroupId = model.OwnerGroupId,
+            RowVersion = model.RowVersion
         };
 
     public static MealLinkEntity ToEntity(this MealLink model) =>
@@ -64,7 +76,22 @@ public static class EntityMappingExtensions
             PreviewTitle = model.PreviewTitle,
             PreviewDescription = model.PreviewDescription,
             PreviewImageUrl = model.PreviewImageUrl,
-            PreviewSiteName = model.PreviewSiteName
+            PreviewSiteName = model.PreviewSiteName,
+            OwnerType = model.OwnerType,
+            OwnerUserId = model.OwnerUserId,
+            OwnerGroupId = model.OwnerGroupId,
+            RowVersion = model.RowVersion
+        };
+
+    public static GroupSummary ToSummary(this GroupEntity entity, GroupRole currentUserRole) =>
+        new()
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+            InviteCode = entity.InviteCode,
+            CreatedByUserId = entity.CreatedByUserId,
+            CreatedAtUtc = entity.CreatedAtUtc,
+            CurrentUserRole = currentUserRole
         };
 
     public static AppSettings ToModel(this AppSettingsEntity entity) =>

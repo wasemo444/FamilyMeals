@@ -24,7 +24,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
 
         var response = await Http.GetAsync("/api/bootstrap", cancellationToken);
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         _cache = await response.Content.ReadFromJsonAsync<AppData>(cancellationToken) ?? new AppData();
         _initialized = true;
         NotifyChanged();
@@ -73,7 +73,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     {
         var response = await Http.PostAsJsonAsync("/api/categories", new { name }, cancellationToken);
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         var category = await response.Content.ReadFromJsonAsync<MealCategory>(cancellationToken)
             ?? throw new InvalidOperationException("Failed to deserialize created category.");
 
@@ -90,7 +90,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         }
 
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
         return true;
     }
@@ -104,7 +104,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         }
 
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
         return true;
     }
@@ -113,7 +113,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/favorite", null, cancellationToken);
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
     }
 
@@ -148,7 +148,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         }
 
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         var link = await response.Content.ReadFromJsonAsync<MealLink>(cancellationToken)
             ?? throw new InvalidOperationException("Failed to deserialize created link.");
 
@@ -165,7 +165,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         }
 
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
         return true;
     }
@@ -179,7 +179,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         }
 
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
         return true;
     }
@@ -188,7 +188,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/favorite", null, cancellationToken);
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
     }
 
@@ -196,7 +196,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     {
         var response = await Http.PutAsJsonAsync($"/api/links/{linkId}/preview", preview, cancellationToken);
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         await ReloadFromServerAsync(cancellationToken);
     }
 
@@ -204,7 +204,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     {
         var response = await Http.GetAsync("/api/bootstrap", cancellationToken);
         await EnsureAuthorizedAsync(response);
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response);
         _cache = await response.Content.ReadFromJsonAsync<AppData>(cancellationToken) ?? new AppData();
         NotifyChanged();
     }
@@ -222,6 +222,16 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
         }
 
         await Task.CompletedTask;
+    }
+
+    private static void EnsureSuccess(HttpResponseMessage response)
+    {
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new ConcurrencyConflictException();
+        }
+
+        response.EnsureSuccessStatusCode();
     }
 
     private void NotifyChanged() => DataChanged?.Invoke();

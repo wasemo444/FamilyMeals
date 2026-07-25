@@ -34,4 +34,12 @@ public sealed class MealLink
     public string? PreviewImageUrl { get; set; }
 
     public string? PreviewSiteName { get; set; }
+
+    public OwnerType OwnerType { get; set; } = OwnerType.User;
+
+    public Guid? OwnerUserId { get; set; }
+
+    public Guid? OwnerGroupId { get; set; }
+
+    public byte[] RowVersion { get; set; } = [0, 0, 0, 0, 0, 0, 0, 1];
 }

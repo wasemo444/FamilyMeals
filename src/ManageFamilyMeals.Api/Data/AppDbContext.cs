@@ -13,6 +13,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<MealLinkEntity> Links => Set<MealLinkEntity>();
 
+    public DbSet<GroupEntity> Groups => Set<GroupEntity>();
+
+    public DbSet<GroupMembershipEntity> GroupMemberships => Set<GroupMembershipEntity>();
+
     public DbSet<AppSettingsEntity> AppSettings => Set<AppSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

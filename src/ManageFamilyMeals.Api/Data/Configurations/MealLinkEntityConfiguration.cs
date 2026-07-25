@@ -1,4 +1,5 @@
 using ManageFamilyMeals.Api.Data.Entities;
+using ManageFamilyMeals.Api.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,7 +9,8 @@ public sealed class MealLinkEntityConfiguration : IEntityTypeConfiguration<MealL
 {
     public void Configure(EntityTypeBuilder<MealLinkEntity> builder)
     {
-        builder.ToTable("meal_links");
+        builder.ToTable("meal_links", tableBuilder =>
+            tableBuilder.HasCheckConstraint("CK_meal_links_owner", OwnershipConstraintSql.LinkOwnerCheck));
 
         builder.HasKey(link => link.Id);
 
@@ -28,12 +30,28 @@ public sealed class MealLinkEntityConfiguration : IEntityTypeConfiguration<MealL
         builder.Property(link => link.DeletedAtUtc)
             .HasColumnType("timestamptz");
 
+        builder.Property(link => link.RowVersion)
+            .IsConcurrencyToken()
+            .IsRequired();
+
         builder.HasOne(link => link.Category)
             .WithMany(category => category.Links)
             .HasForeignKey(link => link.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(link => link.OwnerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<GroupEntity>()
+            .WithMany()
+            .HasForeignKey(link => link.OwnerGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(link => new { link.CategoryId, link.IsDeleted });
         builder.HasIndex(link => new { link.IsDeleted, link.DeletedAtUtc });
+        builder.HasIndex(link => new { link.OwnerType, link.OwnerUserId });
+        builder.HasIndex(link => new { link.OwnerType, link.OwnerGroupId });
     }
 }
