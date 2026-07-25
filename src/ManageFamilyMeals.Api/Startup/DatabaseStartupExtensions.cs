@@ -1,5 +1,6 @@
 using ManageFamilyMeals.Api.Data;
 using ManageFamilyMeals.Api.Identity;
+using ManageFamilyMeals.Api.Services;
 using ManageFamilyMeals.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,11 +45,11 @@ public static class DatabaseStartupExtensions
             var seeder = scope.ServiceProvider.GetRequiredService<IdentityDataSeeder>();
             await seeder.SeedAsync();
 
-            var mealDataService = scope.ServiceProvider.GetService<IMealDataService>();
-            if (mealDataService is not null)
-            {
-                await mealDataService.RunMaintenanceAsync();
-            }
+            var ownershipBackfill = scope.ServiceProvider.GetRequiredService<OwnershipBackfillService>();
+            await ownershipBackfill.BackfillUnownedMealDataAsync();
+
+            var maintenance = scope.ServiceProvider.GetRequiredService<ArchiveMaintenanceService>();
+            await maintenance.RunAsync();
         }
     }
 }

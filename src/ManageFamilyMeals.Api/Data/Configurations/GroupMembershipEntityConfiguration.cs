@@ -1,0 +1,32 @@
+using ManageFamilyMeals.Api.Data.Entities;
+using ManageFamilyMeals.Api.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace ManageFamilyMeals.Api.Data.Configurations;
+
+public sealed class GroupMembershipEntityConfiguration : IEntityTypeConfiguration<GroupMembershipEntity>
+{
+    public void Configure(EntityTypeBuilder<GroupMembershipEntity> builder)
+    {
+        builder.ToTable("group_memberships");
+
+        builder.HasKey(membership => membership.Id);
+
+        builder.Property(membership => membership.JoinedAtUtc)
+            .HasColumnType("timestamptz");
+
+        builder.HasIndex(membership => new { membership.GroupId, membership.UserId })
+            .IsUnique();
+
+        builder.HasOne(membership => membership.Group)
+            .WithMany(group => group.Memberships)
+            .HasForeignKey(membership => membership.GroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(membership => membership.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

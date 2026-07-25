@@ -12,7 +12,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
         await service.InitializeAsync();
         await service.AddCategoryAsync("Breakfast");
 
@@ -28,7 +28,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
         await service.InitializeAsync();
         var category = await service.AddCategoryAsync("Breakfast");
         await service.AddLinkAsync(category.Id, "Pancakes", "فطائر", "https://example.com/pancakes");
@@ -64,7 +64,7 @@ public class MealDataServiceTests
                 }
             ]
         });
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
 
         // Act
         await service.RunMaintenanceAsync();
@@ -93,7 +93,7 @@ public class MealDataServiceTests
                 }
             ]
         });
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
 
         // Act
         await service.RunMaintenanceAsync();
@@ -110,7 +110,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
         await service.InitializeAsync();
         var category = await service.AddCategoryAsync("Breakfast");
 
@@ -140,7 +140,7 @@ public class MealDataServiceTests
                 }
             ]
         });
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
 
         // Act
         await service.EnsureLoadedAsync();
@@ -154,7 +154,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
         await service.EnsureLoadedAsync();
 
         // Act
@@ -169,7 +169,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
         await service.EnsureLoadedAsync();
 
         // Act
@@ -184,7 +184,7 @@ public class MealDataServiceTests
     {
         // Arrange
         var store = new InMemoryAppDataStore();
-        var service = new MealDataService(store);
+        var service = new MealDataService(store, new TestCurrentUserContext());
         await service.InitializeAsync();
         var category = await service.AddCategoryAsync("Breakfast");
         var link = await service.AddLinkAsync(category.Id, string.Empty, string.Empty, "https://example.com");

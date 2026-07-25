@@ -1,3 +1,5 @@
+using ManageFamilyMeals.Shared.Models;
+
 namespace ManageFamilyMeals.Api.Data.Entities;
 
 public sealed class MealLinkEntity
@@ -33,4 +35,12 @@ public sealed class MealLinkEntity
     public string? PreviewImageUrl { get; set; }
 
     public string? PreviewSiteName { get; set; }
+
+    public OwnerType OwnerType { get; set; }
+
+    public Guid? OwnerUserId { get; set; }
+
+    public Guid? OwnerGroupId { get; set; }
+
+    public byte[] RowVersion { get; set; } = [0, 0, 0, 0, 0, 0, 0, 1];
 }

@@ -11,6 +11,7 @@ public sealed class MealDataLoadMiddleware(RequestDelegate next)
     private static readonly PathString SettingsPath = "/api/settings";
 
     private static readonly PathString AuthPath = "/api/auth";
+    private static readonly PathString GroupsPath = "/api/groups";
 
     public async Task InvokeAsync(HttpContext context, IMealDataService mealDataService)
     {
@@ -20,7 +21,8 @@ public sealed class MealDataLoadMiddleware(RequestDelegate next)
             && !path.StartsWithSegments(BootstrapPath)
             && !path.StartsWithSegments(LinkPreviewPath)
             && !path.StartsWithSegments(SettingsPath)
-            && !path.StartsWithSegments(AuthPath))
+            && !path.StartsWithSegments(AuthPath)
+            && !path.StartsWithSegments(GroupsPath))
         {
             await mealDataService.EnsureLoadedAsync(context.RequestAborted);
         }

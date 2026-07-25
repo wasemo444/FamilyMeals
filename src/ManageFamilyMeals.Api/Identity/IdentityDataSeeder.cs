@@ -27,6 +27,20 @@ public sealed class IdentityDataSeeder(
         var existing = await userManager.FindByIdAsync(WellKnownUsers.DefaultUserId.ToString());
         if (existing is not null)
         {
+            if (string.IsNullOrEmpty(existing.PasswordHash))
+            {
+                var passwordResult = await userManager.AddPasswordAsync(existing, options.DefaultUserPassword);
+                if (!passwordResult.Succeeded)
+                {
+                    var errors = string.Join(", ", passwordResult.Errors.Select(error => error.Description));
+                    throw new InvalidOperationException($"Failed to set password for default user: {errors}");
+                }
+
+                logger.LogInformation(
+                    "Set password for default user {Email} created without credentials during migration.",
+                    options.DefaultUserEmail);
+            }
+
             return;
         }
 
@@ -58,8 +72,7 @@ public sealed class IdentityDataSeeder(
         }
 
         logger.LogInformation(
-            "Seeded default user {Email} with id {UserId}. " +
-            "E2 bridge: meal data has no ownership columns yet; all authenticated users share the global dataset until E3.",
+            "Seeded default user {Email} with id {UserId}.",
             options.DefaultUserEmail,
             WellKnownUsers.DefaultUserId);
     }

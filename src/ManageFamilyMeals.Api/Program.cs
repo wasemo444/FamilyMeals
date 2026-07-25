@@ -32,6 +32,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddManageFamilyMealsIdentity(builder.Configuration, builder.Environment);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
+builder.Services.AddScoped<ArchiveMaintenanceService>();
+builder.Services.AddScoped<OwnershipBackfillService>();
+builder.Services.AddExceptionHandler<ConcurrencyConflictExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -81,12 +87,14 @@ if (!app.Configuration.GetValue<bool>("Database:SkipInitialization"))
 
 app.UseCors("WebClient");
 app.UseRateLimiter();
+app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<MealDataLoadMiddleware>();
 
 app.MapAuthEndpoints();
 app.MapBootstrapEndpoints();
+app.MapGroupEndpoints();
 app.MapCategoryEndpoints();
 app.MapLinkEndpoints();
 app.MapSettingsEndpoints();

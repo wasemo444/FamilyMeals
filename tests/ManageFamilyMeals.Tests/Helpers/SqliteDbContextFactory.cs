@@ -1,6 +1,8 @@
 using ManageFamilyMeals.Api.Data;
 using ManageFamilyMeals.Api.Data.Configurations;
-using ManageFamilyMeals.Shared.Models;
+using ManageFamilyMeals.Api.Data.Entities;
+using ManageFamilyMeals.Api.Identity;
+using ManageFamilyMeals.Shared.Constants;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +21,7 @@ internal static class SqliteDbContextFactory
 
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
+        SeedDefaultUser(context);
 
         if (!context.AppSettings.Any(item => item.Id == AppSettingsEntityConfiguration.SingletonId))
         {
@@ -31,5 +34,25 @@ internal static class SqliteDbContextFactory
         }
 
         return context;
+    }
+
+    public static void SeedDefaultUser(AppDbContext context)
+    {
+        if (context.Users.Any(user => user.Id == WellKnownUsers.DefaultUserId))
+        {
+            return;
+        }
+
+        context.Users.Add(new ApplicationUser
+        {
+            Id = WellKnownUsers.DefaultUserId,
+            UserName = WellKnownUsers.DefaultUserEmail,
+            NormalizedUserName = WellKnownUsers.DefaultUserEmail.ToUpperInvariant(),
+            Email = WellKnownUsers.DefaultUserEmail,
+            NormalizedEmail = WellKnownUsers.DefaultUserEmail.ToUpperInvariant(),
+            EmailConfirmed = true,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        context.SaveChanges();
     }
 }

@@ -3,7 +3,7 @@ using ManageFamilyMeals.Shared.Models;
 
 namespace ManageFamilyMeals.Shared.Services;
 
-public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
+public sealed class MealDataService(IAppDataStore dataStore, ICurrentUserContext currentUser) : IMealDataService
 {
     private AppData _data = new();
     private bool _initialized;
@@ -74,9 +74,12 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
             throw new InvalidOperationException("Category name already exists.");
         }
 
+        var userId = currentUser.GetRequiredUserId();
         var category = new MealCategory
         {
-            Name = trimmedName
+            Name = trimmedName,
+            OwnerType = OwnerType.User,
+            OwnerUserId = userId
         };
 
         _data.Categories.Add(category);
@@ -159,18 +162,19 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
         string? note = null,
         CancellationToken cancellationToken = default)
     {
-        if (GetCategory(categoryId) is null)
-        {
-            throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
-        }
+        var category = GetCategory(categoryId)
+            ?? throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
 
+        var userId = currentUser.GetRequiredUserId();
         var link = new MealLink
         {
             CategoryId = categoryId,
             TitleEn = titleEn.Trim(),
             TitleAr = titleAr.Trim(),
             Url = url.Trim(),
-            Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
+            Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
+            OwnerType = OwnerType.User,
+            OwnerUserId = userId
         };
 
         _data.Links.Add(link);
@@ -255,16 +259,24 @@ public sealed class MealDataService(IAppDataStore dataStore) : IMealDataService
     {
         var threshold = ArchivePolicy.ExpirationThresholdUtc;
 
-        _data.Categories.RemoveAll(category =>
-            category.IsDeleted && category.DeletedAtUtc is not null && category.DeletedAtUtc < threshold);
+        var expiredCategoryIds = _data.Categories
+            .Where(category => category.IsDeleted
+                && category.DeletedAtUtc is not null
+                && category.DeletedAtUtc < threshold)
+            .Select(category => category.Id)
+            .ToHashSet();
 
         _data.Links.RemoveAll(link =>
-            link.IsDeleted && link.DeletedAtUtc is not null && link.DeletedAtUtc < threshold);
+            expiredCategoryIds.Contains(link.CategoryId)
+            || (link.IsDeleted && link.DeletedAtUtc is not null && link.DeletedAtUtc < threshold));
+
+        _data.Categories.RemoveAll(category => expiredCategoryIds.Contains(category.Id));
     }
 
     private async Task PersistAsync(CancellationToken cancellationToken)
     {
         await dataStore.SaveAsync(_data, cancellationToken);
+        _data = await dataStore.LoadAsync(cancellationToken) ?? new AppData();
         DataChanged?.Invoke();
     }
 }

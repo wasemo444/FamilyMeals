@@ -12,7 +12,7 @@ public class EfAppDataStoreTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create(nameof(LoadAsync_ReturnsEmptyAppDataWhenDatabaseIsEmpty));
-        var store = new EfAppDataStore(context);
+        var store = new EfAppDataStore(context, new TestCurrentUserContext());
 
         // Act
         var data = await store.LoadAsync();
@@ -29,7 +29,7 @@ public class EfAppDataStoreTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create(nameof(SaveAsync_PersistsCategoriesLinksAndSettings));
-        var store = new EfAppDataStore(context);
+        var store = new EfAppDataStore(context, new TestCurrentUserContext());
         var categoryId = Guid.NewGuid();
         var linkId = Guid.NewGuid();
         var payload = new AppData
@@ -69,7 +69,7 @@ public class EfAppDataStoreTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create(nameof(SaveAsync_RemovesEntitiesMissingFromPayload));
-        var store = new EfAppDataStore(context);
+        var store = new EfAppDataStore(context, new TestCurrentUserContext());
         var categoryId = Guid.NewGuid();
         await store.SaveAsync(new AppData
         {
@@ -90,7 +90,7 @@ public class EfAppDataStoreTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create(nameof(SaveAsync_UpdatesExistingRowsInsteadOfDuplicating));
-        var store = new EfAppDataStore(context);
+        var store = new EfAppDataStore(context, new TestCurrentUserContext());
         var categoryId = Guid.NewGuid();
         await store.SaveAsync(new AppData
         {
