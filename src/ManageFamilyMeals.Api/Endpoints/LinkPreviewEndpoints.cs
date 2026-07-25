@@ -10,7 +10,8 @@ public static class LinkPreviewEndpoints
         {
             var preview = await service.FetchAsync(url, cancellationToken);
             return preview is null ? Results.NotFound() : Results.Ok(preview);
-        });
+        })
+        .RequireAuthorization();
 
         endpoints.MapGet("/api/link-preview/image", async (string url, LinkPreviewService service, CancellationToken cancellationToken) =>
         {
@@ -18,7 +19,8 @@ public static class LinkPreviewEndpoints
             return image is null
                 ? Results.NotFound()
                 : Results.File(image.Value.Bytes, image.Value.ContentType);
-        });
+        })
+        .RequireAuthorization();
 
         return endpoints;
     }

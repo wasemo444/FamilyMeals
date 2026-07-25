@@ -10,7 +10,9 @@ public static class SettingsEndpoints
 {
     public static IEndpointRouteBuilder MapSettingsEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/settings", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+        var group = endpoints.MapGroup("/api/settings").RequireAuthorization();
+
+        group.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
         {
             var settings = await dbContext.AppSettings
                 .AsNoTracking()
@@ -19,7 +21,7 @@ public static class SettingsEndpoints
             return Results.Ok(settings?.ToModel() ?? new AppSettings());
         });
 
-        endpoints.MapPut("/api/settings", async (
+        group.MapPut("/", async (
             AppSettings request,
             AppDbContext dbContext,
             CancellationToken cancellationToken) =>

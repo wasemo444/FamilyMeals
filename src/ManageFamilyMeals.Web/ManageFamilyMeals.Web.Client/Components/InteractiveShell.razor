@@ -1,21 +1,33 @@
 @inherits LocalizedComponentBase
 
-@if (IsReady)
-{
-    <CascadingValue Value="_cultureVersion" Name="CultureVersion">
-        <header class="app-header">
-            <a class="brand" href="/">@L["AppTitle"]</a>
-            <nav class="app-nav">
-                <a href="/">@L["Home"]</a>
-                <a href="/archive">@L["Archive"]</a>
-            </nav>
-            <LanguageSwitcher />
-        </header>
+<CascadingValue Value="_cultureVersion" Name="CultureVersion">
+    <header class="app-header" data-testid="app-header">
+        <a class="brand" href="/">@L["AppTitle"]</a>
+        <nav class="app-nav">
+            <a href="/">@L["Home"]</a>
+            <a href="/archive">@L["Archive"]</a>
+        </nav>
+        <div class="app-auth">
+            <AuthorizeView>
+                <Authorized>
+                    <span class="muted">@GetDisplayName(context.User)</span>
+                    <button class="btn" type="button" data-testid="logout-button" @onclick="LogoutAsync">@L["Logout"]</button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login">@L["Login"]</a>
+                    <a href="/register">@L["Register"]</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+        <LanguageSwitcher />
+    </header>
 
+    @if (IsReady)
+    {
         @ChildContent
-    </CascadingValue>
-}
-else
-{
-    <p class="muted loading">@L["LoadingPreview"]</p>
-}
+    }
+    else
+    {
+        <p class="muted loading">@L["LoadingPreview"]</p>
+    }
+</CascadingValue>

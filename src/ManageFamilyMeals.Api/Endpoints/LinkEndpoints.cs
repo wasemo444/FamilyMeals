@@ -7,19 +7,22 @@ public static class LinkEndpoints
 {
     public static IEndpointRouteBuilder MapLinkEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/categories/{categoryId:guid}/links", (Guid categoryId, IMealDataService dataService) =>
+        var categoryLinks = endpoints.MapGroup("/api/categories/{categoryId:guid}/links").RequireAuthorization();
+        var links = endpoints.MapGroup("/api/links").RequireAuthorization();
+
+        categoryLinks.MapGet("/", (Guid categoryId, IMealDataService dataService) =>
             Results.Ok(dataService.GetActiveLinks(categoryId)));
 
-        endpoints.MapGet("/api/categories/{categoryId:guid}/links/favorites", (Guid categoryId, IMealDataService dataService) =>
+        categoryLinks.MapGet("/favorites", (Guid categoryId, IMealDataService dataService) =>
             Results.Ok(dataService.GetFavoriteLinks(categoryId)));
 
-        endpoints.MapGet("/api/categories/{categoryId:guid}/links/archived", (Guid categoryId, IMealDataService dataService) =>
+        categoryLinks.MapGet("/archived", (Guid categoryId, IMealDataService dataService) =>
             Results.Ok(dataService.GetArchivedLinks(categoryId)));
 
-        endpoints.MapGet("/api/links/archived", (IMealDataService dataService) =>
+        links.MapGet("/archived", (IMealDataService dataService) =>
             Results.Ok(dataService.GetAllArchivedLinks()));
 
-        endpoints.MapPost("/api/categories/{categoryId:guid}/links", async (
+        categoryLinks.MapPost("/", async (
             Guid categoryId,
             CreateLinkRequest request,
             IMealDataService dataService,
@@ -46,26 +49,26 @@ public static class LinkEndpoints
             return Results.Created($"/api/links/{link.Id}", link);
         });
 
-        endpoints.MapPost("/api/links/{id:guid}/archive", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
+        links.MapPost("/{id:guid}/archive", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
         {
             var archived = await dataService.ArchiveLinkAsync(id, cancellationToken);
             return archived ? Results.NoContent() : Results.NotFound();
         });
 
-        endpoints.MapPost("/api/links/{id:guid}/restore", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
+        links.MapPost("/{id:guid}/restore", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
         {
             var restored = await dataService.RestoreLinkAsync(id, cancellationToken);
             return restored ? Results.NoContent() : Results.NotFound();
         });
 
-        endpoints.MapPost("/api/links/{id:guid}/favorite", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
+        links.MapPost("/{id:guid}/favorite", async (Guid id, IMealDataService dataService, CancellationToken cancellationToken) =>
         {
             await dataService.ToggleLinkFavoriteAsync(id, cancellationToken);
             var link = dataService.GetLink(id);
             return link is null ? Results.NotFound() : Results.Ok(link);
         });
 
-        endpoints.MapPut("/api/links/{id:guid}/preview", async (
+        links.MapPut("/{id:guid}/preview", async (
             Guid id,
             LinkPreviewData preview,
             IMealDataService dataService,

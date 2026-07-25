@@ -11,6 +11,8 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
 
     public event Action? DataChanged;
 
+    public event Func<Task>? Unauthorized;
+
     private HttpClient Http => httpClientFactory.CreateClient("MealDataApi");
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -20,8 +22,12 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             return;
         }
 
-        await ReloadFromServerAsync(cancellationToken);
+        var response = await Http.GetAsync("/api/bootstrap", cancellationToken);
+        await EnsureAuthorizedAsync(response);
+        response.EnsureSuccessStatusCode();
+        _cache = await response.Content.ReadFromJsonAsync<AppData>(cancellationToken) ?? new AppData();
         _initialized = true;
+        NotifyChanged();
     }
 
     public Task EnsureLoadedAsync(CancellationToken cancellationToken = default) =>
@@ -66,6 +72,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task<MealCategory> AddCategoryAsync(string name, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsJsonAsync("/api/categories", new { name }, cancellationToken);
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         var category = await response.Content.ReadFromJsonAsync<MealCategory>(cancellationToken)
             ?? throw new InvalidOperationException("Failed to deserialize created category.");
@@ -82,6 +89,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             return false;
         }
 
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
         return true;
@@ -95,6 +103,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             return false;
         }
 
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
         return true;
@@ -103,6 +112,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task ToggleCategoryFavoriteAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/categories/{categoryId}/favorite", null, cancellationToken);
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
     }
@@ -137,6 +147,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             throw new KeyNotFoundException($"Category '{categoryId}' was not found.");
         }
 
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         var link = await response.Content.ReadFromJsonAsync<MealLink>(cancellationToken)
             ?? throw new InvalidOperationException("Failed to deserialize created link.");
@@ -153,6 +164,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             return false;
         }
 
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
         return true;
@@ -166,6 +178,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
             return false;
         }
 
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
         return true;
@@ -174,6 +187,7 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task ToggleLinkFavoriteAsync(Guid linkId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/links/{linkId}/favorite", null, cancellationToken);
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
     }
@@ -181,14 +195,33 @@ public sealed class ApiMealDataService(IHttpClientFactory httpClientFactory) : I
     public async Task UpdateLinkPreviewAsync(Guid linkId, LinkPreviewData preview, CancellationToken cancellationToken = default)
     {
         var response = await Http.PutAsJsonAsync($"/api/links/{linkId}/preview", preview, cancellationToken);
+        await EnsureAuthorizedAsync(response);
         response.EnsureSuccessStatusCode();
         await ReloadFromServerAsync(cancellationToken);
     }
 
     private async Task ReloadFromServerAsync(CancellationToken cancellationToken)
     {
-        _cache = await Http.GetFromJsonAsync<AppData>("/api/bootstrap", cancellationToken) ?? new AppData();
+        var response = await Http.GetAsync("/api/bootstrap", cancellationToken);
+        await EnsureAuthorizedAsync(response);
+        response.EnsureSuccessStatusCode();
+        _cache = await response.Content.ReadFromJsonAsync<AppData>(cancellationToken) ?? new AppData();
         NotifyChanged();
+    }
+
+    private async Task EnsureAuthorizedAsync(HttpResponseMessage response)
+    {
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            if (Unauthorized is not null)
+            {
+                await Unauthorized.Invoke();
+            }
+
+            throw new UnauthorizedAccessException("Authentication is required.");
+        }
+
+        await Task.CompletedTask;
     }
 
     private void NotifyChanged() => DataChanged?.Invoke();

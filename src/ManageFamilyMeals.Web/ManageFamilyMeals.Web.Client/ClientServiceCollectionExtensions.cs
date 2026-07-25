@@ -9,20 +9,33 @@ public static class ClientServiceCollectionExtensions
 {
     public static IServiceCollection AddManageFamilyMealsClientServices(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        string? baseAddress = null,
+        Action<IHttpClientBuilder>? configureMealDataApi = null)
     {
         services.AddLocalization();
         services.AddSingleton<CultureState>();
         services.AddSingleton<ILocalizedText, LocalizedText>();
 
-        var apiBaseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:5280";
+        var configuredBaseUrl = configuration["ApiBaseUrl"];
+        var apiBaseUrl = string.IsNullOrWhiteSpace(configuredBaseUrl)
+            ? baseAddress ?? "http://localhost:5084"
+            : configuredBaseUrl;
 
-        services.AddHttpClient("MealDataApi", client =>
+        if (!apiBaseUrl.EndsWith('/'))
         {
-            client.BaseAddress = new Uri(apiBaseUrl);
+            apiBaseUrl += "/";
+        }
+
+        var mealDataApiBuilder = services.AddHttpClient("MealDataApi", client =>
+        {
+            client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
         });
 
+        configureMealDataApi?.Invoke(mealDataApiBuilder);
+
         services.AddScoped<IMealDataService, ApiMealDataService>();
+        services.AddScoped<IAuthClient, AuthClient>();
         services.AddScoped<CultureService>();
         services.AddScoped<ILinkPreviewClient, LinkPreviewClient>();
 

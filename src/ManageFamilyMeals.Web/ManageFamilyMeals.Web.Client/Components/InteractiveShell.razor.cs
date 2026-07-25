@@ -1,6 +1,8 @@
-using ManageFamilyMeals.Shared.Models;
+using System.Security.Claims;
+using ManageFamilyMeals.Shared.Auth;
 using ManageFamilyMeals.Shared.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ManageFamilyMeals.Web.Client.Components;
 
@@ -12,23 +14,133 @@ public partial class InteractiveShell : IDisposable
     [Inject]
     private IMealDataService DataService { get; set; } = default!;
 
+    [Inject]
+    private IAuthClient AuthClient { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
     protected bool IsReady { get; private set; }
 
+    protected AuthUserInfo? _currentUser;
+
     private bool _initialized;
+    private bool _cultureInitialized;
     private int _cultureVersion;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private static string GetDisplayName(ClaimsPrincipal user) =>
+        user.FindFirst("DisplayName")?.Value
+        ?? user.FindFirst(ClaimTypes.Name)?.Value
+        ?? user.FindFirst(ClaimTypes.Email)?.Value
+        ?? user.Identity?.Name
+        ?? string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender || _initialized)
+        if (DataService is ApiMealDataService apiDataService)
+        {
+            apiDataService.Unauthorized += RedirectToLoginAsync;
+        }
+
+        if (_initialized)
         {
             return;
         }
 
-        await DataService.InitializeAsync();
-        await CultureService.InitializeAsync(DataService.GetSettings());
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            try
+            {
+                _currentUser = await AuthClient.GetCurrentUserAsync() ?? CreateUserFromClaims(authState.User);
+                await DataService.InitializeAsync();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                if (RendererInfo.IsInteractive)
+                {
+                    await RedirectToLoginAsync();
+                    return;
+                }
+            }
+        }
+        else
+        {
+            IsReady = true;
+            _initialized = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_cultureInitialized || _initialized)
+        {
+            return;
+        }
+
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await CultureService.InitializeAsync(DataService.GetSettings());
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await RedirectToLoginAsync();
+            return;
+        }
+
+        _cultureInitialized = true;
         IsReady = true;
         _initialized = true;
         StateHasChanged();
+    }
+
+    private static AuthUserInfo CreateUserFromClaims(ClaimsPrincipal user) => new()
+    {
+        Email = user.FindFirst(ClaimTypes.Email)?.Value
+            ?? user.FindFirst("email")?.Value
+            ?? user.Identity?.Name
+            ?? string.Empty,
+        DisplayName = user.FindFirst("DisplayName")?.Value
+            ?? user.FindFirst(ClaimTypes.Name)?.Value
+            ?? user.Identity?.Name
+            ?? string.Empty
+    };
+
+    private Task RedirectToLoginAsync()
+    {
+        var returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            returnUrl = "/";
+        }
+
+        NavigationManager.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+        return Task.CompletedTask;
+    }
+
+    private Task LogoutAsync()
+    {
+        return LogoutInternalAsync();
+    }
+
+    private async Task LogoutInternalAsync()
+    {
+        await AuthClient.LogoutAsync();
+        NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 
     protected override void OnCultureChanged()
@@ -39,6 +151,11 @@ public partial class InteractiveShell : IDisposable
 
     public new void Dispose()
     {
+        if (DataService is ApiMealDataService apiDataService)
+        {
+            apiDataService.Unauthorized -= RedirectToLoginAsync;
+        }
+
         base.Dispose();
     }
 }

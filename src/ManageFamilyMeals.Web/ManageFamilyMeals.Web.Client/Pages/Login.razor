@@ -1,0 +1,44 @@
+@page "/login"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["Login"]</PageTitle>
+
+<section class="page auth-page">
+    <header class="page-header">
+        <h1>@L["Login"]</h1>
+    </header>
+
+    <section class="panel">
+        <form method="post" action="/account/login">
+            @if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+            }
+            <div class="form-row">
+                <input class="input" data-testid="login-email" name="email" value="@EmailValue" placeholder="@L["Email"]" autocomplete="username" />
+            </div>
+            <div class="form-row">
+                <input class="input" data-testid="login-password" name="password" type="password" placeholder="@L["Password"]" autocomplete="current-password" />
+            </div>
+            <div class="form-row">
+                <label>
+                    <input type="checkbox" name="rememberMe" value="true" checked="@RememberMeChecked" />
+                    @L["RememberMe"]
+                </label>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_success))
+            {
+                <p class="success" data-testid="login-success">@_success</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="error" data-testid="login-error">@_error</p>
+            }
+            <div class="form-row">
+                <button class="btn primary" type="submit" data-testid="login-submit">@L["Login"]</button>
+                <a class="btn" href="/register">@L["Register"]</a>
+            </div>
+        </form>
+    </section>
+</section>

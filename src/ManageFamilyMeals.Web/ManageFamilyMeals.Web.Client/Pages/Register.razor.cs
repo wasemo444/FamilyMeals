@@ -1,0 +1,58 @@
+using ManageFamilyMeals.Shared.Auth;
+using ManageFamilyMeals.Shared.Services;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
+
+namespace ManageFamilyMeals.Web.Client.Pages;
+
+public partial class Register
+{
+    [Inject]
+    private IAuthClient AuthClient { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+
+    private readonly RegisterRequest _form = new();
+    private string? _error;
+    private IReadOnlyList<string> _validationErrors = [];
+
+    private async Task RegisterAsync()
+    {
+        _error = null;
+        _validationErrors = [];
+
+        if (!string.Equals(_form.Password, _form.ConfirmPassword, StringComparison.Ordinal))
+        {
+            _validationErrors = [L["PasswordsDoNotMatch"]];
+            return;
+        }
+
+        try
+        {
+            await AuthClient.RegisterAsync(_form);
+            var email = Uri.EscapeDataString(_form.Email.Trim());
+            var requireConfirmedEmail = Configuration.GetValue("Auth:RequireConfirmedEmail", defaultValue: true);
+            var confirmEmailQuery = requireConfirmedEmail ? "&confirmEmail=true" : string.Empty;
+            NavigationManager.NavigateTo(
+                $"/login?registered=true{confirmEmailQuery}&email={email}",
+                forceLoad: true);
+        }
+        catch (AuthValidationException exception)
+        {
+            _validationErrors = exception.Errors.SelectMany(entry => entry.Value).ToArray();
+            _error = AuthValidationMessages.FormatErrors(exception.Errors);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["RegisterFailed"];
+        }
+        catch (Exception)
+        {
+            _error = L["RegisterFailed"];
+        }
+    }
+}

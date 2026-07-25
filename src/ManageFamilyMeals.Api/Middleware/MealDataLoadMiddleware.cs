@@ -10,6 +10,8 @@ public sealed class MealDataLoadMiddleware(RequestDelegate next)
     private static readonly PathString LinkPreviewPath = "/api/link-preview";
     private static readonly PathString SettingsPath = "/api/settings";
 
+    private static readonly PathString AuthPath = "/api/auth";
+
     public async Task InvokeAsync(HttpContext context, IMealDataService mealDataService)
     {
         var path = context.Request.Path;
@@ -17,7 +19,8 @@ public sealed class MealDataLoadMiddleware(RequestDelegate next)
         if (path.StartsWithSegments(ApiPrefix)
             && !path.StartsWithSegments(BootstrapPath)
             && !path.StartsWithSegments(LinkPreviewPath)
-            && !path.StartsWithSegments(SettingsPath))
+            && !path.StartsWithSegments(SettingsPath)
+            && !path.StartsWithSegments(AuthPath))
         {
             await mealDataService.EnsureLoadedAsync(context.RequestAborted);
         }

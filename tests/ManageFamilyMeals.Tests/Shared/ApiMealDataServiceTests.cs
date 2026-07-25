@@ -1,3 +1,4 @@
+using System.Net;
 using ManageFamilyMeals.Shared.Models;
 using ManageFamilyMeals.Shared.Services;
 using ManageFamilyMeals.Tests.Helpers;
@@ -141,5 +142,20 @@ public class ApiMealDataServiceTests
 
         // Assert
         Assert.Equal("ar", service.GetSettings().CultureCode);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WhenUnauthorized_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange
+        var handler = new FakeHttpMessageHandler()
+            .MapGet("/api/bootstrap", new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        var service = new ApiMealDataService(new FakeHttpClientFactory(handler));
+
+        // Act
+        var act = () => service.InitializeAsync();
+
+        // Assert
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 }

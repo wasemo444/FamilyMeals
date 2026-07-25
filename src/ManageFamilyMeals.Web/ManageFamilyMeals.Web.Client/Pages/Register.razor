@@ -1,0 +1,46 @@
+@page "/register"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["Register"]</PageTitle>
+
+<section class="page auth-page">
+    <header class="page-header">
+        <h1>@L["Register"]</h1>
+    </header>
+
+    <section class="panel">
+        <EditForm Model="_form" OnValidSubmit="RegisterAsync">
+            <div class="form-row">
+                <InputText class="input" data-testid="register-display-name" @bind-Value="_form.DisplayName" placeholder="@L["DisplayName"]" />
+            </div>
+            <div class="form-row">
+                <InputText class="input" data-testid="register-email" @bind-Value="_form.Email" placeholder="@L["Email"]" autocomplete="username" />
+            </div>
+            <div class="form-row">
+                <InputText class="input" data-testid="register-password" type="password" @bind-Value="_form.Password" placeholder="@L["Password"]" autocomplete="new-password" />
+            </div>
+            <div class="form-row">
+                <InputText class="input" data-testid="register-confirm-password" type="password" @bind-Value="_form.ConfirmPassword" placeholder="@L["ConfirmPassword"]" autocomplete="new-password" />
+            </div>
+            @if (_validationErrors.Count > 0)
+            {
+                <ul class="error" data-testid="register-validation-errors">
+                    @foreach (var validationError in _validationErrors)
+                    {
+                        <li>@validationError</li>
+                    }
+                </ul>
+            }
+            else if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="error" data-testid="register-error">@_error</p>
+            }
+            <div class="form-row">
+                <button class="btn primary" type="submit" data-testid="register-submit">@L["Register"]</button>
+                <a class="btn" href="/login">@L["Login"]</a>
+            </div>
+        </EditForm>
+    </section>
+</section>
