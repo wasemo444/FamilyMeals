@@ -1,0 +1,136 @@
+using LinkNest.Shared.Models;
+using LinkNest.Shared.Services;
+
+namespace LinkNest.Api.Endpoints;
+
+/// <summary>
+/// CRUD-style minimal API routes for meal categories, including archive, restore, and favorite actions.
+/// </summary>
+/// <remarks>
+/// All routes require authentication. Ownership violations are surfaced as <c>404 Not Found</c>
+/// (not <c>403 Forbidden</c>) to avoid leaking existence of resources the caller cannot access.
+/// Duplicate names within the same owner scope return <c>409 Conflict</c>.
+/// </remarks>
+public static class CategoryEndpoints
+{
+    /// <summary>
+    /// Maps <c>/api/categories</c> endpoints for listing, creating, and mutating categories.
+    /// </summary>
+    /// <param name="endpoints">The application endpoint builder.</param>
+    /// <returns>The same <paramref name="endpoints"/> instance for chaining.</returns>
+    public static IEndpointRouteBuilder MapCategoryEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup("/api/categories").RequireAuthorization();
+
+        group.MapGet("/", (HomeContentFilter? filter, IContentDataService dataService) =>
+            Results.Ok(dataService.GetActiveCategories(filter ?? HomeContentFilter.All)));
+
+        group.MapGet("/favorites", (HomeContentFilter? filter, IContentDataService dataService) =>
+            Results.Ok(dataService.GetFavoriteCategories(filter ?? HomeContentFilter.All)));
+
+        group.MapGet("/archived", (IContentDataService dataService) => Results.Ok(dataService.GetArchivedCategories()));
+
+        group.MapGet("/name-available", async (
+            string name,
+            OwnerType? ownerType,
+            Guid? ownerGroupId,
+            IContentDataService dataService,
+            IOwnershipAuthorization ownershipAuthorization,
+            CancellationToken cancellationToken) =>
+        {
+            if (!ContentOwner.TryResolve(ownerType, ownerGroupId, out var owner, out var error))
+            {
+                return Results.BadRequest(new { error });
+            }
+
+            try
+            {
+                await ownershipAuthorization.ValidateCreateOwnerAsync(owner, cancellationToken);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(new { available = !dataService.IsCategoryNameTaken(name, owner) });
+        });
+
+        group.MapGet("/{id:guid}", (Guid id, IContentDataService dataService) =>
+        {
+            var category = dataService.GetCategory(id);
+            return category is null ? Results.NotFound() : Results.Ok(category);
+        });
+
+        group.MapPost("/", async (CreateCategoryRequest request, IContentDataService dataService, CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Results.BadRequest(new { error = "Name is required." });
+            }
+
+            if (!ContentOwner.TryResolve(request.OwnerType, request.OwnerGroupId, out var owner, out var ownerError))
+            {
+                return Results.BadRequest(new { error = ownerError });
+            }
+
+            if (dataService.IsCategoryNameTaken(request.Name, owner))
+            {
+                return Results.Conflict(new { error = "Category name already exists." });
+            }
+
+            try
+            {
+                var category = await dataService.AddCategoryAsync(request.Name, owner, cancellationToken);
+                return Results.Created($"/api/categories/{category.Id}", category);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
+        });
+
+        group.MapPost("/{id:guid}/archive", async (Guid id, IContentDataService dataService, CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var archived = await dataService.ArchiveCategoryAsync(id, cancellationToken);
+                return archived ? Results.NoContent() : Results.NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
+        });
+
+        group.MapPost("/{id:guid}/restore", async (Guid id, IContentDataService dataService, CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var restored = await dataService.RestoreCategoryAsync(id, cancellationToken);
+                return restored ? Results.NoContent() : Results.NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
+        });
+
+        group.MapPost("/{id:guid}/favorite", async (Guid id, IContentDataService dataService, CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                await dataService.ToggleCategoryFavoriteAsync(id, cancellationToken);
+                var category = dataService.GetCategory(id);
+                return category is null ? Results.NotFound() : Results.Ok(category);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.NotFound();
+            }
+        });
+
+        return endpoints;
+    }
+
+    private sealed record CreateCategoryRequest(string Name, OwnerType? OwnerType = null, Guid? OwnerGroupId = null);
+}

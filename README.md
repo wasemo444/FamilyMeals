@@ -126,13 +126,13 @@ docker exec -it newdietapp-postgres-1 psql -U linknest -d linknest
 
 Main tables: `meal_categories`, `meal_links` (legacy names kept for DB compatibility), `app_settings`.
 
-## Upgrading from Manage Family Meals
+## Upgrading from LinkNest
 
 If you have an existing dev database or Docker volume from before the LinkNest rebrand:
 
-1. **PostgreSQL:** `docker-compose.yml` now uses database/user `linknest` and volume `linknest_pgdata`. Either run `docker compose down -v && docker compose up -d` for a fresh database, or point connection strings at your old `managefamilymeals` database and user `mfm` until you migrate data.
+1. **PostgreSQL:** `docker-compose.yml` now uses database/user `linknest` and volume `linknest_pgdata`. Either run `docker compose down -v && docker compose up -d` for a fresh database, or point connection strings at your old `linknest` database and user `mfm` until you migrate data.
 2. **Auth:** Cookie name and Data Protection application name changed — all users must **log in again** after upgrading.
-3. **Default dev user:** On startup the seeder updates the well-known default user to `dev@linknest.local` if it still has `dev@mfm.local`.
+3. **Default dev user:** On startup the seeder updates the well-known default user to `dev@linknest.local` if it still has `dev@linknest.local`.
 4. **Migrations:** Start the API once so EF applies any pending migrations before serving traffic.
 5. **C# domain types:** `ContentCategory`, `SavedLink`, and `IContentDataService` replace the old `Meal*` names; HTTP JSON shape is unchanged (`Categories` / `Links`).
 

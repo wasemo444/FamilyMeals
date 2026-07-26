@@ -1,11 +1,11 @@
-﻿# Default ignored files
+# Default ignored files
 /shelf/
 /workspace.xml
 # Rider ignored files
 /modules.xml
 /contentModel.xml
 /projectSettingsUpdater.xml
-/.idea.ManageFamilyMeals.iml
+/.idea.LinkNest.iml
 # Editor-based HTTP Client requests
 /httpRequests/
 # Ignored default folder with query files

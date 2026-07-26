@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/LinkNest.Tests/LinkNest.Tests.csproj" />
+    <Project Path="tests/LinkNest.E2E.Tests/LinkNest.E2E.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/LinkNest.Api/LinkNest.Api.csproj" />
+    <Project Path="src/LinkNest.Shared/LinkNest.Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/LinkNest.Web/">
+    <Project Path="src/LinkNest.Web/LinkNest.Web.Client/LinkNest.Web.Client.csproj" />
+    <Project Path="src/LinkNest.Web/LinkNest.Web/LinkNest.Web.csproj" />
+  </Folder>
+</Solution>
