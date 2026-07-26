@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LinkNest.Api.Services;
 
 /// <summary>
-/// Enforces group membership rules: one group per user, member cap, and admin/member authorization.
+/// Enforces group membership rules: member cap and admin/member authorization.
 /// </summary>
 public sealed class GroupMembershipService(AppDbContext dbContext)
 {

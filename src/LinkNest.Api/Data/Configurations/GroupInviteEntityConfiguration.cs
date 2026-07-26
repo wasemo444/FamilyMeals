@@ -27,6 +27,11 @@ public sealed class GroupInviteEntityConfiguration : IEntityTypeConfiguration<Gr
 
         builder.HasIndex(invite => new { invite.GroupId, invite.InviteeUserId, invite.Status });
 
+        builder.HasIndex(invite => new { invite.GroupId, invite.InviteeUserId })
+            .IsUnique()
+            .HasFilter("\"Status\" = 0")
+            .HasDatabaseName("IX_group_invites_GroupId_InviteeUserId_pending_unique");
+
         builder.HasOne(invite => invite.Group)
             .WithMany(group => group.Invites)
             .HasForeignKey(invite => invite.GroupId)

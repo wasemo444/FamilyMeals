@@ -100,6 +100,11 @@ public static class LocalizationCatalog
             ["AcceptInvite"] = "Accept",
             ["DeclineInvite"] = "Decline",
             ["YourGroup"] = "Your group",
+            ["YourGroups"] = "Your groups",
+            ["GroupsNav"] = "Groups",
+            ["GroupsPageTitle"] = "Groups",
+            ["GroupsPageDescription"] = "Create groups, accept invites, and manage members.",
+            ["ManageGroupsLink"] = "Manage groups",
             ["ManageMembers"] = "Manage members",
             ["UserAlreadyInGroup"] = "You are already a member of a group.",
             ["GroupMembersTitle"] = "Members · {0}",
@@ -123,6 +128,8 @@ public static class LocalizationCatalog
             ["InviteAlreadyPending"] = "An invite is already pending for that user.",
             ["RemoveMemberFailed"] = "Could not remove member.",
             ["LeaveGroupFailed"] = "Could not leave group.",
+            ["CannotLeaveAsLastAdmin"] = "You are the only admin. Remove other members before leaving.",
+            ["InviteAcceptFailed"] = "Could not accept the invite.",
         },
         ["ar"] = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -212,6 +219,11 @@ public static class LocalizationCatalog
             ["AcceptInvite"] = "قبول",
             ["DeclineInvite"] = "رفض",
             ["YourGroup"] = "مجموعتك",
+            ["YourGroups"] = "مجموعاتك",
+            ["GroupsNav"] = "المجموعات",
+            ["GroupsPageTitle"] = "المجموعات",
+            ["GroupsPageDescription"] = "أنشئ مجموعات، واقبل الدعوات، وأدر الأعضاء.",
+            ["ManageGroupsLink"] = "إدارة المجموعات",
             ["ManageMembers"] = "إدارة الأعضاء",
             ["UserAlreadyInGroup"] = "أنت عضو في مجموعة بالفعل.",
             ["GroupMembersTitle"] = "الأعضاء · {0}",
@@ -235,6 +247,8 @@ public static class LocalizationCatalog
             ["InviteAlreadyPending"] = "توجد دعوة معلّقة بالفعل لذلك المستخدم.",
             ["RemoveMemberFailed"] = "تعذّرت إزالة العضو.",
             ["LeaveGroupFailed"] = "تعذّرت مغادرة المجموعة.",
+            ["CannotLeaveAsLastAdmin"] = "أنت المسؤول الوحيد. أزل الأعضاء الآخرين قبل المغادرة.",
+            ["InviteAcceptFailed"] = "تعذّر قبول الدعوة.",
         },
     };
 

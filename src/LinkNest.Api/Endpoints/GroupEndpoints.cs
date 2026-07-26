@@ -38,7 +38,6 @@ public static class GroupEndpoints
     private static async Task<IResult> CreateGroupAsync(
         CreateGroupRequest request,
         AppDbContext dbContext,
-        GroupMembershipService membershipService,
         ICurrentUserContext currentUser,
         CancellationToken cancellationToken)
     {
@@ -54,12 +53,6 @@ public static class GroupEndpoints
         }
 
         var userId = currentUser.GetRequiredUserId();
-
-        if (await membershipService.IsUserInAnyGroupAsync(userId, cancellationToken))
-        {
-            return Results.BadRequest(new { code = "user_in_group", error = "You are already a member of a group." });
-        }
-
         var now = DateTime.UtcNow;
 
         for (var attempt = 0; attempt < 5; attempt++)

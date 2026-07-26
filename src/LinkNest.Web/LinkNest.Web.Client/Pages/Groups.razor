@@ -1,0 +1,76 @@
+@page "/groups"
+@rendermode InteractiveAuto
+@attribute [Authorize]
+@inherits LocalizedComponentBase
+@using LinkNest.Shared.Models
+
+<PageTitle>@L["GroupsPageTitle"]</PageTitle>
+
+<InteractiveShell>
+<section class="page">
+    <a class="back-link" href="/">← @L["Home"]</a>
+
+    <header class="page-header">
+        <h1>@L["GroupsPageTitle"]</h1>
+        <p class="muted">@L["GroupsPageDescription"]</p>
+    </header>
+
+    @if (_pendingInvites.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["PendingInvites"]</h2>
+            @foreach (var invite in _pendingInvites)
+            {
+                <div class="invite-row">
+                    <p>@L.Format("InvitePrompt", invite.GroupName, invite.InvitedByDisplayName)</p>
+                    <div class="form-row">
+                        <button class="btn primary" type="button" @onclick="() => AcceptInviteAsync(invite.Id)">@L["AcceptInvite"]</button>
+                        <button class="btn" type="button" @onclick="() => DeclineInviteAsync(invite.Id)">@L["DeclineInvite"]</button>
+                    </div>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_inviteActionError))
+            {
+                <p class="error">@_inviteActionError</p>
+            }
+        </section>
+    }
+
+    <section class="panel">
+        <h2>@L["CreateGroup"]</h2>
+        <EditForm Model="_groupForm" OnValidSubmit="CreateGroupAsync">
+            <div class="form-row">
+                <InputText class="input" @bind-Value="_groupForm.Name" placeholder="@L["GroupName"]" />
+                <button class="btn primary" type="submit">@L["Create"]</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_groupError))
+            {
+                <p class="error">@_groupError</p>
+            }
+        </EditForm>
+    </section>
+
+    <section class="panel">
+        <h2>@L["YourGroups"]</h2>
+        @if (_groups.Count == 0)
+        {
+            <p class="muted">@L["NoGroupsYet"]</p>
+        }
+        else
+        {
+            <ul class="member-list">
+                @foreach (var group in _groups)
+                {
+                    <li class="member-row">
+                        <div>
+                            <strong>@group.Name</strong>
+                            <span class="role-badge">@RoleLabel(group.CurrentUserRole)</span>
+                        </div>
+                        <a class="btn" href="/group/@group.Id">@L["ManageMembers"]</a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</section>
+</InteractiveShell>

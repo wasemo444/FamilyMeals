@@ -79,7 +79,7 @@ public sealed class GroupClient(IHttpClientFactory httpClientFactory) : IGroupSe
     public async Task LeaveGroupAsync(Guid groupId, CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync($"/api/groups/{groupId}/leave", null, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrBadRequestAsync(response, cancellationToken);
     }
 
     private static async Task EnsureSuccessOrBadRequestAsync(

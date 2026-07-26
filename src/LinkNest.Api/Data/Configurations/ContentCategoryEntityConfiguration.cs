@@ -12,6 +12,7 @@ public sealed class ContentCategoryEntityConfiguration : IEntityTypeConfiguratio
 {
     public void Configure(EntityTypeBuilder<ContentCategoryEntity> builder)
     {
+        // Legacy table name retained for existing PostgreSQL databases (E3 migration).
         builder.ToTable("meal_categories", tableBuilder =>
             tableBuilder.HasCheckConstraint("CK_meal_categories_owner", OwnershipConstraintSql.CategoryOwnerCheck));
 

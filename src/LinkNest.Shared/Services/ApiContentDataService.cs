@@ -49,6 +49,10 @@ public sealed class ApiContentDataService(IHttpClientFactory httpClientFactory) 
         InitializeAsync(cancellationToken);
 
     /// <inheritdoc />
+    public Task ReloadAsync(CancellationToken cancellationToken = default) =>
+        ReloadFromServerAsync(cancellationToken);
+
+    /// <inheritdoc />
     public Task RunMaintenanceAsync(CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 

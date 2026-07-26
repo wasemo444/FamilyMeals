@@ -124,6 +124,10 @@ public partial class GroupMembers
             await GroupService.LeaveGroupAsync(GroupId);
             Navigation.NavigateTo("/", replace: true);
         }
+        catch (ApiBadRequestException ex) when (ex.Code == "cannot_leave_as_last_admin")
+        {
+            _actionError = L["CannotLeaveAsLastAdmin"];
+        }
         catch (HttpRequestException)
         {
             _actionError = L["LeaveGroupFailed"];

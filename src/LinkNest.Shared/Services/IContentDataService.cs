@@ -24,6 +24,12 @@ public interface IContentDataService
     Task EnsureLoadedAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Reloads categories and links from the server (or store) after membership changes.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task ReloadAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Runs startup maintenance such as legacy migration and expired archive purge.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>

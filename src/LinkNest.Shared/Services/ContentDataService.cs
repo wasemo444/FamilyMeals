@@ -42,6 +42,14 @@ public sealed class ContentDataService(
     }
 
     /// <inheritdoc />
+    public async Task ReloadAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureLoadedAsync(cancellationToken);
+        _data = await dataStore.LoadAsync(cancellationToken) ?? new AppData();
+        DataChanged?.Invoke();
+    }
+
+    /// <inheritdoc />
     public async Task RunMaintenanceAsync(CancellationToken cancellationToken = default)
     {
         await EnsureLoadedAsync(cancellationToken);

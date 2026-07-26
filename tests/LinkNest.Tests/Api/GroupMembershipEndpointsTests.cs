@@ -91,9 +91,26 @@ public class GroupMembershipEndpointsTests : IClassFixture<ApiWebApplicationFact
     }
 
     [Fact]
-    public async Task Invite_WhenInviteeAlreadyInGroup_ReturnsBadRequest()
+    public async Task Invite_WhenInviteeAlreadyMemberOfSameGroup_ReturnsBadRequest()
     {
-        var memberEmail = $"in-group-{Guid.NewGuid():N}@example.com";
+        var memberEmail = $"same-group-{Guid.NewGuid():N}@example.com";
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, memberEmail);
+
+        using var adminClient = await CreateAdminClientAsync();
+        var group = await CreateGroupAsync(adminClient);
+        await adminClient.PostAsJsonAsync($"/api/groups/{group.Id}/invites", new { email = memberEmail });
+
+        var response = await adminClient.PostAsJsonAsync($"/api/groups/{group.Id}/invites", new { email = memberEmail });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("invite_already_pending", body.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Invite_WhenInviteeInDifferentGroup_Succeeds()
+    {
+        var memberEmail = $"multi-group-{Guid.NewGuid():N}@example.com";
         await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, memberEmail);
 
         using var adminClient1 = await CreateAdminClientAsync();
@@ -104,27 +121,23 @@ public class GroupMembershipEndpointsTests : IClassFixture<ApiWebApplicationFact
         var pending = await memberClient.GetFromJsonAsync<List<GroupInviteSummary>>("/api/groups/invites/pending");
         await memberClient.PostAsync($"/api/groups/invites/{pending![0].Id}/accept", null);
 
-        using var adminClient2 = await CreateSecondGroupAdminClientAsync();
+        using var adminClient2 = await CreateAdminClientAsync();
         var group2 = await CreateGroupAsync(adminClient2);
 
         var response = await adminClient2.PostAsJsonAsync($"/api/groups/{group2.Id}/invites", new { email = memberEmail });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("invitee_in_group", body.GetProperty("code").GetString());
+        response.EnsureSuccessStatusCode();
     }
 
     [Fact]
-    public async Task CreateGroup_WhenUserAlreadyInGroup_ReturnsBadRequest()
+    public async Task CreateGroup_AllowsMultipleGroupsForSameUser()
     {
         using var client = await _factory.CreateFreshAuthenticatedClientAsync();
         await CreateGroupAsync(client);
 
         var response = await client.PostAsJsonAsync("/api/groups", new { name = "Second Group" });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("user_in_group", body.GetProperty("code").GetString());
+        response.EnsureSuccessStatusCode();
     }
 
     [Fact]
@@ -164,6 +177,127 @@ public class GroupMembershipEndpointsTests : IClassFixture<ApiWebApplicationFact
         Assert.Equal(GroupRole.Admin, members![0].Role);
     }
 
+    [Fact]
+    public async Task DeclineInvite_MarksInviteDeclined()
+    {
+        var inviteeEmail = $"decline-{Guid.NewGuid():N}@example.com";
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, inviteeEmail);
+
+        using var adminClient = await CreateAdminClientAsync();
+        var group = await CreateGroupAsync(adminClient);
+        await adminClient.PostAsJsonAsync($"/api/groups/{group.Id}/invites", new { email = inviteeEmail });
+
+        using var inviteeClient = await _factory.CreateAuthenticatedClientAsync(inviteeEmail);
+        var pending = await inviteeClient.GetFromJsonAsync<List<GroupInviteSummary>>("/api/groups/invites/pending");
+        var declineResponse = await inviteeClient.PostAsync($"/api/groups/invites/{pending![0].Id}/decline", null);
+        declineResponse.EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var invite = await db.GroupInvites.SingleAsync(i => i.Id == pending[0].Id);
+        Assert.Equal(GroupInviteStatus.Declined, invite.Status);
+    }
+
+    [Fact]
+    public async Task Invite_WhenGroupFull_ReturnsBadRequest()
+    {
+        using var adminClient = await CreateAdminClientAsync();
+        var group = await CreateGroupAsync(adminClient);
+
+        for (var i = 0; i < GroupPolicy.MaxMembers - 1; i++)
+        {
+            var email = $"cap-member-{Guid.NewGuid():N}@example.com";
+            await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, email);
+            await AuthTestHelpers.AddGroupMemberAsync(_factory.Services, group.Id, email);
+        }
+
+        var overflowEmail = $"cap-overflow-{Guid.NewGuid():N}@example.com";
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, overflowEmail);
+
+        var response = await adminClient.PostAsJsonAsync(
+            $"/api/groups/{group.Id}/invites",
+            new { email = overflowEmail });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("group_full", body.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Invite_WhenNonAdmin_ReturnsNotFound()
+    {
+        var memberEmail = $"non-admin-{Guid.NewGuid():N}@example.com";
+        var targetEmail = $"target-{Guid.NewGuid():N}@example.com";
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, memberEmail);
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, targetEmail);
+
+        using var adminClient = await CreateAdminClientAsync();
+        var group = await CreateGroupAsync(adminClient);
+        await adminClient.PostAsJsonAsync($"/api/groups/{group.Id}/invites", new { email = memberEmail });
+
+        using var memberClient = await _factory.CreateAuthenticatedClientAsync(memberEmail);
+        var pending = await memberClient.GetFromJsonAsync<List<GroupInviteSummary>>("/api/groups/invites/pending");
+        await memberClient.PostAsync($"/api/groups/invites/{pending![0].Id}/accept", null);
+
+        var response = await memberClient.PostAsJsonAsync(
+            $"/api/groups/{group.Id}/invites",
+            new { email = targetEmail });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Leave_WhenLastAdminWithOtherMembers_ReturnsBadRequest()
+    {
+        var memberEmail = $"leave-member-{Guid.NewGuid():N}@example.com";
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, memberEmail);
+
+        using var adminClient = await CreateAdminClientAsync();
+        var group = await CreateGroupAsync(adminClient);
+        await adminClient.PostAsJsonAsync($"/api/groups/{group.Id}/invites", new { email = memberEmail });
+
+        using var memberClient = await _factory.CreateAuthenticatedClientAsync(memberEmail);
+        var pending = await memberClient.GetFromJsonAsync<List<GroupInviteSummary>>("/api/groups/invites/pending");
+        await memberClient.PostAsync($"/api/groups/invites/{pending![0].Id}/accept", null);
+
+        var response = await adminClient.PostAsync($"/api/groups/{group.Id}/leave", null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("cannot_leave_as_last_admin", body.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task RemoveMember_GroupOwnedContentRemainsForRemainingMembers()
+    {
+        var memberEmail = $"orphan-{Guid.NewGuid():N}@example.com";
+        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, memberEmail);
+
+        using var adminClient = await CreateAdminClientAsync();
+        var group = await CreateGroupAsync(adminClient);
+
+        var categoryName = $"Shared-{Guid.NewGuid():N}";
+        var createCategoryResponse = await adminClient.PostAsJsonAsync("/api/categories", new
+        {
+            name = categoryName,
+            ownerType = OwnerType.Group,
+            ownerGroupId = group.Id
+        });
+        createCategoryResponse.EnsureSuccessStatusCode();
+
+        await adminClient.PostAsJsonAsync($"/api/groups/{group.Id}/invites", new { email = memberEmail });
+        using var memberClient = await _factory.CreateAuthenticatedClientAsync(memberEmail);
+        var pending = await memberClient.GetFromJsonAsync<List<GroupInviteSummary>>("/api/groups/invites/pending");
+        await memberClient.PostAsync($"/api/groups/invites/{pending![0].Id}/accept", null);
+
+        var memberId = (await memberClient.GetFromJsonAsync<AuthUserInfo>("/api/auth/me"))!.Id;
+        var removeResponse = await adminClient.DeleteAsync($"/api/groups/{group.Id}/members/{memberId}");
+        removeResponse.EnsureSuccessStatusCode();
+
+        var categories = await adminClient.GetFromJsonAsync<List<ContentCategory>>("/api/categories?filter=Shared");
+        Assert.Contains(categories!, category => category.Name == categoryName && category.OwnerGroupId == group.Id);
+    }
+
     private async Task<HttpClient> CreateAdminClientAsync() =>
         await _factory.CreateFreshAuthenticatedClientAsync();
 
@@ -172,12 +306,5 @@ public class GroupMembershipEndpointsTests : IClassFixture<ApiWebApplicationFact
         var response = await client.PostAsJsonAsync("/api/groups", new { name = $"Group-{Guid.NewGuid():N}" });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<GroupSummary>())!;
-    }
-
-    private async Task<HttpClient> CreateSecondGroupAdminClientAsync()
-    {
-        var email = $"admin2-{Guid.NewGuid():N}@example.com";
-        await AuthTestHelpers.RegisterAndConfirmUserAsync(_factory.Services, email);
-        return await _factory.CreateAuthenticatedClientAsync(email);
     }
 }

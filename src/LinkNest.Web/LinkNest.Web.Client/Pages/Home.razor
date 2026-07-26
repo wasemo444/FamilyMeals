@@ -16,6 +16,7 @@
     {
         <section class="panel">
             <h2>@L["PendingInvites"]</h2>
+            <p class="muted"><a href="/groups">@L["ManageGroupsLink"]</a></p>
             @foreach (var invite in _pendingInvites)
             {
                 <div class="invite-row">
@@ -26,38 +27,24 @@
                     </div>
                 </div>
             }
-        </section>
-    }
-
-    @if (_groups.Count == 0)
-    {
-        <section class="panel">
-            <h2>@L["CreateGroup"]</h2>
-            <p class="muted">@L["NoGroupsYet"]</p>
-            <EditForm Model="_groupForm" OnValidSubmit="CreateGroupAsync">
-                <div class="form-row">
-                    <InputText class="input" @bind-Value="_groupForm.Name" placeholder="@L["GroupName"]" />
-                    <button class="btn primary" type="submit">@L["Create"]</button>
-                </div>
-                @if (!string.IsNullOrWhiteSpace(_groupError))
-                {
-                    <p class="error">@_groupError</p>
-                }
-            </EditForm>
+            @if (!string.IsNullOrWhiteSpace(_inviteActionError))
+            {
+                <p class="error">@_inviteActionError</p>
+            }
         </section>
     }
 
     @if (_groups.Count > 0)
     {
         <section class="panel">
-            <h2>@L["YourGroup"]</h2>
-            @foreach (var group in _groups)
-            {
-                <p>
-                    @L.Format("GroupLabel", group.Name)
-                    — <a href="/group/@group.Id">@L["ManageMembers"]</a>
-                </p>
-            }
+            <h2>@L["YourGroups"]</h2>
+            <p><a href="/groups">@L["ManageGroupsLink"]</a></p>
+        </section>
+    }
+    else
+    {
+        <section class="panel">
+            <p class="muted">@L["NoGroupsYet"] <a href="/groups">@L["CreateGroup"]</a></p>
         </section>
     }
 

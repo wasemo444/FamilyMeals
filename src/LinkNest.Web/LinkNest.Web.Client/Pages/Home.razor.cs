@@ -16,9 +16,8 @@ public partial class Home : IDisposable
     private IGroupService GroupService { get; set; } = default!;
 
     private readonly CategoryForm _form = new();
-    private readonly GroupForm _groupForm = new();
     private string? _error;
-    private string? _groupError;
+    private string? _inviteActionError;
     private string _searchTerm = string.Empty;
     private string _selectedOwnerKey = "personal";
     private HomeContentFilter _filter = HomeContentFilter.All;
@@ -31,10 +30,15 @@ public partial class Home : IDisposable
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _groups = await GroupService.GetMyGroupsAsync();
-        _pendingInvites = await GroupService.GetPendingInvitesAsync();
+        await LoadGroupsAsync();
         DataService.DataChanged += Refresh;
         Refresh();
+    }
+
+    private async Task LoadGroupsAsync()
+    {
+        _groups = await GroupService.GetMyGroupsAsync();
+        _pendingInvites = await GroupService.GetPendingInvitesAsync();
     }
 
     private void Refresh()
@@ -99,45 +103,40 @@ public partial class Home : IDisposable
         _form.Name = string.Empty;
     }
 
-    private async Task CreateGroupAsync()
+    private async Task AcceptInviteAsync(Guid inviteId)
     {
-        _groupError = null;
-
-        if (string.IsNullOrWhiteSpace(_groupForm.Name))
-        {
-            _groupError = L["GroupNameRequired"];
-            return;
-        }
+        _inviteActionError = null;
 
         try
         {
-            var group = await GroupService.CreateAsync(_groupForm.Name);
-            _groups = [.. _groups, group];
-            _selectedOwnerKey = group.Id.ToString();
-            _groupForm.Name = string.Empty;
+            await GroupService.AcceptInviteAsync(inviteId);
+            await DataService.ReloadAsync();
+            await LoadGroupsAsync();
+            _filter = HomeContentFilter.Shared;
+            Refresh();
         }
-        catch (ApiBadRequestException ex) when (ex.Code == "user_in_group")
+        catch (ApiBadRequestException ex)
         {
-            _groupError = L["UserAlreadyInGroup"];
+            _inviteActionError = MapInviteAcceptError(ex.Code);
+            await LoadGroupsAsync();
         }
         catch (HttpRequestException)
         {
-            _groupError = L["RegisterFailed"];
+            _inviteActionError = L["InviteAcceptFailed"];
         }
     }
 
-    private async Task AcceptInviteAsync(Guid inviteId)
+    private string MapInviteAcceptError(string code) => code switch
     {
-        await GroupService.AcceptInviteAsync(inviteId);
-        _pendingInvites = await GroupService.GetPendingInvitesAsync();
-        _groups = await GroupService.GetMyGroupsAsync();
-        Refresh();
-    }
+        "group_full" => L["GroupFull"],
+        "invitee_already_member" => L["InviteeAlreadyMember"],
+        _ => L["InviteAcceptFailed"]
+    };
 
     private async Task DeclineInviteAsync(Guid inviteId)
     {
         await GroupService.DeclineInviteAsync(inviteId);
-        _pendingInvites = await GroupService.GetPendingInvitesAsync();
+        await LoadGroupsAsync();
     }
 
     public new void Dispose()
@@ -147,11 +146,6 @@ public partial class Home : IDisposable
     }
 
     private sealed class CategoryForm
-    {
-        public string Name { get; set; } = string.Empty;
-    }
-
-    private sealed class GroupForm
     {
         public string Name { get; set; } = string.Empty;
     }

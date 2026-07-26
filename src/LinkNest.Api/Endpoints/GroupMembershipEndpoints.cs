@@ -108,11 +108,6 @@ public static class GroupMembershipEndpoints
             return BadRequest("invitee_email_unconfirmed", "That user has not confirmed their email address.");
         }
 
-        if (await membershipService.IsUserInAnyGroupAsync(invitee.Id, cancellationToken))
-        {
-            return BadRequest("invitee_in_group", "That user is already a member of a group.");
-        }
-
         if (await membershipService.GetMembershipAsync(groupId, invitee.Id, cancellationToken) is not null)
         {
             return BadRequest("invitee_already_member", "That user is already a member of this group.");
@@ -145,7 +140,15 @@ public static class GroupMembershipEndpoints
         };
 
         dbContext.GroupInvites.Add(invite);
-        await dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (GroupMembershipConflictMapper.IsDuplicatePendingInvite(ex))
+        {
+            return BadRequest("invite_already_pending", "An invite is already pending for that user.");
+        }
 
         return Results.Created($"/api/groups/invites/{invite.Id}", new { invite.Id });
     }
@@ -204,12 +207,14 @@ public static class GroupMembershipEndpoints
             return Results.NotFound();
         }
 
-        if (await membershipService.IsUserInAnyGroupAsync(userId, cancellationToken))
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        if (await membershipService.GetMembershipAsync(invite.GroupId, userId, cancellationToken) is not null)
         {
-            return BadRequest("invitee_in_group", "You are already a member of a group.");
+            return BadRequest("invitee_already_member", "You are already a member of this group.");
         }
 
-        if (await membershipService.IsGroupFullAsync(invite.GroupId, cancellationToken))
+        if (await membershipService.GetMemberCountAsync(invite.GroupId, cancellationToken) >= GroupPolicy.MaxMembers)
         {
             return BadRequest("group_full", $"This group has reached the maximum of {GroupPolicy.MaxMembers} members.");
         }
@@ -227,8 +232,17 @@ public static class GroupMembershipEndpoints
             JoinedAtUtc = now
         });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return Results.Ok();
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Results.Ok();
+        }
+        catch (DbUpdateException ex) when (GroupMembershipConflictMapper.IsDuplicateGroupMembership(ex))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return BadRequest("invitee_already_member", "You are already a member of this group.");
+        }
     }
 
     private static async Task<IResult> DeclineInviteAsync(
@@ -302,6 +316,23 @@ public static class GroupMembershipEndpoints
         if (membership is null)
         {
             return Results.NotFound();
+        }
+
+        if (membership.Role == GroupRole.Admin)
+        {
+            var adminCount = await dbContext.GroupMemberships.CountAsync(
+                m => m.GroupId == groupId && m.Role == GroupRole.Admin,
+                cancellationToken);
+            var memberCount = await dbContext.GroupMemberships.CountAsync(
+                m => m.GroupId == groupId,
+                cancellationToken);
+
+            if (adminCount == 1 && memberCount > 1)
+            {
+                return BadRequest(
+                    "cannot_leave_as_last_admin",
+                    "You are the only admin. Remove other members or transfer admin before leaving.");
+            }
         }
 
         dbContext.GroupMemberships.Remove(membership);
