@@ -14,20 +14,22 @@ LinkNest is a **Blazor Web App** with a **standalone ASP.NET Core REST API** and
 | **LinkNest.Api** | `src/LinkNest.Api/` | System-of-record HTTP API: EF Core, Identity cookies, ownership enforcement, link preview |
 | **LinkNest.Web** | `src/LinkNest.Web/LinkNest.Web/` | Blazor host: YARP proxy, browser login (`/account/*`), auth-state serialization |
 | **LinkNest.Web.Client** | `src/LinkNest.Web/LinkNest.Web.Client/` | Interactive UI pages/components; HTTP client adapters to API |
+| **LinkNest.Mobile** | `src/LinkNest.Mobile/` | MAUI Blazor Hybrid — JWT bearer auth, reuses Web.Client pages (H4: extract to `LinkNest.UI`) |
 | **Tests** | `tests/` | Unit/integration (`LinkNest.Tests`) and Playwright E2E (`LinkNest.E2E.Tests`) |
 
 ## Architecture in One Diagram
 
 ```
-Browser
-  └─► Web host (:5084)
-        ├─► /account/login|logout  → Web Identity (cookie on Web origin)
-        ├─► Blazor pages/components  → ApiContentDataService
-        └─► /api/* (YARP proxy)      → Api host (:5280)
-              └─► ContentDataService → EfAppDataStore → PostgreSQL
+Browser (web)                         MAUI (mobile)
+  └─► Web host (:5084)                  └─► Api (:5280) direct HTTP
+        ├─► /account/login|logout             Authorization: Bearer {jwt}
+        ├─► Blazor → ApiContentDataService
+        └─► /api/* (YARP + cookie forward)
+              └─► Api (:5280) SmartAuth → cookie OR JWT
+                    └─► ContentDataService → PostgreSQL
 ```
 
-**Critical:** Content **data** always flows through the API. Identity cookies for the browser are issued by the **Web** host via form login, then forwarded to the API by `CookieForwardingHandler`.
+**Critical:** Content **data** always flows through the API. The **browser** uses cookies from the Web host (`CookieForwardingHandler`). **MAUI** uses JWT from `POST /api/auth/token` stored in SecureStorage (`BearerTokenHandler`).
 
 ## Layered Documentation
 
@@ -50,11 +52,13 @@ Read documents in this order based on task depth:
 
 Default dev user: `dev@linknest.local` / `DevPassword1!`
 
+**Mobile (E7):** After `dotnet workload restore`, run API then `dotnet run --project src/LinkNest.Mobile -f net10.0-windows10.0.19041.0`. See [README](../README.md#run-the-mobile-app-e7--windows).
+
 ## Where to Edit What
 
 | Change | Location |
 |--------|----------|
-| UI page or component | `Web.Client/Pages/`, `Web.Client/Components/` |
+| UI page or component | `Web.Client/Pages/`, `Web.Client/Components/` (until E9 H4: `LinkNest.UI/` — edits there affect both web and mobile) |
 | HTTP API route | `Api/Endpoints/` |
 | Group membership (invites, leave, remove) | `Api/Endpoints/GroupMembershipEndpoints.cs`, `Api/Services/GroupMembershipService.cs` |
 | Group members UI | `Web.Client/Pages/GroupMembers.razor` |
@@ -62,6 +66,8 @@ Default dev user: `dev@linknest.local` / `DevPassword1!`
 | Persistence / scoping | `Api/Data/EfAppDataStore.cs` |
 | Browser form login/logout | `Web/Endpoints/AccountEndpoints.cs` |
 | JSON auth API | `Api/Endpoints/AuthEndpoints.cs` |
+| JWT / SmartAuth (mobile bearer) | `Api/Identity/IdentityServiceExtensions.cs`, `JwtTokenService.cs`, `ConfigureJwtOptions.cs` |
+| Mobile bootstrap & token storage | `Mobile/MauiProgram.cs`, `Mobile/Services/MauiSecureTokenStore.cs`, `Shared/Auth/BearerTokenHandler.cs` |
 | Reverse proxy / cookie forward | `Web/ReverseProxy/` |
 | EF entities / migrations | `Api/Data/` |
 
@@ -74,11 +80,13 @@ Default dev user: `dev@linknest.local` / `DevPassword1!`
 5. **Do not register `LocalStorageAppDataStore`** — legacy v1 client storage; not wired in DI.
 6. **Links inherit category ownership** on create and when `CategoryId` changes in `EfAppDataStore`.
 7. **RowVersion is required** for updates; stale tokens → `ConcurrencyConflictException` → HTTP 409.
-8. **One group per user** — enforced on create, invite accept, and invite target; a user already in a group cannot join another.
-9. **Group member cap is 10** (`GroupPolicy.MaxMembers`) — invite and accept reject when full; no waitlist.
-10. **Group invites require a registered, email-confirmed account** — API returns structured 400 codes (`invitee_not_found`, `invitee_email_unconfirmed`); Web maps codes to localized messages via `ApiBadRequestException`.
-11. **Removed/departed members' group-owned content stays with the group** — do not delete or reassign on leave/remove.
-12. **Stop Api/Web processes before rebuilding** to avoid DLL file locks on Windows.
+8. **Group member cap is 10** (`GroupPolicy.MaxMembers`) — invite and accept reject when full; no waitlist.
+9. **Group invites require a registered, email-confirmed account** — API returns structured 400 codes (`invitee_not_found`, `invitee_email_unconfirmed`); Web maps codes to localized messages via `ApiBadRequestException`.
+10. **Removed/departed members' group-owned content stays with the group** — do not delete or reassign on leave/remove.
+11. **Mobile uses bearer JWT, not cookies** — do not call `POST /api/auth/logout` from MAUI for session end; clear `ISecureTokenStore` locally. `/api/auth/logout` is cookie-only.
+12. **JWT secret must not be committed** — use `ConfigureJwtOptions` dev fallback or env/`Jwt__Secret` in non-dev.
+13. **Stop Api/Web processes before rebuilding** to avoid DLL file locks on Windows.
+14. **MAUI workload installs must be serial** — parallel `dotnet workload install` on Windows causes MSI `0x652` failures.
 
 ## XML Documentation (Phase 1)
 
@@ -103,8 +111,10 @@ dotnet test tests/LinkNest.E2E.Tests/LinkNest.E2E.Tests.csproj -c Release
 | Expecting 403 on forbidden category edit | Expect **404** |
 | Calling Api directly from Blazor without proxy | Use `HttpClient` named `"LinkNestApi"` (same-origin via Web) |
 | Editing migration after apply | Create a new migration instead |
-| Allowing a user in multiple groups | Blocked by E5 — one group per user |
+| Allowing a user in multiple groups | Supported — users may create/join multiple groups; cap is per-group (10 members) |
 | Using invite code for join in E5 | Email invite flow only; invite code field exists but is not the join path |
+| Calling `/api/auth/logout` from MAUI | Clear local JWT via `ISecureTokenStore`; cookie logout does not invalidate bearer tokens |
+| Referencing Web.Client from Mobile long-term | Deferred H4 — extract pages to `LinkNest.UI` RCL |
 
 ## Documentation Maintenance
 

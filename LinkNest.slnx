@@ -6,6 +6,7 @@
   <Folder Name="/src/">
     <Project Path="src/LinkNest.Api/LinkNest.Api.csproj" />
     <Project Path="src/LinkNest.Shared/LinkNest.Shared.csproj" />
+    <Project Path="src/LinkNest.Mobile/LinkNest.Mobile.csproj" />
   </Folder>
   <Folder Name="/src/LinkNest.Web/">
     <Project Path="src/LinkNest.Web/LinkNest.Web.Client/LinkNest.Web.Client.csproj" />

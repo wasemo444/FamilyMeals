@@ -1,5 +1,7 @@
 # E7 — Mobile (.NET MAUI Blazor Hybrid)
 
+**Status: Implemented**
+
 ## Goal
 
 Add the `LinkNest.Mobile` MAUI Blazor Hybrid app (planned since v1 but never built) reusing `LinkNest.Shared`, wired to the same API as the web app, including bearer/JWT auth for mobile clients. This is the last epic — it depends on the full web-side feature set being in place.
@@ -20,7 +22,7 @@ E6 (all core functionality and hardening should exist before duplicating the cli
 - New `LinkNest.Mobile` MAUI Blazor Hybrid project exists, referencing `LinkNest.Shared`, and builds/runs on at least one target platform (Android or Windows, whichever is easiest to verify locally).
 - Mobile app authenticates against the same API using bearer/JWT tokens (separate from the web cookie flow added in E2); token is stored securely (platform secure storage, not plain file/prefs) and attached to API requests.
 - All core flows work on mobile: login, view home (personal + group content), create/archive/favorite categories and links, view/restore archive, switch language/RTL, view group members, send/accept invites.
-- Mobile reuses `LinkNest.Shared` components/services rather than duplicating UI logic — any mobile-only code is limited to platform bootstrapping, secure token storage, and native-shell concerns.
+- Mobile reuses **`LinkNest.Web.Client`** pages via project reference today (H4: extract to `LinkNest.UI` RCL). Shared holds services/DTOs and bearer auth handlers, not routable UI.
 
 ## Out of Scope
 
@@ -38,3 +40,28 @@ E6 (all core functionality and hardening should exist before duplicating the cli
 - Install/run the mobile app on an emulator or device, log in, and walk through create/favorite/archive/restore for both personal and group content.
 - Kill and relaunch the app, confirm the stored token keeps the session logged in (or prompts to re-login gracefully if the token expired) rather than crashing.
 - Switch language on mobile and confirm RTL renders correctly on that platform's rendering engine.
+
+### Build prerequisites
+
+```powershell
+dotnet workload restore
+dotnet build src/LinkNest.Mobile/LinkNest.Mobile.csproj -c Release -f net10.0-windows10.0.19041.0
+```
+
+### E7 manual test matrix (L4)
+
+| # | Scenario | Expected |
+|---|----------|----------|
+| 1 | Login with dev credentials | Home loads personal + group content |
+| 2 | Create / favorite / archive / restore (personal) | Same as web; bootstrap reloads |
+| 3 | Shared group content + invites (Groups page) | Accept invite → shared filter shows content |
+| 4 | Switch EN ↔ AR | RTL/LTR and persisted culture |
+| 5 | Kill and relaunch app | Session restored from JWT or login prompt if expired |
+| 6 | Expired / invalid token | 401 → local clear → login screen (no crash) |
+| 7 | API unreachable at startup | Login screen; token not wiped (retry when API up) |
+
+Full deferred work: [E9 § E7 Mobile follow-ups](E9-carry-over-from-previous-epic.md#e7-mobile--deferred-follow-ups-carry-over-from-architect-review).
+
+### API URL configuration (physical devices / emulators)
+
+Override the default API URL via `src/LinkNest.Mobile/appsettings.Development.json` or environment variable `LINKNEST_API_BASE_URL` (e.g. `http://192.168.x.x:5280/` for a physical device on the same LAN). Android emulator default when unset: `http://10.0.2.2:5280/`.

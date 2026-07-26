@@ -28,6 +28,7 @@ public static class AuthEndpoints
 
         group.MapPost("/register", RegisterAsync);
         group.MapPost("/login", LoginAsync);
+        group.MapPost("/token", TokenLoginAsync);
         group.MapPost("/logout", LogoutAsync).RequireAuthorization();
         group.MapGet("/me", GetCurrentUserAsync).RequireAuthorization();
 
@@ -125,6 +126,49 @@ public static class AuthEndpoints
             : Results.Ok(ToAuthUserInfo(user));
     }
 
+    private static async Task<IResult> TokenLoginAsync(
+        LoginRequest request,
+        SignInManager<ApplicationUser> signInManager,
+        JwtTokenService jwtTokenService)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return Results.BadRequest(new { error = "Email and password are required." });
+        }
+
+        var normalizedEmail = request.Email.Trim();
+        var user = await signInManager.UserManager.FindByEmailAsync(normalizedEmail);
+
+        var result = await signInManager.CheckPasswordSignInAsync(
+            user ?? new ApplicationUser(),
+            request.Password,
+            lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+        {
+            return Results.Problem(
+                detail: "Account is temporarily locked. Try again later.",
+                statusCode: StatusCodes.Status429TooManyRequests);
+        }
+
+        if (user is null || result.IsNotAllowed || !result.Succeeded)
+        {
+            return Results.Unauthorized();
+        }
+
+        var (accessToken, expiresAtUtc) = jwtTokenService.CreateToken(user);
+        return Results.Ok(new AuthTokenResponse
+        {
+            AccessToken = accessToken,
+            ExpiresAtUtc = expiresAtUtc,
+            User = ToAuthUserInfo(user)
+        });
+    }
+
+    /// <remarks>
+    /// Clears the cookie authentication session only. Mobile bearer clients should discard
+    /// stored JWTs locally; tokens remain valid until expiry unless server-side revocation is added.
+    /// </remarks>
     private static async Task<IResult> LogoutAsync(SignInManager<ApplicationUser> signInManager)
     {
         await signInManager.SignOutAsync();

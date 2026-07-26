@@ -10,7 +10,7 @@ namespace LinkNest.Web.Client.Pages;
 /// </summary>
 /// <remarks>
 /// On success, redirects to the login page with query parameters indicating whether email
-/// confirmation is required. Uses a full page load so auth state is reset cleanly.
+/// confirmation is required. Uses a full page load on web so auth state is reset cleanly.
 /// </remarks>
 public partial class Register
 {
@@ -22,6 +22,9 @@ public partial class Register
 
     [Inject]
     private IConfiguration Configuration { get; set; } = default!;
+
+    [Inject]
+    private IClientAuthMode ClientAuthMode { get; set; } = default!;
 
     private readonly RegisterRequest _form = new();
     private string? _error;
@@ -46,7 +49,7 @@ public partial class Register
             var confirmEmailQuery = requireConfirmedEmail ? "&confirmEmail=true" : string.Empty;
             NavigationManager.NavigateTo(
                 $"/login?registered=true{confirmEmailQuery}&email={email}",
-                forceLoad: true);
+                forceLoad: !ClientAuthMode.UsesBearerToken);
         }
         catch (AuthValidationException exception)
         {

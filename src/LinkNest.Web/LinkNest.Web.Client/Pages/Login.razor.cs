@@ -1,17 +1,29 @@
+using LinkNest.Shared.Auth;
+using LinkNest.Shared.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace LinkNest.Web.Client.Pages;
 
 /// <summary>
-/// Login page that displays validation messages and submits credentials via an HTML form post.
+/// Login page that supports cookie form posts (web) and JWT bearer login (mobile).
 /// </summary>
-/// <remarks>
-/// Authentication is handled by <see cref="LinkNest.Web.Endpoints.AccountEndpoints"/> on the
-/// Web host so Identity cookies are issued to the browser. Query parameters carry return URLs,
-/// registration success, email confirmation, and error codes from redirects.
-/// </remarks>
 public partial class Login
 {
+    [Inject]
+    private IClientAuthMode ClientAuthMode { get; set; } = default!;
+
+    [Inject]
+    private IAuthClient AuthClient { get; set; } = default!;
+
+    [Inject]
+    private ISecureTokenStore SecureTokenStore { get; set; } = default!;
+
+    [Inject]
+    private IAuthStateNotifier AuthStateNotifier { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
@@ -30,8 +42,11 @@ public partial class Login
     [SupplyParameterFromQuery(Name = "error")]
     public string? Error { get; set; }
 
+    private readonly LoginRequest _form = new();
     private string? _error;
     private string? _success;
+
+    protected bool UsesBearerToken => ClientAuthMode.UsesBearerToken;
 
     protected string EmailValue =>
         string.IsNullOrWhiteSpace(RegisteredEmail) ? string.Empty : RegisteredEmail;
@@ -40,6 +55,11 @@ public partial class Login
 
     protected override void OnParametersSet()
     {
+        if (UsesBearerToken && !string.IsNullOrWhiteSpace(RegisteredEmail))
+        {
+            _form.Email = RegisteredEmail;
+        }
+
         _error = Error switch
         {
             "invalid" => L["InvalidCredentials"],
@@ -57,5 +77,32 @@ public partial class Login
                 : Registered
                     ? L["RegistrationSuccessful"]
                     : null;
+    }
+
+    private async Task LoginWithTokenAsync()
+    {
+        _error = null;
+
+        try
+        {
+            var response = await AuthClient.LoginWithTokenAsync(_form);
+            await SecureTokenStore.SaveAsync(response.AccessToken, response.ExpiresAtUtc);
+            await AuthStateNotifier.NotifySignedInAsync(response.User);
+
+            var destination = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+            NavigationManager.NavigateTo(destination);
+        }
+        catch (AuthValidationException exception)
+        {
+            _error = AuthValidationMessages.FormatErrors(exception.Errors);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["InvalidCredentials"];
+        }
+        catch (Exception)
+        {
+            _error = L["LoginFailed"];
+        }
     }
 }

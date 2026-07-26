@@ -50,7 +50,7 @@ dotnet run
 The API runs at **http://localhost:5280**.
 
 - There is no home page or Swagger UI at `/`.
-- To verify it is working, log in at the Web app or POST to `/api/auth/login`, then open **http://localhost:5280/api/bootstrap** (requires auth cookie).
+- To verify it is working, log in at the Web app or POST to `/api/auth/login` (or `/api/auth/token` for mobile), then open **http://localhost:5280/api/bootstrap** (requires authentication — web: cookie; mobile/direct: `Authorization: Bearer` JWT).
 - On first run in Development, EF Core applies migrations automatically.
 
 ### 3. Start the Web app
@@ -70,7 +70,7 @@ Open **http://localhost:5084** in your browser (or the HTTPS URL shown in the co
 
 - Register at `/register` or log in at `/login`.
 - Default dev user (seeded on first run): `dev@linknest.local` / `DevPassword1!`
-- Protected pages and `/api/*` data endpoints require a valid auth cookie; unauthenticated requests return **401**.
+- Protected pages and `/api/*` data endpoints require authentication (web: cookie; mobile: JWT bearer); unauthenticated requests return **401**.
 - Log out from the shell header menu.
 - **DataProtection keys:** In Development, API and Web default to `%LOCALAPPDATA%/LinkNest/DataProtection-Keys` (see `appsettings.Development.json`). Both hosts must resolve to the **same directory** or auth cookies will not decrypt. In Production, set `LINKNEST_DATA_PROTECTION_KEYS_PATH` (legacy `MFM_DATA_PROTECTION_KEYS_PATH` is also accepted).
 - **Ownership (E3+):** categories and links are scoped per user and group membership. See [docs/agents.md](docs/agents.md) and [docs/L2.md](docs/L2.md).
@@ -97,6 +97,29 @@ E2E tests (Playwright; first run installs Chromium):
 dotnet test tests/LinkNest.E2E.Tests/LinkNest.E2E.Tests.csproj -c Release
 ```
 
+### Run the Mobile app (E7 — Windows)
+
+**Prerequisites:** [.NET MAUI workload](https://learn.microsoft.com/dotnet/maui/get-started/installation) — run **once**, not in parallel with other workload installs:
+
+```powershell
+dotnet workload restore
+dotnet workload install maui
+```
+
+Start PostgreSQL and the API first (steps 1–2 above), then:
+
+```powershell
+dotnet run --project src/LinkNest.Mobile/LinkNest.Mobile.csproj -f net10.0-windows10.0.19041.0
+```
+
+- Default API URL: `http://localhost:5280/` (see `src/LinkNest.Mobile/appsettings.json`).
+- Physical device / emulator on another machine: set `LINKNEST_API_BASE_URL` or edit `appsettings.Development.json` (e.g. `http://192.168.x.x:5280/`).
+- Login: `dev@linknest.local` / `DevPassword1!` (JWT bearer — not the web cookie flow).
+
+If build fails with `NETSDK1147` mentioning `maui-tizen`, MAUI packs are incomplete — close Visual Studio, run `dotnet workload repair` once, then rebuild. See [E9 H3](docs/tickets/E9-carry-over-from-previous-epic.md#h3--android-target-framework-and-emulator-support) for Android target work.
+
+Deferred mobile work (Android TFM, UI library extraction): [docs/tickets/E9-carry-over-from-previous-epic.md](docs/tickets/E9-carry-over-from-previous-epic.md#e7-mobile--deferred-follow-ups-carry-over-from-architect-review).
+
 ## Troubleshooting
 
 **`MSB3027` / file locked by `LinkNest.Api`**
@@ -116,6 +139,12 @@ docker compose up -d
 
 The `-v` flag removes the Docker volume and wipes the database. Use `docker compose down` without `-v` to keep data.
 
+**MAUI build: `NETSDK1147` / `maui-tizen` / workload install `0x652`**
+
+- The `maui-tizen` message is often misleading — it usually means MAUI workload **packs** are missing or a partial install failed.
+- Do not run multiple `dotnet workload install` or `workload restore` commands at the same time (Windows MSI error `0x652`).
+- Close Visual Studio, wait for installers to finish, then run `dotnet workload repair` once, followed by `dotnet workload restore src/LinkNest.Mobile/LinkNest.Mobile.csproj`.
+
 ## Access the database
 
 SSMS does not work with PostgreSQL. Use **pgAdmin**, **DBeaver**, **Azure Data Studio** (PostgreSQL extension), or `psql`:
@@ -132,7 +161,7 @@ If you have an existing dev database or Docker volume from before the LinkNest r
 
 1. **PostgreSQL:** `docker-compose.yml` now uses database/user `linknest` and volume `linknest_pgdata`. Either run `docker compose down -v && docker compose up -d` for a fresh database, or point connection strings at your old `linknest` database and user `mfm` until you migrate data.
 2. **Auth:** Cookie name and Data Protection application name changed — all users must **log in again** after upgrading.
-3. **Default dev user:** On startup the seeder updates the well-known default user to `dev@linknest.local` if it still has `dev@linknest.local`.
+3. **Default dev user:** On startup the seeder updates the well-known default user to `dev@linknest.local` if it still has the legacy `dev@mfm.local` email.
 4. **Migrations:** Start the API once so EF applies any pending migrations before serving traffic.
 5. **C# domain types:** `ContentCategory`, `SavedLink`, and `IContentDataService` replace the old `Meal*` names; HTTP JSON shape is unchanged (`Categories` / `Links`).
 
@@ -142,9 +171,11 @@ If you have an existing dev database or Docker volume from before the LinkNest r
 |---------|------|
 | `LinkNest.Api` | REST API, EF Core, PostgreSQL, link preview fetch |
 | `LinkNest.Shared` | Models, `ContentDataService`, API client, RESX strings |
-| `LinkNest.Web` | ASP.NET Core host (Blazor Auto) |
-| `LinkNest.Web.Client` | Interactive WASM pages (Home, Category, Archive) |
+| `LinkNest.Web` | ASP.NET Core Blazor host (`src/LinkNest.Web/LinkNest.Web/`) — YARP proxy, form login |
+| `LinkNest.Web.Client` | Interactive pages (Home, Category, Archive, Groups, Share, Login, Register, …) |
+| `LinkNest.Mobile` | MAUI Blazor Hybrid (Windows; Android deferred — see E9 H3) |
 | `LinkNest.Tests` | Unit and integration tests |
+| `LinkNest.E2E.Tests` | Playwright end-to-end tests |
 
 ## What this validates
 

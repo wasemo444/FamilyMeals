@@ -38,6 +38,15 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
     }
 
     /// <inheritdoc />
+    public async Task<AuthTokenResponse> LoginWithTokenAsync(LoginRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PostAsJsonAsync("/api/auth/token", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return await response.Content.ReadFromJsonAsync<AuthTokenResponse>(cancellationToken)
+            ?? throw new InvalidOperationException("Failed to deserialize token response.");
+    }
+
+    /// <inheritdoc />
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
         var response = await Http.PostAsync("/api/auth/logout", null, cancellationToken);

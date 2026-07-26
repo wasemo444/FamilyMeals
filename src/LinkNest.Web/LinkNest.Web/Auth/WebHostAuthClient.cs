@@ -71,6 +71,10 @@ public sealed class WebHostAuthClient(
     }
 
     /// <inheritdoc />
+    public Task<AuthTokenResponse> LoginWithTokenAsync(LoginRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.LoginWithTokenAsync(request, cancellationToken);
+
+    /// <inheritdoc />
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
         if (httpContextAccessor.HttpContext is not null)

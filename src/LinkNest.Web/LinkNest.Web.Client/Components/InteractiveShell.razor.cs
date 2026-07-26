@@ -26,12 +26,23 @@ public partial class InteractiveShell : IDisposable
     private IAuthClient AuthClient { get; set; } = default!;
 
     [Inject]
+    private IClientAuthMode ClientAuthMode { get; set; } = default!;
+
+    [Inject]
+    private ISecureTokenStore SecureTokenStore { get; set; } = default!;
+
+    [Inject]
+    private IAuthStateNotifier AuthStateNotifier { get; set; } = default!;
+
+    [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
     protected bool IsReady { get; private set; }
+
+    protected bool UsesBearerToken => ClientAuthMode.UsesBearerToken;
 
     protected AuthUserInfo? _currentUser;
 
@@ -128,16 +139,40 @@ public partial class InteractiveShell : IDisposable
             ?? string.Empty
     };
 
-    private Task RedirectToLoginAsync()
+    private async Task RedirectToLoginAsync()
     {
+        if (UsesBearerToken)
+        {
+            await SecureTokenStore.ClearAsync();
+            await AuthStateNotifier.NotifySignedOutAsync();
+        }
+
         var returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         if (string.IsNullOrWhiteSpace(returnUrl))
         {
             returnUrl = "/";
         }
 
-        NavigationManager.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
-        return Task.CompletedTask;
+        NavigationManager.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: !UsesBearerToken);
+    }
+
+    protected async Task LogoutAsync()
+    {
+        if (!UsesBearerToken)
+        {
+            try
+            {
+                await AuthClient.LogoutAsync();
+            }
+            catch (HttpRequestException)
+            {
+                // Cookie session may already be cleared; still clear local state.
+            }
+        }
+
+        await SecureTokenStore.ClearAsync();
+        await AuthStateNotifier.NotifySignedOutAsync();
+        NavigationManager.NavigateTo("/login");
     }
 
     protected override void OnCultureChanged()
