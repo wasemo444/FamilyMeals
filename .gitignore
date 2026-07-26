@@ -52,3 +52,7 @@ Desktop.ini
 .env.*
 !.env.example
 secrets.json
+
+# ASP.NET data protection keys (never commit)
+**/.LinkNest/
+**/dataprotection-keys/

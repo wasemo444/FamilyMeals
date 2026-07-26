@@ -1,4 +1,4 @@
-# Product Requirements Document — Manage Family Meals
+# Product Requirements Document — LinkNest
 
 **Version:** 2.0
 **Date:** July 19, 2026
@@ -12,7 +12,7 @@
 
 ## 1. Executive Summary
 
-**Manage Family Meals** is a unified web and mobile application for a small group (~10 family/friends) to organize meal-related links into categories (Breakfast, Lunch, Snack, etc.). It supports English and Arabic with full RTL layout for Arabic.
+**LinkNest** is a unified web and mobile application for saving and organizing links to any online content — videos, courses, articles, recipes, and more — into categories and shared collections. Small groups (~10 people) can share categories and links while keeping private content visible only to the owner. It supports English and Arabic with full RTL layout for Arabic.
 
 **What's new in v2:** Version 1 stored data per device in JSON/localStorage and explicitly deferred both authentication and multi-device/shared storage. Version 2 resolves those deferrals for the pieces needed now:
 
@@ -66,7 +66,7 @@ As a direct consequence, v1's "Out of Scope" items **"Multi-device data sync"** 
 | Persistence format | **PostgreSQL (relational), accessed via EF Core and a Web API tier** — replaces v1's JSON file (browser localStorage on web; app data directory on mobile) |
 | API tier *(new in v2)* | ASP.NET Core Web API — can be hosted alongside or reuse the Blazor Web App host process; both the Blazor web client and the MAUI Hybrid app call it over HTTP(S) instead of touching storage directly |
 | Authentication | **Minimal authentication pulled forward as a hard prerequisite for group functionality.** **[OPEN QUESTION — Auth mechanism]** V1 deferred authentication entirely to "later phase." Group functionality cannot work without identifying distinct users — you cannot have a 10-person group, invite links, or per-user ownership without a `User` identity. **Recommended direction:** implement a minimal identity mechanism now (email/password via ASP.NET Core Identity, or a lightweight passwordless/email-link flow), sufficient only to identify users and support group membership; defer the fuller auth UX (password reset, social login, MFA, etc.) to a later phase, consistent with v1's original intent of keeping auth UX minimal at first. |
-| Session/token mechanism *(new in v2 — architecture review finding)* | **Resolved per client type, not left to implementation.** Blazor Web (Auto render mode) uses cookie-based auth with an explicit server↔WASM auth-state handoff (e.g., `PersistingAuthenticationStateProvider`) so SSR and WASM stay authenticated as one session; the MAUI Hybrid app has no shared cookie jar and instead uses a bearer/JWT token stored in secure platform storage and attached to every API call. Both flows terminate at the same `ManageFamilyMeals.Api` identity endpoints (FR-29). This closes the "auth works on web, silently fails on mobile" risk identified in review. |
+| Session/token mechanism *(new in v2 — architecture review finding)* | **Resolved per client type, not left to implementation.** Blazor Web (Auto render mode) uses cookie-based auth with an explicit server↔WASM auth-state handoff (e.g., `PersistingAuthenticationStateProvider`) so SSR and WASM stay authenticated as one session; the MAUI Hybrid app has no shared cookie jar and instead uses a bearer/JWT token stored in secure platform storage and attached to every API call. Both flows terminate at the same `LinkNest.Api` identity endpoints (FR-29). This closes the "auth works on web, silently fails on mobile" risk identified in review. |
 | Group size cap | Hard cap of **10 members per group**, enforced at invite/join time (see [Ownership & Permissions Model](#ownership--permissions-model)) |
 | Group membership scope | **[OPEN QUESTION — Multi-group membership]** The task scope refers to "a group" (singular). **Recommended direction:** restrict each user to **one group at a time** for v2 to keep the ownership model simple; revisit multi-group membership in a later phase. |
 | Delete behavior | Soft delete / archive for 7 days, then permanent purge (now applies equally to private and shared/group-owned content) |
@@ -74,7 +74,7 @@ As a direct consequence, v1's "Out of Scope" items **"Multi-device data sync"** 
 | Link fields | Title + URL + optional link preview (WhatsApp-style OG card); optionally calorie/nutritional info when shared in a group context (see [Data Model](#9-data-model)) |
 | Default language | Follow device/browser locale (en or ar) |
 | Delivery priority | Web first, then mobile |
-| Product name | **Manage Family Meals** |
+| Product name | **LinkNest** |
 
 ---
 
@@ -172,10 +172,10 @@ As a direct consequence, v1's "Out of Scope" items **"Multi-device data sync"** 
 
 ### 6.8 Data Integrity, Concurrency & Migration *(new in v2 — architecture review findings)*
 
-- **FR-40:** Enforce, at the database level, that every `MealCategory`/`MealLink` row has **exactly one** owner consistent with its `OwnerType` — a Postgres `CHECK` constraint (or equivalent) rejecting rows where `OwnerUserId`/`OwnerGroupId` are both null, both set, or set to the field that doesn't match `OwnerType`. This is not optional application-layer validation; it must hold even if application code has a bug, because the authorization layer trusts these columns directly.
-- **FR-41:** Protect shared (group-owned) content from lost updates under concurrent edits using **optimistic concurrency** (a row version/concurrency token on `MealCategory` and `MealLink`). When two members edit or archive the same item concurrently, the second write must fail with a detectable conflict rather than silently overwriting the first; the UI surfaces a "this was changed by someone else — reload and retry" message rather than swallowing the conflict.
-- **FR-42:** Foreign keys from `MealCategory`/`MealLink` to `User`/`Group` use **`RESTRICT`/`NoAction`** on delete, not `SetNull` or cascade — a user or group cannot be deleted while it still owns content. Deleting a group requires all of its `OwnerGroupId` content to be reassigned or archived within the same transaction as the delete, so no row can ever end up with `OwnerType = Group` and a null/dangling `OwnerGroupId`.
-- **FR-43:** Provide a one-time migration path for existing v1 users' JSON/localStorage data into PostgreSQL at v2 cutover (e.g., an import tool or endpoint that reads a user's exported v1 JSON and creates the equivalent private `MealCategory`/`MealLink` rows owned by their new `User` account). V1 users' existing data must not be silently stranded when v2 ships.
+- **FR-40:** Enforce, at the database level, that every `ContentCategory`/`SavedLink` row has **exactly one** owner consistent with its `OwnerType` — a Postgres `CHECK` constraint (or equivalent) rejecting rows where `OwnerUserId`/`OwnerGroupId` are both null, both set, or set to the field that doesn't match `OwnerType`. This is not optional application-layer validation; it must hold even if application code has a bug, because the authorization layer trusts these columns directly.
+- **FR-41:** Protect shared (group-owned) content from lost updates under concurrent edits using **optimistic concurrency** (a row version/concurrency token on `ContentCategory` and `SavedLink`). When two members edit or archive the same item concurrently, the second write must fail with a detectable conflict rather than silently overwriting the first; the UI surfaces a "this was changed by someone else — reload and retry" message rather than swallowing the conflict.
+- **FR-42:** Foreign keys from `ContentCategory`/`SavedLink` to `User`/`Group` use **`RESTRICT`/`NoAction`** on delete, not `SetNull` or cascade — a user or group cannot be deleted while it still owns content. Deleting a group requires all of its `OwnerGroupId` content to be reassigned or archived within the same transaction as the delete, so no row can ever end up with `OwnerType = Group` and a null/dangling `OwnerGroupId`.
+- **FR-43:** Provide a one-time migration path for existing v1 users' JSON/localStorage data into PostgreSQL at v2 cutover (e.g., an import tool or endpoint that reads a user's exported v1 JSON and creates the equivalent private `ContentCategory`/`SavedLink` rows owned by their new `User` account). V1 users' existing data must not be silently stranded when v2 ships.
 
 ---
 
@@ -183,7 +183,7 @@ As a direct consequence, v1's "Out of Scope" items **"Multi-device data sync"** 
 
 Group functionality requires every shared category and link to have a clear owner and a clear set of rules for who can act on it. This section defines that model, since it did not exist in v1 (which had no concept of shared data at all).
 
-- **Ownership types.** Every `MealCategory` and `MealLink` is owned by exactly one of: a specific `User` (private — visible only to that user) or a `Group` (shared — visible to all current members of that group). See [Data Model](#9-data-model) for the schema representation.
+- **Ownership types.** Every `ContentCategory` and `SavedLink` is owned by exactly one of: a specific `User` (private — visible only to that user) or a `Group` (shared — visible to all current members of that group). See [Data Model](#9-data-model) for the schema representation.
 
 - **Who can edit or archive shared (group-owned) content?** **[OPEN QUESTION — Edit/archive permissions on shared content]** Can any group member edit or archive shared content, or only the member who originally created it? **Recommended direction:** allow **any group member** to edit or archive shared content, since the point of group sharing is collaborative meal planning (e.g., one person adds a link, another corrects the title or archives a stale one). This is flagged explicitly as a **product decision**, not just a technical one — it affects trust and expectations among group members, and should be confirmed with the product owner before implementation, since the alternative (creator-only edit rights) is equally defensible for a smaller, more controlled sharing model.
 
@@ -205,7 +205,7 @@ Group functionality requires every shared category and link to have a clear owne
 | Reliability | No data loss on normal shutdown; PostgreSQL provides durable, transactional writes, replacing v1's "no data loss" guarantee that depended on browser/device storage persistence |
 | Accessibility | Keyboard-navigable forms on web |
 | Maintainability | Shared models/services/components in RCL; data-access logic centralized behind the Web API/EF Core layer rather than duplicated per client |
-| Data Integrity *(new in v2 — architecture review finding)* | Every `MealCategory`/`MealLink` row's ownership is enforced at the database level, not just in application code — a Postgres `CHECK` constraint rejects any row whose `OwnerType`/`OwnerUserId`/`OwnerGroupId` combination is invalid (FR-40), so the authorization layer can trust these columns unconditionally |
+| Data Integrity *(new in v2 — architecture review finding)* | Every `ContentCategory`/`SavedLink` row's ownership is enforced at the database level, not just in application code — a Postgres `CHECK` constraint rejects any row whose `OwnerType`/`OwnerUserId`/`OwnerGroupId` combination is invalid (FR-40), so the authorization layer can trust these columns unconditionally |
 | Scale | ~10 users **per group**, an initially small number of groups; low concurrency per group, and concurrent writes to shared (group-owned) content are protected by optimistic concurrency (a `RowVersion` token) rather than left as an unenforced assumption — the second of two simultaneous edits fails with a detectable conflict instead of silently overwriting the first (FR-41) |
 | Visual Consistency *(new in v2 — delivery-planning addition)* | A single design language (palette, typography, spacing, shared component styles) is applied consistently across every screen delivered in this phase, on both the Blazor web client and the MAUI Hybrid app, rather than accumulating ad-hoc/default styling per feature as it ships. Delivered as a dedicated pass after core functionality (web + mobile) is in place, not spread across each feature epic. |
 | Security | **Minimal authentication is now required** (see FR-28/FR-29 and [OPEN QUESTION — Auth mechanism](#open-question--auth-mechanism-for-groups)) — this is a change from v1's "No auth" POC posture. Authorization must enforce the ownership model: a user may read/write their own private content and their group's shared content, but not another user's private content or another group's shared content. Session handling follows the per-client mechanism resolved in [Section 4](#4-approved-architecture-decisions) (cookie + auth-state handoff for Blazor Auto; bearer/JWT for MAUI), rather than being an unspecified detail. Link preview fetching remains server-side only, and must additionally block requests to private/link-local/loopback/metadata IP ranges and unsafe redirects (FR-11 — architecture review finding: SSRF risk). |
@@ -238,7 +238,7 @@ GroupMembership                         (new in v2)
 ├── Role: enum { Admin, Member }          // see OPEN QUESTION: Group roles
 └── JoinedAtUtc: DateTime
 
-MealCategory
+ContentCategory
 ├── Id: Guid
 ├── Name: string
 ├── IsFavorite: bool
@@ -250,7 +250,7 @@ MealCategory
 ├── OwnerGroupId: Guid?                   // new in v2 — set when OwnerType = Group (shared); FK is RESTRICT/NoAction on delete (FR-42)
 └── RowVersion: byte[]                    // new in v2 — optimistic concurrency token for shared-edit conflict detection (FR-41)
 
-MealLink
+SavedLink
 ├── Id: Guid
 ├── CategoryId: Guid
 ├── Title: string
@@ -274,7 +274,7 @@ AppSettings
 └── CultureCode: string?
 ```
 
-**Referential integrity notes (why this matters for the PostgreSQL decision):** archiving a `MealCategory` must cascade to its `MealLink`s (unchanged from v1, FR-04). A `Group` being deleted must resolve what happens to its `MealCategory`/`MealLink` rows still owned by `OwnerGroupId` — per the [Ownership & Permissions Model](#ownership--permissions-model), shared content survives individual member departures because ownership is the group, not a member; a full group deletion (US-23) is a separate, explicit action and should be handled with an application-level decision (e.g., require re-assigning or archiving shared content before a group can be deleted) rather than a silent cascade delete, to avoid accidental data loss. This kind of integrity constraint is exactly what a relational database with foreign keys is suited to express and enforce.
+**Referential integrity notes (why this matters for the PostgreSQL decision):** archiving a `ContentCategory` must cascade to its `SavedLink`s (unchanged from v1, FR-04). A `Group` being deleted must resolve what happens to its `ContentCategory`/`SavedLink` rows still owned by `OwnerGroupId` — per the [Ownership & Permissions Model](#ownership--permissions-model), shared content survives individual member departures because ownership is the group, not a member; a full group deletion (US-23) is a separate, explicit action and should be handled with an application-level decision (e.g., require re-assigning or archiving shared content before a group can be deleted) rather than a silent cascade delete, to avoid accidental data loss. This kind of integrity constraint is exactly what a relational database with foreign keys is suited to express and enforce.
 
 **Architecture review additions (FR-40–FR-42):** the ownership columns above are not just documentation — they are backed by an explicit DB `CHECK` constraint (FR-40) so a mismatched `OwnerType`/FK combination is a rejected write, not a silent bad row that the authorization layer would trust. The `OwnerUserId`/`OwnerGroupId` foreign keys use `RESTRICT`/`NoAction` rather than EF Core's common `SetNull` default (FR-42) — `SetNull` would otherwise leave `OwnerType = Group` with a null `OwnerGroupId` the moment a group row is deleted, which is exactly the invalid state FR-40's constraint exists to prevent. The `RowVersion` concurrency token (FR-41) exists specifically because §7 allows any group member to edit shared content — without it, two concurrent edits to the same row produce a silent lost update with no conflict signal to either user.
 
@@ -283,24 +283,24 @@ AppSettings
 ## 10. Solution Structure
 
 ```
-ManageFamilyMeals.slnx
+LinkNest.slnx
 src/
-├── ManageFamilyMeals.Shared/       # Models, services, RESX localization
-├── ManageFamilyMeals.Api/          # (New in v2) ASP.NET Core Web API — EF Core + PostgreSQL provider
+├── LinkNest.Shared/       # Models, services, RESX localization
+├── LinkNest.Api/          # (New in v2) ASP.NET Core Web API — EF Core + PostgreSQL provider
 │                                   #   data access, auth endpoints, group/membership services,
 │                                   #   ownership/authorization checks (mine vs. shared)
-├── ManageFamilyMeals.Web/          # Blazor Web App host (Auto render mode)
-│   └── ManageFamilyMeals.Web.Client/  # Interactive WASM components & pages — calls ManageFamilyMeals.Api over HTTP
-└── ManageFamilyMeals.Mobile/       # .NET MAUI Blazor Hybrid — calls ManageFamilyMeals.Api over HTTP
+├── LinkNest.Web/          # Blazor Web App host (Auto render mode)
+│   └── LinkNest.Web.Client/  # Interactive WASM components & pages — calls LinkNest.Api over HTTP
+└── LinkNest.Mobile/       # .NET MAUI Blazor Hybrid — calls LinkNest.Api over HTTP
                                     #   (no longer reads/writes a local JSON file directly, per the PostgreSQL decision)
 ```
 
-Notes on the new `ManageFamilyMeals.Api` project:
+Notes on the new `LinkNest.Api` project:
 
 - Hosts EF Core `DbContext` and the PostgreSQL provider (e.g., `Npgsql.EntityFrameworkCore.PostgreSQL`)
-- Can be deployed as a standalone process or co-hosted within the `ManageFamilyMeals.Web` host process for the initial v2 rollout to minimize new infrastructure — either approach satisfies the requirement that the MAUI client talks to a server-side API rather than local storage
+- Can be deployed as a standalone process or co-hosted within the `LinkNest.Web` host process for the initial v2 rollout to minimize new infrastructure — either approach satisfies the requirement that the MAUI client talks to a server-side API rather than local storage
 - Owns the new **group/membership services**: create group, generate/redeem invite code, enforce 10-member cap, role assignment (Admin/Member), leave/remove member
-- Owns the **ownership/authorization layer**: every request resolves the current user, checks whether the target `MealCategory`/`MealLink` is owned by that user or by that user's group, and rejects access otherwise
+- Owns the **ownership/authorization layer**: every request resolves the current user, checks whether the target `ContentCategory`/`SavedLink` is owned by that user or by that user's group, and rejects access otherwise
 - Exposes authentication endpoints (register/login) per FR-28/FR-29
 - *(Architecture review findings, closed as API responsibilities in v2)*:
   - Enforces the ownership invariant via a database `CHECK` constraint on `OwnerType`/`OwnerUserId`/`OwnerGroupId`, in addition to any application-layer validation (FR-40)
@@ -367,10 +367,10 @@ Notes on the new `ManageFamilyMeals.Api` project:
 *(Updated from v1 §11 — mobile wiring, auth, and sync/sharing are now this phase's scope, not a future one.)*
 
 1. **This phase (v2):**
-   - Stand up `ManageFamilyMeals.Api` with EF Core + PostgreSQL, and migrate persistence off JSON/localStorage
+   - Stand up `LinkNest.Api` with EF Core + PostgreSQL, and migrate persistence off JSON/localStorage
    - Implement minimal authentication (FR-28/FR-29)
    - Implement group create/join/leave/membership and the ownership model (FR-31–FR-39)
-   - Wire the `ManageFamilyMeals.Mobile` MAUI Blazor Hybrid project to call the new API instead of local storage
+   - Wire the `LinkNest.Mobile` MAUI Blazor Hybrid project to call the new API instead of local storage
    - Close all six architecture-review findings as delivered requirements, not open risks: ownership `CHECK` constraint (FR-40), optimistic concurrency on shared content (FR-41), `RESTRICT`/`NoAction` FK behavior on group deletion (FR-42), the per-client session/token model (§4, FR-29), SSRF-safe link preview fetching (FR-11), and the v1→v2 data migration path (FR-43)
    - Apply a dedicated visual style/theming pass (see Visual Consistency, §8) once web and mobile functionality are both in place, so styling work covers the full surface area once rather than being redone per feature
    - Delivery is broken into eight dependency-sequenced epics tracked in `docs/tickets/` (E1 API+PostgreSQL foundation → E2 authentication → E3 groups/ownership → E4 sharing/unified home → E5 membership management → E6 security/migration hardening → E7 mobile → E8 visual style/theming), each implemented and reviewed independently before the next begins

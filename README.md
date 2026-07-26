@@ -1,6 +1,6 @@
-# Manage Family Meals
+# LinkNest
 
-Blazor web app with a PostgreSQL-backed API for storing meal categories and links.
+Blazor web app with a PostgreSQL-backed API for saving and organizing links — videos, courses, articles, recipes, or any other content — into categories and shared collections.
 
 ## Documentation
 
@@ -36,14 +36,14 @@ PostgreSQL listens on **localhost:55432** (port 5432 inside the container).
 |----------|---------------------|
 | Host     | `localhost`         |
 | Port     | `55432`             |
-| Database | `managefamilymeals` |
-| User     | `mfm`               |
-| Password | `mfm_dev`           |
+| Database | `linknest` |
+| User     | `linknest`               |
+| Password | `linknest_dev`           |
 
 ### 2. Start the API
 
 ```powershell
-cd src/ManageFamilyMeals.Api
+cd src/LinkNest.Api
 dotnet run
 ```
 
@@ -58,7 +58,7 @@ The API runs at **http://localhost:5280**.
 In a **second** terminal:
 
 ```powershell
-cd src/ManageFamilyMeals.Web/ManageFamilyMeals.Web
+cd src/LinkNest.Web/LinkNest.Web
 dotnet run
 ```
 
@@ -69,18 +69,18 @@ Open **http://localhost:5084** in your browser (or the HTTPS URL shown in the co
 ### Authentication (E2)
 
 - Register at `/register` or log in at `/login`.
-- Default dev user (seeded on first run): `dev@mfm.local` / `DevPassword1!`
+- Default dev user (seeded on first run): `dev@linknest.local` / `DevPassword1!`
 - Protected pages and `/api/*` data endpoints require a valid auth cookie; unauthenticated requests return **401**.
 - Log out from the shell header menu.
-- **DataProtection keys:** API and Web must share the same `DataProtection:KeysPath` (default: `.managefamilymeals/dataprotection-keys` under each host’s content root). Use an absolute shared path or volume in multi-instance deployments.
-- **E2 bridge:** meal data has no ownership columns yet; all authenticated users see the same global dataset until E3 adds per-user scoping.
+- **DataProtection keys:** In Development, API and Web default to `%LOCALAPPDATA%/LinkNest/DataProtection-Keys` (see `appsettings.Development.json`). Both hosts must resolve to the **same directory** or auth cookies will not decrypt. In Production, set `LINKNEST_DATA_PROTECTION_KEYS_PATH` (legacy `MFM_DATA_PROTECTION_KEYS_PATH` is also accepted).
+- **Ownership (E3+):** categories and links are scoped per user and group membership. See [docs/agents.md](docs/agents.md) and [docs/L2.md](docs/L2.md).
 
 ### Build the whole solution (optional)
 
 From the repository root:
 
 ```powershell
-dotnet build ManageFamilyMeals.slnx
+dotnet build LinkNest.slnx
 ```
 
 ### Run tests (optional)
@@ -88,20 +88,20 @@ dotnet build ManageFamilyMeals.slnx
 Use Release so tests do not conflict with a running Debug API:
 
 ```powershell
-dotnet test tests/ManageFamilyMeals.Tests/ManageFamilyMeals.Tests.csproj -c Release
+dotnet test tests/LinkNest.Tests/LinkNest.Tests.csproj -c Release
 ```
 
 E2E tests (Playwright; first run installs Chromium):
 
 ```powershell
-dotnet test tests/ManageFamilyMeals.E2E.Tests/ManageFamilyMeals.E2E.Tests.csproj -c Release
+dotnet test tests/LinkNest.E2E.Tests/LinkNest.E2E.Tests.csproj -c Release
 ```
 
 ## Troubleshooting
 
-**`MSB3027` / file locked by `ManageFamilyMeals.Api`**
+**`MSB3027` / file locked by `LinkNest.Api`**
 
-Stop the running API before rebuilding (`Ctrl+C` in its terminal, or `Stop-Process -Name ManageFamilyMeals.Api -Force`), then run again.
+Stop the running API before rebuilding (`Ctrl+C` in its terminal, or `Stop-Process -Name LinkNest.Api -Force`), then run again.
 
 **API fails on startup (database connection)**
 
@@ -121,20 +121,30 @@ The `-v` flag removes the Docker volume and wipes the database. Use `docker comp
 SSMS does not work with PostgreSQL. Use **pgAdmin**, **DBeaver**, **Azure Data Studio** (PostgreSQL extension), or `psql`:
 
 ```powershell
-docker exec -it newdietapp-postgres-1 psql -U mfm -d managefamilymeals
+docker exec -it newdietapp-postgres-1 psql -U linknest -d linknest
 ```
 
-Main tables: `meal_categories`, `meal_links`, `app_settings`.
+Main tables: `meal_categories`, `meal_links` (legacy names kept for DB compatibility), `app_settings`.
+
+## Upgrading from LinkNest
+
+If you have an existing dev database or Docker volume from before the LinkNest rebrand:
+
+1. **PostgreSQL:** `docker-compose.yml` now uses database/user `linknest` and volume `linknest_pgdata`. Either run `docker compose down -v && docker compose up -d` for a fresh database, or point connection strings at your old `linknest` database and user `mfm` until you migrate data.
+2. **Auth:** Cookie name and Data Protection application name changed — all users must **log in again** after upgrading.
+3. **Default dev user:** On startup the seeder updates the well-known default user to `dev@linknest.local` if it still has `dev@linknest.local`.
+4. **Migrations:** Start the API once so EF applies any pending migrations before serving traffic.
+5. **C# domain types:** `ContentCategory`, `SavedLink`, and `IContentDataService` replace the old `Meal*` names; HTTP JSON shape is unchanged (`Categories` / `Links`).
 
 ## Project layout
 
 | Project | Role |
 |---------|------|
-| `ManageFamilyMeals.Api` | REST API, EF Core, PostgreSQL, link preview fetch |
-| `ManageFamilyMeals.Shared` | Models, `MealDataService`, API client, RESX strings |
-| `ManageFamilyMeals.Web` | ASP.NET Core host (Blazor Auto) |
-| `ManageFamilyMeals.Web.Client` | Interactive WASM pages (Home, Category, Archive) |
-| `ManageFamilyMeals.Tests` | Unit and integration tests |
+| `LinkNest.Api` | REST API, EF Core, PostgreSQL, link preview fetch |
+| `LinkNest.Shared` | Models, `ContentDataService`, API client, RESX strings |
+| `LinkNest.Web` | ASP.NET Core host (Blazor Auto) |
+| `LinkNest.Web.Client` | Interactive WASM pages (Home, Category, Archive) |
+| `LinkNest.Tests` | Unit and integration tests |
 
 ## What this validates
 

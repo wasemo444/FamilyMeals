@@ -1,0 +1,36 @@
+@inherits LocalizedComponentBase
+
+<CascadingValue Value="_cultureVersion" Name="CultureVersion">
+    <header class="app-header" data-testid="app-header">
+        <a class="brand" href="/">@L["AppTitle"]</a>
+        <nav class="app-nav">
+            <a href="/">@L["Home"]</a>
+            <a href="/groups">@L["GroupsNav"]</a>
+            <a href="/archive">@L["Archive"]</a>
+        </nav>
+        <div class="app-auth">
+            <AuthorizeView>
+                <Authorized>
+                    <span class="muted">@GetDisplayName(context.User)</span>
+                    <form method="post" action="/account/logout" class="logout-form">
+                        <button class="btn" type="submit" data-testid="logout-button">@L["Logout"]</button>
+                    </form>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login">@L["Login"]</a>
+                    <a href="/register">@L["Register"]</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+        <LanguageSwitcher />
+    </header>
+
+    @if (IsReady)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <p class="muted loading">@L["LoadingPreview"]</p>
+    }
+</CascadingValue>

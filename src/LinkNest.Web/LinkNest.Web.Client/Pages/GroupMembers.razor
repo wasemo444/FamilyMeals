@@ -1,0 +1,84 @@
+@page "/group/{GroupId:guid}"
+@rendermode InteractiveAuto
+@attribute [Authorize]
+@inherits LocalizedComponentBase
+@using LinkNest.Shared.Models
+
+<PageTitle>@_pageTitle</PageTitle>
+
+<InteractiveShell>
+<section class="page">
+    <a class="back-link" href="/">← @L["Back"]</a>
+
+    @if (_notFound)
+    {
+        <p class="error">@L["GroupNotFound"]</p>
+    }
+    else
+    {
+        <header class="page-header">
+            <h1>@L.Format("GroupMembersTitle", _groupName)</h1>
+        </header>
+
+        @if (_isAdmin)
+        {
+            <section class="panel">
+                <h2>@L["InviteMember"]</h2>
+                <EditForm Model="_inviteForm" OnValidSubmit="InviteAsync">
+                    <div class="form-row">
+                        <InputText class="input" @bind-Value="_inviteForm.Email" placeholder="@L["Email"]" />
+                        <button class="btn primary" type="submit">@L["SendInvite"]</button>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_inviteError))
+                    {
+                        <p class="error">@_inviteError</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_inviteSuccess))
+                    {
+                        <p class="muted">@_inviteSuccess</p>
+                    }
+                </EditForm>
+            </section>
+        }
+
+        <section class="panel">
+            <h2>@L["MemberList"]</h2>
+            @if (_members.Count == 0)
+            {
+                <p class="muted">@L["NoMembersYet"]</p>
+            }
+            else
+            {
+                <ul class="member-list">
+                    @foreach (var member in _members)
+                    {
+                        <li class="member-row">
+                            <div>
+                                <strong>@member.DisplayName</strong>
+                                <span class="muted">@member.Email</span>
+                            </div>
+                            <div class="member-actions">
+                                <span class="role-badge">@RoleLabel(member.Role)</span>
+                                @if (_isAdmin && member.UserId != _currentUserId)
+                                {
+                                    <button class="btn danger" type="button" @onclick="() => RemoveMemberAsync(member.UserId)">
+                                        @L["RemoveMember"]
+                                    </button>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="panel">
+            <button class="btn" type="button" @onclick="LeaveAsync">@L["LeaveGroup"]</button>
+            @if (!string.IsNullOrWhiteSpace(_actionError))
+            {
+                <p class="error">@_actionError</p>
+            }
+        </section>
+    }
+</section>
+</InteractiveShell>

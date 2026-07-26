@@ -30,8 +30,8 @@ E3 (ownership model must exist as the migration target).
 
 ## Likely Files/Areas
 
-- `src/ManageFamilyMeals.Api/` — link preview fetcher (URL/IP validation logic, likely a dedicated `ISafeUrlFetcher` or similar), unit tests for the SSRF guard.
-- `src/ManageFamilyMeals.Api/Migration/` (or a standalone console tool project) — v1 JSON → PostgreSQL import script.
+- `src/LinkNest.Api/` — link preview fetcher (URL/IP validation logic, likely a dedicated `ISafeUrlFetcher` or similar), unit tests for the SSRF guard.
+- `src/LinkNest.Api/Migration/` (or a standalone console tool project) — v1 JSON → PostgreSQL import script.
 
 ## Manual Test Notes
 

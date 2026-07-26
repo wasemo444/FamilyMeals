@@ -1,20 +1,20 @@
 # Agent & Developer Entry Point
 
-This file is the **first document** to read when entering the ManageFamilyMeals codebase — whether you are an AI agent or a human engineer.
+This file is the **first document** to read when entering the LinkNest codebase — whether you are an AI agent or a human engineer.
 
 ## What This System Is
 
-ManageFamilyMeals is a **Blazor Web App** with a **standalone ASP.NET Core REST API** and **PostgreSQL** persistence. Users organize meal recipe links into categories, optionally share categories with family groups, and browse content in English or Arabic.
+LinkNest is a **Blazor Web App** with a **standalone ASP.NET Core REST API** and **PostgreSQL** persistence. Users save and organize links to any online content in categories, optionally share collections with groups, and browse content in English or Arabic.
 
 ## Solution Map
 
 | Project | Path | Role |
 |---------|------|------|
-| **ManageFamilyMeals.Shared** | `src/ManageFamilyMeals.Shared/` | Domain models, service contracts, pure query/ownership rules, auth DTOs, localization |
-| **ManageFamilyMeals.Api** | `src/ManageFamilyMeals.Api/` | System-of-record HTTP API: EF Core, Identity cookies, ownership enforcement, link preview |
-| **ManageFamilyMeals.Web** | `src/ManageFamilyMeals.Web/ManageFamilyMeals.Web/` | Blazor host: YARP proxy, browser login (`/account/*`), auth-state serialization |
-| **ManageFamilyMeals.Web.Client** | `src/ManageFamilyMeals.Web/ManageFamilyMeals.Web.Client/` | Interactive UI pages/components; HTTP client adapters to API |
-| **Tests** | `tests/` | Unit/integration (`ManageFamilyMeals.Tests`) and Playwright E2E (`ManageFamilyMeals.E2E.Tests`) |
+| **LinkNest.Shared** | `src/LinkNest.Shared/` | Domain models, service contracts, pure query/ownership rules, auth DTOs, localization |
+| **LinkNest.Api** | `src/LinkNest.Api/` | System-of-record HTTP API: EF Core, Identity cookies, ownership enforcement, link preview |
+| **LinkNest.Web** | `src/LinkNest.Web/LinkNest.Web/` | Blazor host: YARP proxy, browser login (`/account/*`), auth-state serialization |
+| **LinkNest.Web.Client** | `src/LinkNest.Web/LinkNest.Web.Client/` | Interactive UI pages/components; HTTP client adapters to API |
+| **Tests** | `tests/` | Unit/integration (`LinkNest.Tests`) and Playwright E2E (`LinkNest.E2E.Tests`) |
 
 ## Architecture in One Diagram
 
@@ -22,12 +22,12 @@ ManageFamilyMeals is a **Blazor Web App** with a **standalone ASP.NET Core REST 
 Browser
   └─► Web host (:5084)
         ├─► /account/login|logout  → Web Identity (cookie on Web origin)
-        ├─► Blazor pages/components  → ApiMealDataService
+        ├─► Blazor pages/components  → ApiContentDataService
         └─► /api/* (YARP proxy)      → Api host (:5280)
-              └─► MealDataService → EfAppDataStore → PostgreSQL
+              └─► ContentDataService → EfAppDataStore → PostgreSQL
 ```
 
-**Critical:** Meal **data** always flows through the API. Identity cookies for the browser are issued by the **Web** host via form login, then forwarded to the API by `CookieForwardingHandler`.
+**Critical:** Content **data** always flows through the API. Identity cookies for the browser are issued by the **Web** host via form login, then forwarded to the API by `CookieForwardingHandler`.
 
 ## Layered Documentation
 
@@ -45,10 +45,10 @@ Read documents in this order based on task depth:
 ## Run Order (Local Dev)
 
 1. `docker compose up -d` — PostgreSQL on `localhost:55432`
-2. `dotnet run` in `src/ManageFamilyMeals.Api` — **http://localhost:5280**
-3. `dotnet run` in `src/ManageFamilyMeals.Web/ManageFamilyMeals.Web` — **http://localhost:5084**
+2. `dotnet run` in `src/LinkNest.Api` — **http://localhost:5280**
+3. `dotnet run` in `src/LinkNest.Web/LinkNest.Web` — **http://localhost:5084**
 
-Default dev user: `dev@mfm.local` / `DevPassword1!`
+Default dev user: `dev@linknest.local` / `DevPassword1!`
 
 ## Where to Edit What
 
@@ -56,7 +56,9 @@ Default dev user: `dev@mfm.local` / `DevPassword1!`
 |--------|----------|
 | UI page or component | `Web.Client/Pages/`, `Web.Client/Components/` |
 | HTTP API route | `Api/Endpoints/` |
-| Domain rules (shared) | `Shared/Services/MealDataQueries.cs`, `OwnershipRules.cs` |
+| Group membership (invites, leave, remove) | `Api/Endpoints/GroupMembershipEndpoints.cs`, `Api/Services/GroupMembershipService.cs` |
+| Group members UI | `Web.Client/Pages/GroupMembers.razor` |
+| Domain rules (shared) | `Shared/Services/ContentDataQueries.cs`, `OwnershipRules.cs` |
 | Persistence / scoping | `Api/Data/EfAppDataStore.cs` |
 | Browser form login/logout | `Web/Endpoints/AccountEndpoints.cs` |
 | JSON auth API | `Api/Endpoints/AuthEndpoints.cs` |
@@ -66,13 +68,17 @@ Default dev user: `dev@mfm.local` / `DevPassword1!`
 ## Non-Negotiable Rules for Agents
 
 1. **Do not bypass the Web proxy** in production paths — the browser calls same-origin `/api/*`, not `:5280` directly.
-2. **Ownership rules live in Shared** — `OwnershipRules` and `MealDataQueries` are the single source of filter/mutate logic. Do not duplicate in UI.
+2. **Ownership rules live in Shared** — `OwnershipRules` and `ContentDataQueries` are the single source of filter/mutate logic. Do not duplicate in UI.
 3. **Unauthorized resource access returns 404** (not 403) on category/link mutations — intentional obfuscation.
 4. **DataProtection keys must match** between Api and Web (`DataProtection:KeysPath`).
 5. **Do not register `LocalStorageAppDataStore`** — legacy v1 client storage; not wired in DI.
 6. **Links inherit category ownership** on create and when `CategoryId` changes in `EfAppDataStore`.
 7. **RowVersion is required** for updates; stale tokens → `ConcurrencyConflictException` → HTTP 409.
-8. **Stop Api/Web processes before rebuilding** to avoid DLL file locks on Windows.
+8. **One group per user** — enforced on create, invite accept, and invite target; a user already in a group cannot join another.
+9. **Group member cap is 10** (`GroupPolicy.MaxMembers`) — invite and accept reject when full; no waitlist.
+10. **Group invites require a registered, email-confirmed account** — API returns structured 400 codes (`invitee_not_found`, `invitee_email_unconfirmed`); Web maps codes to localized messages via `ApiBadRequestException`.
+11. **Removed/departed members' group-owned content stays with the group** — do not delete or reassign on leave/remove.
+12. **Stop Api/Web processes before rebuilding** to avoid DLL file locks on Windows.
 
 ## XML Documentation (Phase 1)
 
@@ -82,10 +88,10 @@ Public types in Shared, Api, and Web projects have `///` XML comments. Enable In
 
 ```powershell
 # Unit/integration (use Release if Api is running in Debug)
-dotnet test tests/ManageFamilyMeals.Tests/ManageFamilyMeals.Tests.csproj -c Release
+dotnet test tests/LinkNest.Tests/LinkNest.Tests.csproj -c Release
 
 # E2E (Playwright)
-dotnet test tests/ManageFamilyMeals.E2E.Tests/ManageFamilyMeals.E2E.Tests.csproj -c Release
+dotnet test tests/LinkNest.E2E.Tests/LinkNest.E2E.Tests.csproj -c Release
 ```
 
 ## Common Agent Mistakes
@@ -95,8 +101,10 @@ dotnet test tests/ManageFamilyMeals.E2E.Tests/ManageFamilyMeals.E2E.Tests.csproj
 | Fixing login in Api when browser uses Web form | Edit `AccountEndpoints` on Web host |
 | Adding ownership checks only in endpoints | Enforce in `OwnershipRules` + `EfAppDataStore` |
 | Expecting 403 on forbidden category edit | Expect **404** |
-| Calling Api directly from Blazor without proxy | Use `HttpClient` named `"MealDataApi"` (same-origin via Web) |
+| Calling Api directly from Blazor without proxy | Use `HttpClient` named `"LinkNestApi"` (same-origin via Web) |
 | Editing migration after apply | Create a new migration instead |
+| Allowing a user in multiple groups | Blocked by E5 — one group per user |
+| Using invite code for join in E5 | Email invite flow only; invite code field exists but is not the join path |
 
 ## Documentation Maintenance
 

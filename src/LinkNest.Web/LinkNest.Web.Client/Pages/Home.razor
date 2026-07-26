@@ -1,0 +1,134 @@
+@page "/"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inherits LocalizedComponentBase
+@using LinkNest.Shared.Models
+
+<PageTitle>@L["AppTitle"]</PageTitle>
+
+<InteractiveShell>
+<section class="page">
+    <header class="page-header">
+        <h1>@L["AppTitle"]</h1>
+    </header>
+
+    @if (_pendingInvites.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["PendingInvites"]</h2>
+            <p class="muted"><a href="/groups">@L["ManageGroupsLink"]</a></p>
+            @foreach (var invite in _pendingInvites)
+            {
+                <div class="invite-row">
+                    <p>@L.Format("InvitePrompt", invite.GroupName, invite.InvitedByDisplayName)</p>
+                    <div class="form-row">
+                        <button class="btn primary" type="button" @onclick="() => AcceptInviteAsync(invite.Id)">@L["AcceptInvite"]</button>
+                        <button class="btn" type="button" @onclick="() => DeclineInviteAsync(invite.Id)">@L["DeclineInvite"]</button>
+                    </div>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_inviteActionError))
+            {
+                <p class="error">@_inviteActionError</p>
+            }
+        </section>
+    }
+
+    @if (_groups.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["YourGroups"]</h2>
+            <p><a href="/groups">@L["ManageGroupsLink"]</a></p>
+        </section>
+    }
+    else
+    {
+        <section class="panel">
+            <p class="muted">@L["NoGroupsYet"] <a href="/groups">@L["CreateGroup"]</a></p>
+        </section>
+    }
+
+    @if (_groups.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["ViewFilter"]</h2>
+            <div class="filter-toggle" role="group" aria-label="@L["ViewFilter"]">
+                <button type="button" class="@FilterClass(HomeContentFilter.All)" @onclick="() => SetFilter(HomeContentFilter.All)">
+                    @L["FilterAll"]
+                </button>
+                <button type="button" class="@FilterClass(HomeContentFilter.Mine)" @onclick="() => SetFilter(HomeContentFilter.Mine)">
+                    @L["FilterMine"]
+                </button>
+                <button type="button" class="@FilterClass(HomeContentFilter.Shared)" @onclick="() => SetFilter(HomeContentFilter.Shared)">
+                    @L["FilterShared"]
+                </button>
+            </div>
+        </section>
+    }
+
+    <section class="panel">
+        <h2>@L["AddCategory"]</h2>
+        <EditForm Model="_form" OnValidSubmit="CreateCategoryAsync">
+            <div class="form-stack">
+                @if (_groups.Count > 0)
+                {
+                    <label class="field-label" for="category-owner">@L["SaveTo"]</label>
+                    <InputSelect id="category-owner" class="input" @bind-Value="_selectedOwnerKey">
+                        <option value="personal">@L["Personal"]</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group.Id">@L.Format("GroupLabel", group.Name)</option>
+                        }
+                    </InputSelect>
+                }
+                <div class="form-row">
+                    <InputText class="input" @bind-Value="_form.Name" placeholder="@L["CategoryName"]" />
+                    <button class="btn primary" type="submit">@L["Create"]</button>
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="error">@_error</p>
+            }
+        </EditForm>
+    </section>
+
+    <section class="panel">
+        <h2>@L["SearchCategories"]</h2>
+        <InputText class="input search-input"
+                   @bind-Value="_searchTerm"
+                   @bind-Value:after="OnSearchChanged"
+                   placeholder="@L["SearchCategories"]" />
+    </section>
+
+    @if (_favoriteCategories.Count > 0)
+    {
+        <section class="panel">
+            <h2>@L["FavoriteCategories"]</h2>
+            <div class="card-grid">
+                @foreach (var category in _favoriteCategories)
+                {
+                    <CategoryCard Category="category" />
+                }
+            </div>
+        </section>
+    }
+
+    <section class="panel">
+        <h2>@L["AllCategories"]</h2>
+        @if (_allCategories.Count == 0)
+        {
+            <p class="muted">@(_hasAnyCategories ? L["NoCategorySearchResults"] : L["NoCategoriesYet"])</p>
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (var category in _allCategories)
+                {
+                    <CategoryCard Category="category" />
+                }
+            </div>
+        }
+    </section>
+</section>
+</InteractiveShell>

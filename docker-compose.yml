@@ -2,13 +2,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: mfm
-      POSTGRES_PASSWORD: mfm_dev
-      POSTGRES_DB: managefamilymeals
+      POSTGRES_USER: linknest
+      POSTGRES_PASSWORD: linknest_dev
+      POSTGRES_DB: linknest
     ports:
       - "55432:5432"
     volumes:
-      - mfm_pgdata:/var/lib/postgresql/data
+      - linknest_pgdata:/var/lib/postgresql/data
 
 volumes:
-  mfm_pgdata:
+  linknest_pgdata:

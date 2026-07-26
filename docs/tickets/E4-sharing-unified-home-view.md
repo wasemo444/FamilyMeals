@@ -33,9 +33,9 @@ E3 (ownership columns and groups must exist).
 
 ## Likely Files/Areas
 
-- `src/ManageFamilyMeals.Api/` — endpoints for creating group-owned content, authorization checks (member-of-owning-group) on edit/archive endpoints for categories and links.
-- `src/ManageFamilyMeals.Shared/` — DTOs to carry owner info (personal vs. group + group name) to the UI.
-- `src/ManageFamilyMeals.Web.Client/Pages/` — home page updated to render combined personal + group sections; category/link create forms updated with an owner picker (personal vs. one of the user's groups).
+- `src/LinkNest.Api/` — endpoints for creating group-owned content, authorization checks (member-of-owning-group) on edit/archive endpoints for categories and links.
+- `src/LinkNest.Shared/` — DTOs to carry owner info (personal vs. group + group name) to the UI.
+- `src/LinkNest.Web.Client/Pages/` — home page updated to render combined personal + group sections; category/link create forms updated with an owner picker (personal vs. one of the user's groups).
 
 ## Manual Test Notes
 
