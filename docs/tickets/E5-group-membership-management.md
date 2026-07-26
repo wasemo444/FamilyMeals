@@ -29,13 +29,18 @@ E4 (sharing must exist so membership changes have something meaningful to affect
 
 - Changing a member's role beyond the E3 creator-as-Admin default (no promote/demote UI unless already implied by invite acceptance flow — keep role management minimal, just enough to satisfy FR-36–39).
 - Public/open group discovery or join links (explicitly excluded by the invite-only decision).
+- Invite code redemption join path (E5 uses email invite; `InviteCode` column retained for future use).
 - Mobile (E7), migration tooling and SSRF hardening (E6).
+
+## Status
+
+**Implemented** — see [L2.md § Group Membership](../L2.md#group-membership-e5) and `GroupMembershipEndpointsTests`.
 
 ## Likely Files/Areas
 
-- `src/ManageFamilyMeals.Api/` — invite endpoint (Admin-only), accept/decline endpoint, remove-member endpoint (Admin-only), cap-check logic, one-group-per-user check.
-- `src/ManageFamilyMeals.Shared/` — invite/membership DTOs.
-- `src/ManageFamilyMeals.Web.Client/Pages/` — group members page (list, invite form, remove action), pending-invite view for the invited user.
+- `src/LinkNest.Api/` — invite endpoint (Admin-only), accept/decline endpoint, remove-member endpoint (Admin-only), cap-check logic, one-group-per-user check.
+- `src/LinkNest.Shared/` — invite/membership DTOs.
+- `src/LinkNest.Web.Client/Pages/` — group members page (list, invite form, remove action), pending-invite view for the invited user.
 
 ## Manual Test Notes
 

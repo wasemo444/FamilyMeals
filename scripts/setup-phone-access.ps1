@@ -1,7 +1,7 @@
 # Run this script as Administrator (right-click PowerShell -> Run as administrator)
 # Fixes phone access when Wi-Fi is on the Public firewall profile.
 
-$ruleName = "ManageFamilyMeals Dev 5299"
+$ruleName = "LinkNest Dev 5299"
 
 Write-Host "Adding firewall rule for Private, Public, and Domain profiles..."
 netsh advfirewall firewall delete rule name="$ruleName" 2>$null
@@ -18,7 +18,7 @@ catch {
 
 Write-Host ""
 Write-Host "Done. Start the app with:" -ForegroundColor Cyan
-Write-Host '  cd src\ManageFamilyMeals.Web\ManageFamilyMeals.Web'
+Write-Host '  cd src\LinkNest.Web\LinkNest.Web'
 Write-Host '  dotnet run --urls "http://0.0.0.0:5299"'
 Write-Host ""
 Write-Host "On your phone (same Wi-Fi): http://192.168.178.21:5299"

@@ -1,4 +1,4 @@
-# Product Requirements Document — Manage Family Meals
+# Product Requirements Document — LinkNest
 
 **Version:** 1.0 (POC)  
 **Date:** July 13, 2026  
@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-**Manage Family Meals** is a unified web and mobile application for a small group (~10 family/friends) to organize meal-related links into categories (Breakfast, Lunch, Snack, etc.). The app requires no database server and stores data per device. It supports English and Arabic with full RTL layout for Arabic.
+**LinkNest** is a unified web and mobile application for a small group (~10 family/friends) to organize meal-related links into categories (Breakfast, Lunch, Snack, etc.). The app requires no database server and stores data per device. It supports English and Arabic with full RTL layout for Arabic.
 
 ---
 
@@ -39,7 +39,7 @@
 | Link fields | Title + URL + optional link preview (WhatsApp-style OG card) |
 | Default language | Follow device/browser locale (en or ar) |
 | Delivery priority | Web first, then mobile |
-| Product name | **Manage Family Meals** |
+| Product name | **LinkNest** |
 
 ---
 
@@ -126,11 +126,11 @@
 
 ```
 AppData
-├── Categories[]: MealCategory
-├── Links[]: MealLink
+├── Categories[]: ContentCategory
+├── Links[]: SavedLink
 └── Settings: AppSettings
 
-MealCategory
+ContentCategory
 ├── Id: Guid
 ├── Name: string
 ├── IsFavorite: bool
@@ -138,7 +138,7 @@ MealCategory
 ├── IsDeleted: bool
 └── DeletedAtUtc: DateTime?
 
-MealLink
+SavedLink
 ├── Id: Guid
 ├── CategoryId: Guid
 ├── Title: string
@@ -161,12 +161,12 @@ AppSettings
 ## 8. Solution Structure (POC)
 
 ```
-ManageFamilyMeals.slnx
+LinkNest.slnx
 src/
-├── ManageFamilyMeals.Shared/       # Models, services, RESX localization
-├── ManageFamilyMeals.Web/          # Blazor Web App host (Auto render mode)
-│   └── ManageFamilyMeals.Web.Client/  # Interactive WASM components & pages
-└── ManageFamilyMeals.Mobile/       # (Future) MAUI Blazor Hybrid
+├── LinkNest.Shared/       # Models, services, RESX localization
+├── LinkNest.Web/          # Blazor Web App host (Auto render mode)
+│   └── LinkNest.Web.Client/  # Interactive WASM components & pages
+└── LinkNest.Mobile/       # (Future) MAUI Blazor Hybrid
 ```
 
 ---
@@ -204,7 +204,7 @@ src/
 
 ## 11. Next Phase (Pending Your Approval)
 
-1. **Mobile:** Add `ManageFamilyMeals.Mobile` MAUI Blazor Hybrid project referencing Shared RCL
+1. **Mobile:** Add `LinkNest.Mobile` MAUI Blazor Hybrid project referencing Shared RCL
 2. **Auth:** Email registration/login (ASP.NET Core Identity or external provider)
 3. **Sync (optional):** If group sharing is needed later, introduce a minimal API + shared storage
 

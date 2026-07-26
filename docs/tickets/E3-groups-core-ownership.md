@@ -2,7 +2,7 @@
 
 ## Goal
 
-Introduce `Group` and `GroupMembership` entities and the ownership model (`OwnerType`/`OwnerUserId`/`OwnerGroupId`) on `MealCategory`/`MealLink`, plus the data-integrity hardening the architecture review called for (CHECK constraint, optimistic concurrency, FK delete behavior). This is the schema/ownership foundation E4 and E5 build on — it does not yet expose sharing UI.
+Introduce `Group` and `GroupMembership` entities and the ownership model (`OwnerType`/`OwnerUserId`/`OwnerGroupId`) on `ContentCategory`/`SavedLink`, plus the data-integrity hardening the architecture review called for (CHECK constraint, optimistic concurrency, FK delete behavior). This is the schema/ownership foundation E4 and E5 build on — it does not yet expose sharing UI.
 
 ## Depends On
 
@@ -19,10 +19,10 @@ E2 (need authenticated users before anything can be "owned").
 ## Acceptance Criteria
 
 - `Group` entity (Id, Name, CreatedAtUtc, CreatedByUserId) and `GroupMembership` entity (GroupId, UserId, Role, JoinedAtUtc) exist with a migration.
-- `MealCategory` and `MealLink` gain `OwnerType` (User | Group), `OwnerUserId`, `OwnerGroupId`, and `RowVersion` columns via migration; existing rows are backfilled with `OwnerType = User` and `OwnerUserId` set to their creator.
+- `ContentCategory` and `SavedLink` gain `OwnerType` (User | Group), `OwnerUserId`, `OwnerGroupId`, and `RowVersion` columns via migration; existing rows are backfilled with `OwnerType = User` and `OwnerUserId` set to their creator.
 - A DB-level CHECK constraint enforces exactly one of `OwnerUserId`/`OwnerGroupId` is set based on `OwnerType` (FR-40).
 - `RowVersion` is wired for EF Core optimistic concurrency; a concurrent-edit conflict returns a 409/conflict result instead of silently overwriting (FR-41).
-- Foreign keys from `MealCategory`/`MealLink` to `Group`/`User` use `RESTRICT`/`NoAction` delete behavior, not cascade delete, per FR-42 (a group or user with existing content cannot be deleted outright — deletion path for groups is out of scope here, just the FK behavior).
+- Foreign keys from `ContentCategory`/`SavedLink` to `Group`/`User` use `RESTRICT`/`NoAction` delete behavior, not cascade delete, per FR-42 (a group or user with existing content cannot be deleted outright — deletion path for groups is out of scope here, just the FK behavior).
 - A user can create a group and becomes its Admin (creator-becomes-Admin default, no group-role UI beyond this yet).
 - A user can create categories/links owned by themselves (`OwnerType = User`) — this is just the existing E1/E2 behavior now expressed through the new ownership columns; owning content by a group is schema-ready but not yet reachable from UI (that's E4).
 - Validation Checklist rows #14, #21, #22, #23 flip to "Implemented."
@@ -36,9 +36,9 @@ E2 (need authenticated users before anything can be "owned").
 
 ## Likely Files/Areas
 
-- `src/ManageFamilyMeals.Api/` — `Group`, `GroupMembership` entities, EF configs, migration (schema + backfill), CHECK constraint (raw SQL in migration or `HasCheckConstraint`), concurrency token config, FK delete-behavior config, group-creation endpoint.
-- `src/ManageFamilyMeals.Shared/Models/` — shared `Group`/ownership DTOs if UI needs them.
-- Existing `MealCategory`/`MealLink` entity configs — updated for new columns.
+- `src/LinkNest.Api/` — `Group`, `GroupMembership` entities, EF configs, migration (schema + backfill), CHECK constraint (raw SQL in migration or `HasCheckConstraint`), concurrency token config, FK delete-behavior config, group-creation endpoint.
+- `src/LinkNest.Shared/Models/` — shared `Group`/ownership DTOs if UI needs them.
+- Existing `ContentCategory`/`SavedLink` entity configs — updated for new columns.
 
 ## Manual Test Notes
 

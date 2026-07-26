@@ -18,7 +18,7 @@ E1 (API + PostgreSQL must exist first).
 
 ## Acceptance Criteria
 
-- `ManageFamilyMeals.Api` uses ASP.NET Core Identity with a PostgreSQL-backed `IdentityDbContext` (or Identity tables added to the existing DbContext).
+- `LinkNest.Api` uses ASP.NET Core Identity with a PostgreSQL-backed `IdentityDbContext` (or Identity tables added to the existing DbContext).
 - Register and login endpoints exist; passwords are hashed via Identity's default hasher (no custom crypto).
 - Web app issues an auth cookie on login; `PersistingAuthenticationStateProvider` (or equivalent) flows auth state from server to the WASM client so `AuthorizeView`/`[Authorize]` work in Blazor Auto render mode.
 - All data endpoints from E1 now require authentication (`[Authorize]`), returning 401 when no valid session exists.
@@ -35,10 +35,10 @@ E1 (API + PostgreSQL must exist first).
 
 ## Likely Files/Areas
 
-- `src/ManageFamilyMeals.Api/` — Identity setup in `Program.cs`, `ApplicationUser` entity, Identity DbContext config, register/login/logout endpoints, migration adding Identity tables.
-- `src/ManageFamilyMeals.Web/` (server host) — cookie auth configuration, `PersistingAuthenticationStateProvider`, login/register Razor pages or components.
-- `src/ManageFamilyMeals.Web.Client/` — `AuthorizeView` usage, redirect-to-login handling, auth state consumption.
-- `src/ManageFamilyMeals.Shared/` — any shared auth-state contracts/DTOs.
+- `src/LinkNest.Api/` — Identity setup in `Program.cs`, `ApplicationUser` entity, Identity DbContext config, register/login/logout endpoints, migration adding Identity tables.
+- `src/LinkNest.Web/` (server host) — cookie auth configuration, `PersistingAuthenticationStateProvider`, login/register Razor pages or components.
+- `src/LinkNest.Web.Client/` — `AuthorizeView` usage, redirect-to-login handling, auth state consumption.
+- `src/LinkNest.Shared/` — any shared auth-state contracts/DTOs.
 
 ## Manual Test Notes
 
