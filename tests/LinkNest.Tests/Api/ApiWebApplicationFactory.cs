@@ -102,7 +102,10 @@ public static class ApiTestHostConfiguration
                 [$"{IdentitySeedOptions.SectionName}:DefaultUserEmail"] = WellKnownUsers.DefaultUserEmail,
                 [$"{IdentitySeedOptions.SectionName}:DefaultUserPassword"] = ApiWebApplicationFactory.DefaultTestPassword,
                 [$"{IdentitySeedOptions.SectionName}:DefaultUserDisplayName"] = "Default Dev User",
-                ["DataProtection:KeysPath"] = dataProtectionPath
+                ["DataProtection:KeysPath"] = dataProtectionPath,
+                [$"{JwtOptions.SectionName}:Secret"] = "LinkNest.Test.Jwt.SigningKey.Minimum32Chars!",
+                [$"{JwtOptions.SectionName}:Issuer"] = "LinkNest.Api",
+                [$"{JwtOptions.SectionName}:Audience"] = "LinkNest.Mobile"
             });
         });
     }

@@ -11,7 +11,8 @@ namespace LinkNest.Web.Client;
 public static class ClientServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds localization, HTTP clients, and scoped services used by interactive client components.
+    /// Adds localization, HTTP clients, and scoped services used by interactive client components,
+    /// including web cookie-auth defaults.
     /// </summary>
     /// <param name="services">The service collection to configure.</param>
     /// <param name="configuration">Application configuration (reads <c>ApiBaseUrl</c> when set).</param>
@@ -19,6 +20,20 @@ public static class ClientServiceCollectionExtensions
     /// <param name="configureLinkNestApi">Optional callback to add handlers (for example cookie forwarding on the Web host).</param>
     /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
     public static IServiceCollection AddLinkNestClientServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? baseAddress = null,
+        Action<IHttpClientBuilder>? configureLinkNestApi = null)
+    {
+        services.AddLinkNestCoreClientServices(configuration, baseAddress, configureLinkNestApi);
+        services.AddLinkNestWebCookieAuth();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds localization, HTTP clients, and data services without binding auth-mode implementations.
+    /// </summary>
+    public static IServiceCollection AddLinkNestCoreClientServices(
         this IServiceCollection services,
         IConfiguration configuration,
         string? baseAddress = null,
@@ -51,6 +66,17 @@ public static class ClientServiceCollectionExtensions
         services.AddScoped<CultureService>();
         services.AddScoped<ILinkPreviewClient, LinkPreviewClient>();
 
+        return services;
+    }
+
+    /// <summary>
+    /// Registers cookie-based auth abstractions for the web client.
+    /// </summary>
+    public static IServiceCollection AddLinkNestWebCookieAuth(this IServiceCollection services)
+    {
+        services.AddSingleton<IClientAuthMode, WebClientAuthMode>();
+        services.AddSingleton<IAuthStateNotifier, WebAuthStateNotifier>();
+        services.AddSingleton<ISecureTokenStore, WebSecureTokenStore>();
         return services;
     }
 }

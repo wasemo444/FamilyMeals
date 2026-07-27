@@ -12,9 +12,16 @@
             <AuthorizeView>
                 <Authorized>
                     <span class="muted">@GetDisplayName(context.User)</span>
-                    <form method="post" action="/account/logout" class="logout-form">
-                        <button class="btn" type="submit" data-testid="logout-button">@L["Logout"]</button>
-                    </form>
+                    @if (UsesBearerToken)
+                    {
+                        <button class="btn" type="button" data-testid="logout-button" @onclick="LogoutAsync">@L["Logout"]</button>
+                    }
+                    else
+                    {
+                        <form method="post" action="/account/logout" class="logout-form">
+                            <button class="btn" type="submit" data-testid="logout-button">@L["Logout"]</button>
+                        </form>
+                    }
                 </Authorized>
                 <NotAuthorized>
                     <a href="/login">@L["Login"]</a>

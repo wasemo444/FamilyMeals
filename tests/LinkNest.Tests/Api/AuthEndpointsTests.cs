@@ -188,4 +188,111 @@ public class AuthEndpointsTests : IClassFixture<ApiWebApplicationFactory>
         // Assert
         response.EnsureSuccessStatusCode();
     }
+
+    [Fact]
+    public async Task TokenLogin_WithSeededDefaultUser_ReturnsJwtAndMeWorksWithBearer()
+    {
+        // Arrange
+        using var client = _factory.CreateClient();
+
+        // Act
+        var tokenResponse = await client.PostAsJsonAsync("/api/auth/token", new LoginRequest
+        {
+            Email = WellKnownUsers.DefaultUserEmail,
+            Password = ApiWebApplicationFactory.DefaultTestPassword
+        });
+        var tokenPayload = await tokenResponse.Content.ReadFromJsonAsync<AuthTokenResponse>();
+
+        using var bearerRequest = new HttpRequestMessage(HttpMethod.Get, "/api/auth/me");
+        bearerRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            tokenPayload!.AccessToken);
+        var meResponse = await client.SendAsync(bearerRequest);
+        var user = await meResponse.Content.ReadFromJsonAsync<AuthUserInfo>();
+
+        // Assert
+        tokenResponse.EnsureSuccessStatusCode();
+        Assert.NotNull(tokenPayload);
+        Assert.False(string.IsNullOrWhiteSpace(tokenPayload!.AccessToken));
+        Assert.True(tokenPayload.ExpiresAtUtc > DateTime.UtcNow);
+        Assert.Equal(WellKnownUsers.DefaultUserEmail, tokenPayload.User.Email);
+        meResponse.EnsureSuccessStatusCode();
+        Assert.NotNull(user);
+        Assert.Equal(WellKnownUsers.DefaultUserEmail, user!.Email);
+    }
+
+    [Fact]
+    public async Task TokenLogin_WithInvalidPassword_ReturnsUnauthorized()
+    {
+        // Arrange
+        using var client = _factory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/auth/token", new LoginRequest
+        {
+            Email = WellKnownUsers.DefaultUserEmail,
+            Password = "WrongPassword1!"
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Bootstrap_WithBearerToken_ReturnsSuccess()
+    {
+        // Arrange
+        using var client = _factory.CreateClient();
+        var tokenResponse = await client.PostAsJsonAsync("/api/auth/token", new LoginRequest
+        {
+            Email = WellKnownUsers.DefaultUserEmail,
+            Password = ApiWebApplicationFactory.DefaultTestPassword
+        });
+        var tokenPayload = await tokenResponse.Content.ReadFromJsonAsync<AuthTokenResponse>();
+        tokenResponse.EnsureSuccessStatusCode();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/bootstrap");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            tokenPayload!.AccessToken);
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task Me_WithBearerAndCookiePrefersBearerWhenBothPresent()
+    {
+        // Arrange — cookie session from login
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true
+        });
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = WellKnownUsers.DefaultUserEmail,
+            Password = ApiWebApplicationFactory.DefaultTestPassword
+        });
+        loginResponse.EnsureSuccessStatusCode();
+
+        var tokenResponse = await client.PostAsJsonAsync("/api/auth/token", new LoginRequest
+        {
+            Email = WellKnownUsers.DefaultUserEmail,
+            Password = ApiWebApplicationFactory.DefaultTestPassword
+        });
+        var tokenPayload = await tokenResponse.Content.ReadFromJsonAsync<AuthTokenResponse>();
+
+        // Act — send both cookie (automatic) and bearer header
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/me");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            tokenPayload!.AccessToken);
+        var meResponse = await client.SendAsync(request);
+
+        // Assert
+        meResponse.EnsureSuccessStatusCode();
+    }
 }

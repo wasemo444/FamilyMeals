@@ -28,6 +28,14 @@ public interface IAuthClient
     Task<AuthUserInfo> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Authenticates an existing user and returns a JWT bearer token for mobile clients.
+    /// </summary>
+    /// <param name="request">Login credentials.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Access token, expiration, and user profile.</returns>
+    Task<AuthTokenResponse> LoginWithTokenAsync(LoginRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Ends the current authentication session.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>

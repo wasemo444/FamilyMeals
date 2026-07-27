@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace LinkNest.Api.Identity;
 
@@ -15,6 +18,9 @@ public static class IdentityServiceExtensions
 {
     /// <summary>Application authentication cookie name shared with the web host.</summary>
     public const string ApplicationCookieName = ".LinkNest.Auth";
+
+    /// <summary>Policy scheme that forwards to JWT or cookie auth based on the Authorization header.</summary>
+    public const string SmartAuthScheme = "SmartAuth";
 
     /// <summary>
     /// Adds Identity, cookie auth, data protection, and related services to the DI container.
@@ -31,6 +37,7 @@ public static class IdentityServiceExtensions
     {
         services.Configure<IdentitySeedOptions>(configuration.GetSection(IdentitySeedOptions.SectionName));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+        services.AddSingleton<JwtTokenService>();
         services.AddScoped<IdentityDataSeeder>();
         services.AddSingleton<IEmailSender, LoggingEmailSender>();
         services.AddScoped<EmailConfirmationService>();
@@ -62,12 +69,27 @@ public static class IdentityServiceExtensions
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddSingleton<IConfigureOptions<JwtOptions>, ConfigureJwtOptions>();
+        services.AddSingleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
+
         services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultAuthenticateScheme = SmartAuthScheme;
+                options.DefaultChallengeScheme = SmartAuthScheme;
                 options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
             })
+            .AddPolicyScheme(SmartAuthScheme, SmartAuthScheme, policyOptions =>
+            {
+                policyOptions.ForwardDefaultSelector = context =>
+                {
+                    var authorization = context.Request.Headers.Authorization.ToString();
+                    return authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                        ? JwtBearerDefaults.AuthenticationScheme
+                        : IdentityConstants.ApplicationScheme;
+                };
+            })
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, _ => { })
             .AddCookie(IdentityConstants.ApplicationScheme, options =>
             {
                 options.Cookie.Name = ApplicationCookieName;
