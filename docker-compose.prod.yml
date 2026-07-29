@@ -1,0 +1,55 @@
+# Production compose — uses external PostgreSQL (Neon, Supabase, etc.).
+# Copy env.production.example to .env and fill in secrets before running:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Public traffic should terminate TLS at a reverse proxy (Caddy, nginx, Traefik)
+# in front of the web service on port 8080.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: ${DATABASE_URL}
+      DataProtection__KeysPath: /keys
+      Jwt__Secret: ${JWT_SECRET}
+      Auth__WebBaseUrl: ${WEB_BASE_URL}
+      Auth__AllowRegistration: ${ALLOW_REGISTRATION:-false}
+      Auth__RequireConfirmedEmail: ${REQUIRE_CONFIRMED_EMAIL:-true}
+      Email__Smtp__Host: ${SMTP_HOST}
+      Email__Smtp__Port: ${SMTP_PORT:-587}
+      Email__Smtp__Username: ${SMTP_USERNAME}
+      Email__Smtp__Password: ${SMTP_PASSWORD}
+      Email__Smtp__FromAddress: ${SMTP_FROM_ADDRESS}
+      Email__Smtp__FromName: ${SMTP_FROM_NAME:-LinkNest}
+      Email__Smtp__UseStartTls: ${SMTP_USE_STARTTLS:-true}
+    volumes:
+      - linknest_keys:/keys
+    expose:
+      - "8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: ${DATABASE_URL}
+      DataProtection__KeysPath: /keys
+      WebBaseUrl: ${WEB_BASE_URL}
+      ReverseProxy__ApiBaseAddress: http://api:8080
+      Auth__AllowRegistration: ${ALLOW_REGISTRATION:-false}
+      Auth__RequireConfirmedEmail: ${REQUIRE_CONFIRMED_EMAIL:-true}
+    volumes:
+      - linknest_keys:/keys
+
+volumes:
+  linknest_keys:

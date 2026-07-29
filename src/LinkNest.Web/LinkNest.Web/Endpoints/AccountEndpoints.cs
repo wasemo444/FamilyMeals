@@ -71,6 +71,11 @@ public static class AccountEndpoints
             return RedirectToLogin(returnUrl, normalizedEmail, error: "invalid");
         }
 
+        if (!user.IsActive)
+        {
+            return RedirectToLogin(returnUrl, normalizedEmail, error: "deactivated");
+        }
+
         var result = await signInManager.PasswordSignInAsync(
             user.UserName ?? normalizedEmail,
             password,
@@ -82,7 +87,12 @@ public static class AccountEndpoints
             return RedirectToLogin(returnUrl, normalizedEmail, error: "locked");
         }
 
-        if (result.IsNotAllowed || !result.Succeeded)
+        if (result.IsNotAllowed)
+        {
+            return RedirectToLogin(returnUrl, normalizedEmail, error: "unconfirmed");
+        }
+
+        if (!result.Succeeded)
         {
             return RedirectToLogin(returnUrl, normalizedEmail, error: "invalid");
         }

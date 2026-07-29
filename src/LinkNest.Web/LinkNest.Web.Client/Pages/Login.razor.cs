@@ -40,6 +40,12 @@ public partial class Login
     [SupplyParameterFromQuery(Name = "confirmed")]
     public bool EmailConfirmed { get; set; }
 
+    [SupplyParameterFromQuery(Name = "reset")]
+    public bool PasswordReset { get; set; }
+
+    [SupplyParameterFromQuery(Name = "deactivated")]
+    public bool AccountDeactivated { get; set; }
+
     [SupplyParameterFromQuery(Name = "email")]
     public string? RegisteredEmail { get; set; }
 
@@ -49,6 +55,9 @@ public partial class Login
     private readonly LoginRequest _form = new();
     private string? _error;
     private string? _success;
+    private string? _resendSuccess;
+    private bool _showResendConfirmation;
+    private bool _resending;
 
     protected bool UsesBearerToken => ClientAuthMode.UsesBearerToken;
 
@@ -72,10 +81,13 @@ public partial class Login
             _form.Email = RegisteredEmail;
         }
 
+        _showResendConfirmation = Error == "unconfirmed";
+
         _error = Error switch
         {
             "invalid" => L["InvalidCredentials"],
             "unconfirmed" => L["EmailNotConfirmed"],
+            "deactivated" => L["AccountDeactivated"],
             "locked" => L["LoginFailed"],
             "required" => L["LoginFailed"],
             "invalidToken" => L["EmailConfirmationFailed"],
@@ -84,16 +96,22 @@ public partial class Login
 
         _success = EmailConfirmed
             ? L["EmailConfirmedSuccess"]
-            : Registered && ConfirmEmail
-                ? L["RegistrationConfirmEmail"]
-                : Registered
-                    ? L["RegistrationSuccessful"]
-                    : null;
+            : PasswordReset
+                ? L["PasswordResetSuccess"]
+                : AccountDeactivated
+                    ? L["AccountDeactivatedSuccess"]
+                    : Registered && ConfirmEmail
+                        ? L["RegistrationConfirmEmail"]
+                        : Registered
+                            ? L["RegistrationSuccessful"]
+                            : null;
     }
 
     private async Task LoginWithTokenAsync()
     {
         _error = null;
+        _resendSuccess = null;
+        _showResendConfirmation = false;
 
         try
         {
@@ -108,13 +126,46 @@ public partial class Login
         {
             _error = AuthValidationMessages.FormatErrors(exception.Errors);
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException exception)
         {
-            _error = L["InvalidCredentials"];
+            _error = exception.Message.Contains("confirm", StringComparison.OrdinalIgnoreCase)
+                ? L["EmailNotConfirmed"]
+                : exception.Message.Contains("deactivated", StringComparison.OrdinalIgnoreCase)
+                    ? L["AccountDeactivated"]
+                    : L["InvalidCredentials"];
+            _showResendConfirmation = _error == L["EmailNotConfirmed"];
         }
         catch (Exception)
         {
             _error = L["LoginFailed"];
+        }
+    }
+
+    private async Task ResendConfirmationAsync()
+    {
+        _resendSuccess = null;
+        _resending = true;
+
+        var email = UsesBearerToken ? _form.Email : EmailValue;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            _error = L["ResendConfirmationEmailRequired"];
+            _resending = false;
+            return;
+        }
+
+        try
+        {
+            await AuthClient.ResendConfirmationAsync(new ResendConfirmationRequest { Email = email.Trim() });
+            _resendSuccess = L["ResendConfirmationSent"];
+        }
+        catch (Exception)
+        {
+            _error = L["ResendConfirmationFailed"];
+        }
+        finally
+        {
+            _resending = false;
         }
     }
 }

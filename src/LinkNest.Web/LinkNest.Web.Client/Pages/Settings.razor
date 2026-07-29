@@ -1,0 +1,97 @@
+@page "/settings"
+@rendermode AutoRenderMode
+@attribute [Authorize]
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["Settings"]</PageTitle>
+
+<InteractiveShell>
+<div class="ln-page ln-settings">
+    <a class="ln-back" href="/">← @L["Home"]</a>
+
+    <header class="ln-page-head">
+        <h1>@L["Settings"]</h1>
+        <p class="ln-muted">@L["SettingsDescription"]</p>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="ln-loading">@L["LoadingPreview"]</p>
+    }
+    else
+    {
+        <section class="ln-settings-section" aria-labelledby="language-heading">
+            <h2 id="language-heading">@L["LanguagePreference"]</h2>
+            <LanguageSwitcher />
+        </section>
+
+        <section class="ln-settings-section" aria-labelledby="profile-heading">
+            <h2 id="profile-heading">@L["ProfileSettings"]</h2>
+            <EditForm Model="_profileForm" OnValidSubmit="SaveProfileAsync" class="ln-form-stack">
+                <label class="ln-field">
+                    <span>@L["DisplayName"]</span>
+                    <InputText class="ln-input" data-testid="settings-display-name" @bind-Value="_profileForm.DisplayName" />
+                </label>
+                <label class="ln-field">
+                    <span>@L["Email"]</span>
+                    <input class="ln-input" type="email" value="@_email" readonly disabled />
+                </label>
+                @if (!string.IsNullOrWhiteSpace(_profileSuccess))
+                {
+                    <p class="ln-success" data-testid="settings-profile-success">@_profileSuccess</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_profileError))
+                {
+                    <p class="ln-error" data-testid="settings-profile-error">@_profileError</p>
+                }
+                <button class="ln-btn ln-btn--primary" type="submit" data-testid="settings-save-profile" disabled="@_savingProfile">@L["SaveChanges"]</button>
+            </EditForm>
+        </section>
+
+        <section class="ln-settings-section" aria-labelledby="password-heading">
+            <h2 id="password-heading">@L["PasswordSettings"]</h2>
+            <p class="ln-muted">@L["ChangePasswordHint"]</p>
+            <a class="ln-btn ln-btn--ghost" href="/forgot-password">@L["ChangePassword"]</a>
+        </section>
+
+        <section class="ln-settings-section ln-settings-section--danger" aria-labelledby="deactivate-heading">
+            <h2 id="deactivate-heading">@L["DeactivateAccount"]</h2>
+            <p class="ln-muted">@L["DeactivateAccountHint"]</p>
+            @if (!_showDeactivateForm)
+            {
+                <button class="ln-btn ln-btn--danger" type="button" data-testid="settings-deactivate-open" @onclick="() => _showDeactivateForm = true">@L["DeactivateAccount"]</button>
+            }
+            else
+            {
+                <EditForm Model="_deactivateForm" OnValidSubmit="DeactivateAsync" class="ln-form-stack">
+                    <label class="ln-field">
+                        <span>@L["DeactivateConfirmationLabel"]</span>
+                        <InputText class="ln-input" data-testid="settings-deactivate-confirmation" @bind-Value="_deactivateForm.Confirmation" placeholder="@_deactivatePlaceholder" />
+                    </label>
+                    <label class="ln-field">
+                        <span>@L["Password"]</span>
+                        <InputText class="ln-input" data-testid="settings-deactivate-password" type="password" @bind-Value="_deactivateForm.Password" autocomplete="current-password" />
+                    </label>
+                    @if (_deactivateErrors.Count > 0)
+                    {
+                        <ul class="ln-error-list" data-testid="settings-deactivate-errors">
+                            @foreach (var deactivateError in _deactivateErrors)
+                            {
+                                <li>@deactivateError</li>
+                            }
+                        </ul>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_deactivateError))
+                    {
+                        <p class="ln-error" data-testid="settings-deactivate-error">@_deactivateError</p>
+                    }
+                    <div class="ln-auth-actions">
+                        <button class="ln-btn ln-btn--danger" type="submit" data-testid="settings-deactivate-submit" disabled="@_deactivating">@L["ConfirmDeactivate"]</button>
+                        <button class="ln-btn ln-btn--ghost" type="button" @onclick="CancelDeactivate">@L["Cancel"]</button>
+                    </div>
+                </EditForm>
+            }
+        </section>
+    }
+</div>
+</InteractiveShell>

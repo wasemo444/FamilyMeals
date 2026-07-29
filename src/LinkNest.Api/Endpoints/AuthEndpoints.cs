@@ -31,6 +31,11 @@ public static class AuthEndpoints
         group.MapPost("/token", TokenLoginAsync);
         group.MapPost("/logout", LogoutAsync).RequireAuthorization();
         group.MapGet("/me", GetCurrentUserAsync).RequireAuthorization();
+        group.MapPatch("/me", UpdateProfileAsync).RequireAuthorization();
+        group.MapPost("/forgot-password", ForgotPasswordAsync);
+        group.MapPost("/reset-password", ResetPasswordAsync);
+        group.MapPost("/resend-confirmation", ResendConfirmationAsync);
+        group.MapPost("/deactivate", DeactivateAccountAsync).RequireAuthorization();
 
         return endpoints;
     }
@@ -102,8 +107,14 @@ public static class AuthEndpoints
         var normalizedEmail = request.Email.Trim();
         var user = await signInManager.UserManager.FindByEmailAsync(normalizedEmail);
 
+        var loginFailure = EvaluateLoginEligibility(user);
+        if (loginFailure is not null)
+        {
+            return loginFailure;
+        }
+
         var result = await signInManager.PasswordSignInAsync(
-            user?.UserName ?? normalizedEmail,
+            user!.UserName ?? normalizedEmail,
             request.Password,
             request.RememberMe,
             lockoutOnFailure: true);
@@ -115,7 +126,15 @@ public static class AuthEndpoints
                 statusCode: StatusCodes.Status429TooManyRequests);
         }
 
-        if (result.IsNotAllowed || !result.Succeeded)
+        if (result.IsNotAllowed)
+        {
+            return Results.Problem(
+                detail: "Please confirm your email address before signing in.",
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Email not confirmed");
+        }
+
+        if (!result.Succeeded)
         {
             return Results.Unauthorized();
         }
@@ -139,8 +158,14 @@ public static class AuthEndpoints
         var normalizedEmail = request.Email.Trim();
         var user = await signInManager.UserManager.FindByEmailAsync(normalizedEmail);
 
+        var loginFailure = EvaluateLoginEligibility(user);
+        if (loginFailure is not null)
+        {
+            return loginFailure;
+        }
+
         var result = await signInManager.CheckPasswordSignInAsync(
-            user ?? new ApplicationUser(),
+            user!,
             request.Password,
             lockoutOnFailure: true);
 
@@ -151,17 +176,25 @@ public static class AuthEndpoints
                 statusCode: StatusCodes.Status429TooManyRequests);
         }
 
-        if (user is null || result.IsNotAllowed || !result.Succeeded)
+        if (result.IsNotAllowed)
+        {
+            return Results.Problem(
+                detail: "Please confirm your email address before signing in.",
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Email not confirmed");
+        }
+
+        if (!result.Succeeded)
         {
             return Results.Unauthorized();
         }
 
-        var (accessToken, expiresAtUtc) = jwtTokenService.CreateToken(user);
+        var (accessToken, expiresAtUtc) = jwtTokenService.CreateToken(user!);
         return Results.Ok(new AuthTokenResponse
         {
             AccessToken = accessToken,
             ExpiresAtUtc = expiresAtUtc,
-            User = ToAuthUserInfo(user)
+            User = ToAuthUserInfo(user!)
         });
     }
 
@@ -180,7 +213,170 @@ public static class AuthEndpoints
         UserManager<ApplicationUser> userManager)
     {
         var user = await userManager.GetUserAsync(principal);
-        return user is null ? Results.Unauthorized() : Results.Ok(ToAuthUserInfo(user));
+        return user is null || !user.IsActive ? Results.Unauthorized() : Results.Ok(ToAuthUserInfo(user));
+    }
+
+    private static async Task<IResult> UpdateProfileAsync(
+        UpdateProfileRequest request,
+        ClaimsPrincipal principal,
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager)
+    {
+        if (string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["DisplayName"] = ["Display name is required."]
+            });
+        }
+
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null || !user.IsActive)
+        {
+            return Results.Unauthorized();
+        }
+
+        user.DisplayName = request.DisplayName.Trim();
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return Results.ValidationProblem(result.Errors.ToDictionary(
+                error => error.Code,
+                error => new[] { error.Description }));
+        }
+
+        await signInManager.RefreshSignInAsync(user);
+        return Results.Ok(ToAuthUserInfo(user));
+    }
+
+    private static async Task<IResult> ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        PasswordResetService passwordResetService)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return Results.BadRequest(new { error = "Email is required." });
+        }
+
+        await passwordResetService.SendResetEmailAsync(request.Email);
+        return Results.Ok(new { message = "If an account exists for that email, a reset link has been sent." });
+    }
+
+    private static async Task<IResult> ResetPasswordAsync(
+        ResetPasswordRequest request,
+        PasswordResetService passwordResetService)
+    {
+        if (request.UserId == Guid.Empty
+            || string.IsNullOrWhiteSpace(request.Code)
+            || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return Results.BadRequest(new { error = "User id, code, and password are required." });
+        }
+
+        if (!string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["ConfirmPassword"] = ["Passwords do not match."]
+            });
+        }
+
+        var result = await passwordResetService.ResetPasswordAsync(
+            request.UserId,
+            request.Code,
+            request.Password);
+
+        if (!result.Succeeded)
+        {
+            return Results.ValidationProblem(result.Errors.ToDictionary(
+                error => error.Code,
+                error => new[] { error.Description }));
+        }
+
+        return Results.Ok(new { message = "Password has been reset." });
+    }
+
+    private static async Task<IResult> ResendConfirmationAsync(
+        ResendConfirmationRequest request,
+        EmailConfirmationService emailConfirmationService)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return Results.BadRequest(new { error = "Email is required." });
+        }
+
+        await emailConfirmationService.ResendConfirmationEmailAsync(request.Email);
+        return Results.Ok(new { message = "If an unconfirmed account exists for that email, a confirmation link has been sent." });
+    }
+
+    private static async Task<IResult> DeactivateAccountAsync(
+        DeactivateAccountRequest request,
+        ClaimsPrincipal principal,
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null || !user.IsActive)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["Password"] = ["Password is required."]
+            });
+        }
+
+        var expectedConfirmation = user.DisplayName?.Trim() ?? "DEACTIVATE";
+        if (!string.Equals(request.Confirmation.Trim(), expectedConfirmation, StringComparison.Ordinal)
+            && !string.Equals(request.Confirmation.Trim(), "DEACTIVATE", StringComparison.Ordinal))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["Confirmation"] = ["Type your display name or DEACTIVATE to confirm."]
+            });
+        }
+
+        if (!await userManager.CheckPasswordAsync(user, request.Password))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["Password"] = ["Password is incorrect."]
+            });
+        }
+
+        user.IsActive = false;
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            return Results.ValidationProblem(updateResult.Errors.ToDictionary(
+                error => error.Code,
+                error => new[] { error.Description }));
+        }
+
+        await userManager.UpdateSecurityStampAsync(user);
+        await signInManager.SignOutAsync();
+        return Results.Ok(new { message = "Account deactivated." });
+    }
+
+    private static IResult? EvaluateLoginEligibility(ApplicationUser? user)
+    {
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (!user.IsActive)
+        {
+            return Results.Problem(
+                detail: "This account has been deactivated.",
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Account deactivated");
+        }
+
+        return null;
     }
 
     private static AuthUserInfo ToAuthUserInfo(ApplicationUser user) => new()

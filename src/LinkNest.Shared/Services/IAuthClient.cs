@@ -47,4 +47,29 @@ public interface IAuthClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>User profile when authenticated; otherwise <see langword="null"/>.</returns>
     Task<AuthUserInfo?> GetCurrentUserAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a password-reset email when an account exists for the address.
+    /// </summary>
+    Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sets a new password using a reset token from email.
+    /// </summary>
+    Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resends the email confirmation link for an unconfirmed account.
+    /// </summary>
+    Task ResendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the authenticated user's display name.
+    /// </summary>
+    Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Soft-deactivates the authenticated user's account.
+    /// </summary>
+    Task DeactivateAccountAsync(DeactivateAccountRequest request, CancellationToken cancellationToken = default);
 }

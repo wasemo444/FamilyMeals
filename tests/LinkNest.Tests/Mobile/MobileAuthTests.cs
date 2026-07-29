@@ -185,6 +185,21 @@ public class JwtAuthenticationStateProviderTests
 
             return Task.FromResult(CurrentUser);
         }
+
+        public Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task ResendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task DeactivateAccountAsync(DeactivateAccountRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 }
 

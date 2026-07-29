@@ -1,0 +1,31 @@
+# LinkNest Web (Blazor host + YARP proxy) — production container
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY ["src/LinkNest.Shared/LinkNest.Shared.csproj", "src/LinkNest.Shared/"]
+COPY ["src/LinkNest.Api/LinkNest.Api.csproj", "src/LinkNest.Api/"]
+COPY ["src/LinkNest.Web/LinkNest.Web.Client/LinkNest.Web.Client.csproj", "src/LinkNest.Web/LinkNest.Web.Client/"]
+COPY ["src/LinkNest.Web/LinkNest.Web/LinkNest.Web.csproj", "src/LinkNest.Web/LinkNest.Web/"]
+RUN dotnet restore "src/LinkNest.Web/LinkNest.Web/LinkNest.Web.csproj"
+
+COPY ["src/LinkNest.Shared/", "src/LinkNest.Shared/"]
+COPY ["src/LinkNest.Api/", "src/LinkNest.Api/"]
+COPY ["src/LinkNest.Web/LinkNest.Web.Client/", "src/LinkNest.Web/LinkNest.Web.Client/"]
+COPY ["src/LinkNest.Web/LinkNest.Web/", "src/LinkNest.Web/LinkNest.Web/"]
+
+RUN dotnet publish "src/LinkNest.Web/LinkNest.Web/LinkNest.Web.csproj" \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+RUN mkdir -p /keys
+VOLUME ["/keys"]
+
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "LinkNest.Web.dll"]

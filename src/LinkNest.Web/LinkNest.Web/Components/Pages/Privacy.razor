@@ -1,0 +1,89 @@
+@page "/privacy"
+@layout Layout.MainLayout
+
+<PageTitle>Privacy Policy — LinkNest</PageTitle>
+
+<div class="ln-page" style="max-width: 42rem; margin: 0 auto; padding: var(--ln-space-6) var(--ln-space-4);">
+    <header class="ln-page-head">
+        <h1>Privacy Policy</h1>
+        <p class="ln-muted">Last updated: July 2026</p>
+    </header>
+
+    <section class="ln-panel ln-privacy">
+        <p>
+            LinkNest helps you save and organize links in categories, optionally share collections with small groups,
+            and manage favorites and archives. This policy describes what we collect and why.
+        </p>
+
+        <h2 class="ln-panel__title">Information we collect</h2>
+        <ul>
+            <li><strong>Account data:</strong> email address, display name, and password (stored hashed).</li>
+            <li><strong>Content you save:</strong> category names, link titles, URLs, optional notes, and link preview metadata fetched from public URLs.</li>
+            <li><strong>Group data:</strong> group names, membership, and invites when you use shared collections.</li>
+            <li><strong>Preferences:</strong> language choice (English or Arabic) and UI settings.</li>
+            <li><strong>Technical data:</strong> standard server logs (IP address, browser type, timestamps) for security and troubleshooting.</li>
+        </ul>
+
+        <h2 class="ln-panel__title">How we use information</h2>
+        <ul>
+            <li>Provide authentication, sync your data across devices, and operate shared groups.</li>
+            <li>Send transactional email (account confirmation, password reset) when you request it.</li>
+            <li>Protect the service against abuse (rate limiting, fraud prevention).</li>
+        </ul>
+
+        <h2 class="ln-panel__title">What we do not do</h2>
+        <ul>
+            <li>We do not sell your personal information.</li>
+            <li>We do not use your saved links for advertising profiles.</li>
+            <li>We do not send marketing email unless you opt in separately (not offered in v1).</li>
+        </ul>
+
+        <h2 class="ln-panel__title">Sharing</h2>
+        <p>
+            Content you mark as shared is visible to members of that group. Private categories and links remain visible
+            only to your account. We may use infrastructure providers (hosting, database, email delivery) who process data
+            on our behalf under contractual obligations.
+        </p>
+
+        <h2 class="ln-panel__title">Retention &amp; deletion</h2>
+        <p>
+            Your data is kept while your account is active. Archived items are purged after the retention period shown
+            in the app. You may deactivate your account from Settings; your saved content may remain stored per product
+            rules but your login is disabled.
+        </p>
+
+        <h2 class="ln-panel__title">Security</h2>
+        <p>
+            Passwords are hashed. Production deployments use HTTPS. Access to shared group content requires authentication
+            and group membership.
+        </p>
+
+        <h2 class="ln-panel__title">Contact</h2>
+        <p>
+            For privacy questions, contact the operator of this LinkNest instance at the support email published with
+            your deployment.
+        </p>
+
+        <div class="ln-auth-actions" style="margin-top: var(--ln-space-5)">
+            <a class="ln-btn ln-btn--ghost ln-btn--block" href="/">Back to LinkNest</a>
+        </div>
+    </section>
+</div>
+
+<style>
+    .ln-privacy ul {
+        margin: 0 0 var(--ln-space-4);
+        padding-inline-start: var(--ln-space-5);
+        color: var(--ln-text-muted);
+        line-height: 1.55;
+    }
+
+    .ln-privacy li + li {
+        margin-top: var(--ln-space-2);
+    }
+
+    .ln-privacy p {
+        color: var(--ln-text-muted);
+        line-height: 1.55;
+    }
+</style>
