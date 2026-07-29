@@ -6,29 +6,29 @@
 <PageTitle>@L["ShareLinkTitle"]</PageTitle>
 
 <InteractiveShell>
-<section class="page">
-    <header class="page-header">
+<div class="ln-page">
+    <header class="ln-page-head">
         <h1>@L["ShareLinkTitle"]</h1>
-        <p class="muted">@L["ShareHint"]</p>
+        <p class="ln-muted">@L["ShareHint"]</p>
     </header>
 
     @if (!_isReady)
     {
-        <p class="muted">@L["LoadingPreview"]</p>
+        <p class="ln-loading">@L["LoadingPreview"]</p>
     }
     else
     {
         @if (_categories.Count == 0)
         {
-            <section class="panel">
-                <h2>@L["QuickCreateCategory"]</h2>
-                <p class="muted">@L["ShareCreateCategoryHint"]</p>
+            <section class="ln-panel">
+                <h2 class="ln-panel__title">@L["QuickCreateCategory"]</h2>
+                <p class="ln-muted">@L["ShareCreateCategoryHint"]</p>
                 <EditForm Model="_categoryForm" OnValidSubmit="CreateCategoryAsync">
-                    <div class="form-stack">
+                    <div class="ln-form-stack">
                         @if (_groups.Count > 0)
                         {
-                            <label class="field-label" for="share-category-owner">@L["SaveTo"]</label>
-                            <InputSelect id="share-category-owner" class="input" @bind-Value="_selectedOwnerKey">
+                            <label class="ln-field-label" for="share-category-owner">@L["SaveTo"]</label>
+                            <InputSelect id="share-category-owner" class="ln-input" @bind-Value="_selectedOwnerKey">
                                 <option value="personal">@L["Personal"]</option>
                                 @foreach (var group in _groups)
                                 {
@@ -36,26 +36,26 @@
                                 }
                             </InputSelect>
                         }
-                        <div class="form-row">
-                            <InputText class="input" @bind-Value="_categoryForm.Name" placeholder="@L["CategoryName"]" />
-                            <button class="btn primary" type="submit">@L["Create"]</button>
+                        <div class="ln-form-row">
+                            <InputText class="ln-input" @bind-Value="_categoryForm.Name" placeholder="@L["CategoryName"]" />
+                            <button class="ln-btn ln-btn--primary" type="submit">@L["Create"]</button>
                         </div>
                     </div>
                     @if (!string.IsNullOrWhiteSpace(_categoryError))
                     {
-                        <p class="error">@_categoryError</p>
+                        <p class="ln-error">@_categoryError</p>
                     }
                 </EditForm>
             </section>
         }
 
-        <section class="panel">
+        <section class="ln-panel">
             <EditForm Model="_form" OnValidSubmit="SaveLinkAsync">
-                <div class="form-stack">
+                <div class="ln-form-stack">
                     @if (_categories.Count > 0)
                     {
-                        <label class="field-label">@L["SelectCategory"]</label>
-                        <InputSelect class="input" @bind-Value="_form.CategoryId">
+                        <label class="ln-field-label">@L["SelectCategory"]</label>
+                        <InputSelect class="ln-input" @bind-Value="_form.CategoryId">
                             @foreach (var category in _categories)
                             {
                                 <option value="@category.Id">
@@ -65,30 +65,30 @@
                         </InputSelect>
                     }
 
-                    <InputText class="input" @bind-Value="_form.TitleEn" placeholder="@L["LinkTitleEn"]" />
-                    <InputText class="input" @bind-Value="_form.TitleAr" placeholder="@L["LinkTitleAr"]" />
-                    <InputText class="input" @bind-Value="_form.Url" placeholder="@L["LinkUrl"]" />
-                    <InputTextArea class="input textarea" @bind-Value="_form.Note" placeholder="@L["LinkNote"]" rows="2" />
+                    <InputText class="ln-input" @bind-Value="_form.TitleEn" placeholder="@L["LinkTitleEn"]" />
+                    <InputText class="ln-input" @bind-Value="_form.TitleAr" placeholder="@L["LinkTitleAr"]" />
+                    <InputText class="ln-input" @bind-Value="_form.Url" placeholder="@L["LinkUrl"]" />
+                    <InputTextArea class="ln-input ln-textarea" @bind-Value="_form.Note" placeholder="@L["LinkNote"]" rows="2" />
 
-                    <button class="btn primary" type="submit" disabled="@(_isSaving || _categories.Count == 0)">
+                    <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" disabled="@(_isSaving || _categories.Count == 0)">
                         @L["SaveLink"]
                     </button>
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(_error))
                 {
-                    <p class="error">@_error</p>
+                    <p class="ln-error">@_error</p>
                 }
                 @if (!string.IsNullOrWhiteSpace(_success))
                 {
-                    <p class="success">@_success</p>
+                    <p class="ln-success">@_success</p>
                 }
                 @if (_isSaving)
                 {
-                    <p class="muted">@L["LoadingPreview"]</p>
+                    <p class="ln-muted">@L["LoadingPreview"]</p>
                 }
             </EditForm>
         </section>
     }
-</section>
+</div>
 </InteractiveShell>

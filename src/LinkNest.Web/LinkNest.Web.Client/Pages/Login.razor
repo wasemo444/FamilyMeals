@@ -1,70 +1,76 @@
 @page "/login"
+@rendermode AutoRenderMode
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @inherits LocalizedComponentBase
 
 <PageTitle>@L["Login"]</PageTitle>
 
-<section class="page auth-page">
-    <header class="page-header">
-        <h1>@L["Login"]</h1>
+<div class="ln-auth">
+    <header class="ln-auth__toolbar">
+        <a class="ln-brand" href="/">Link<span>Nest</span></a>
+        <div class="ln-auth__actions">
+            <ThemeToggle />
+            <LanguageSwitcher />
+        </div>
     </header>
 
-    <section class="panel">
-        @if (UsesBearerToken)
-        {
-            <EditForm Model="_form" OnValidSubmit="LoginWithTokenAsync">
-                <div class="form-row">
-                    <InputText class="input" data-testid="login-email" @bind-Value="_form.Email" placeholder="@L["Email"]" autocomplete="username" />
-                </div>
-                <div class="form-row">
-                    <InputText class="input" data-testid="login-password" type="password" @bind-Value="_form.Password" placeholder="@L["Password"]" autocomplete="current-password" />
-                </div>
-                @if (!string.IsNullOrWhiteSpace(_success))
+    <main class="ln-auth__main">
+        <section class="ln-auth-card" aria-labelledby="login-heading">
+            <div class="ln-auth-card__glow" aria-hidden="true"></div>
+
+            <header class="ln-auth-card__header">
+                <div class="ln-auth-card__icon" aria-hidden="true">⌁</div>
+                <h1 id="login-heading">@L["Login"]</h1>
+            </header>
+
+            <div class="ln-auth-card__body">
+                @if (UsesBearerToken)
                 {
-                    <p class="success" data-testid="login-success">@_success</p>
+                    <EditForm Model="_form" OnValidSubmit="LoginWithTokenAsync" class="ln-form-stack">
+                        <InputText class="ln-input" data-testid="login-email" @bind-Value="_form.Email" placeholder="@L["Email"]" autocomplete="username" />
+                        <InputText class="ln-input" data-testid="login-password" type="password" @bind-Value="_form.Password" placeholder="@L["Password"]" autocomplete="current-password" />
+                        @if (!string.IsNullOrWhiteSpace(_success))
+                        {
+                            <p class="ln-success" data-testid="login-success">@_success</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_error))
+                        {
+                            <p class="ln-error" data-testid="login-error">@_error</p>
+                        }
+                        <div class="ln-auth-actions">
+                            <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="login-submit">@L["Login"]</button>
+                            <a class="ln-btn ln-btn--ghost ln-btn--block" href="/register">@L["Register"]</a>
+                        </div>
+                    </EditForm>
                 }
-                @if (!string.IsNullOrWhiteSpace(_error))
+                else
                 {
-                    <p class="error" data-testid="login-error">@_error</p>
+                    <form method="post" action="/account/login" class="ln-form-stack">
+                        @if (!string.IsNullOrWhiteSpace(ReturnUrl))
+                        {
+                            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                        }
+                        <input class="ln-input" data-testid="login-email" name="email" value="@EmailValue" placeholder="@L["Email"]" autocomplete="username" />
+                        <input class="ln-input" data-testid="login-password" name="password" type="password" placeholder="@L["Password"]" autocomplete="current-password" />
+                        <label class="ln-check">
+                            <input type="checkbox" name="rememberMe" value="true" checked="@RememberMeChecked" />
+                            @L["RememberMe"]
+                        </label>
+                        @if (!string.IsNullOrWhiteSpace(_success))
+                        {
+                            <p class="ln-success" data-testid="login-success">@_success</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_error))
+                        {
+                            <p class="ln-error" data-testid="login-error">@_error</p>
+                        }
+                        <div class="ln-auth-actions">
+                            <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="login-submit">@L["Login"]</button>
+                            <a class="ln-btn ln-btn--ghost ln-btn--block" href="/register">@L["Register"]</a>
+                        </div>
+                    </form>
                 }
-                <div class="form-row">
-                    <button class="btn primary" type="submit" data-testid="login-submit">@L["Login"]</button>
-                    <a class="btn" href="/register">@L["Register"]</a>
-                </div>
-            </EditForm>
-        }
-        else
-        {
-            <form method="post" action="/account/login">
-                @if (!string.IsNullOrWhiteSpace(ReturnUrl))
-                {
-                    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
-                }
-                <div class="form-row">
-                    <input class="input" data-testid="login-email" name="email" value="@EmailValue" placeholder="@L["Email"]" autocomplete="username" />
-                </div>
-                <div class="form-row">
-                    <input class="input" data-testid="login-password" name="password" type="password" placeholder="@L["Password"]" autocomplete="current-password" />
-                </div>
-                <div class="form-row">
-                    <label>
-                        <input type="checkbox" name="rememberMe" value="true" checked="@RememberMeChecked" />
-                        @L["RememberMe"]
-                    </label>
-                </div>
-                @if (!string.IsNullOrWhiteSpace(_success))
-                {
-                    <p class="success" data-testid="login-success">@_success</p>
-                }
-                @if (!string.IsNullOrWhiteSpace(_error))
-                {
-                    <p class="error" data-testid="login-error">@_error</p>
-                }
-                <div class="form-row">
-                    <button class="btn primary" type="submit" data-testid="login-submit">@L["Login"]</button>
-                    <a class="btn" href="/register">@L["Register"]</a>
-                </div>
-            </form>
-        }
-    </section>
-</section>
+            </div>
+        </section>
+    </main>
+</div>

@@ -1,5 +1,6 @@
 using LinkNest.Shared.Auth;
 using LinkNest.Shared.Services;
+using LinkNest.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 
@@ -26,9 +27,20 @@ public partial class Register
     [Inject]
     private IClientAuthMode ClientAuthMode { get; set; } = default!;
 
+    [Inject]
+    private ThemeService ThemeService { get; set; } = default!;
+
     private readonly RegisterRequest _form = new();
     private string? _error;
     private IReadOnlyList<string> _validationErrors = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeService.InitializeAsync();
+        }
+    }
 
     private async Task RegisterAsync()
     {

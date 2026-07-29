@@ -7,105 +7,81 @@
 <PageTitle>@L["AppTitle"]</PageTitle>
 
 <InteractiveShell>
-<section class="page">
-    <header class="page-header">
-        <h1>@L["AppTitle"]</h1>
+<div class="ln-home">
+    <header class="ln-hero">
+        <div class="ln-hero__text">
+            <h1>Hello, @_displayName!</h1>
+            <p>@L["SearchCategories"]</p>
+        </div>
+        <div class="ln-hero__avatar" aria-hidden="true">@_initials</div>
     </header>
+
+    <div class="ln-stats">
+        <div class="ln-stat">
+            <span class="ln-stat__value">@_totalCategories</span>
+            <span class="ln-stat__label">@L["AllCategories"]</span>
+        </div>
+        <div class="ln-stat">
+            <span class="ln-stat__value">@_totalLinks</span>
+            <span class="ln-stat__label">Links</span>
+        </div>
+        <div class="ln-stat">
+            <span class="ln-stat__value">@_favoriteCount</span>
+            <span class="ln-stat__label">@L["FavoriteCategories"]</span>
+        </div>
+    </div>
 
     @if (_pendingInvites.Count > 0)
     {
-        <section class="panel">
+        <section class="ln-alert">
             <h2>@L["PendingInvites"]</h2>
-            <p class="muted"><a href="/groups">@L["ManageGroupsLink"]</a></p>
+            <p class="ln-muted"><a class="ln-link" href="/groups">@L["ManageGroupsLink"]</a></p>
             @foreach (var invite in _pendingInvites)
             {
-                <div class="invite-row">
+                <div class="ln-invite-row">
                     <p>@L.Format("InvitePrompt", invite.GroupName, invite.InvitedByDisplayName)</p>
-                    <div class="form-row">
-                        <button class="btn primary" type="button" @onclick="() => AcceptInviteAsync(invite.Id)">@L["AcceptInvite"]</button>
-                        <button class="btn" type="button" @onclick="() => DeclineInviteAsync(invite.Id)">@L["DeclineInvite"]</button>
+                    <div class="ln-form-row">
+                        <button class="ln-btn ln-btn--primary" type="button" @onclick="() => AcceptInviteAsync(invite.Id)">@L["AcceptInvite"]</button>
+                        <button class="ln-btn" type="button" @onclick="() => DeclineInviteAsync(invite.Id)">@L["DeclineInvite"]</button>
                     </div>
                 </div>
             }
             @if (!string.IsNullOrWhiteSpace(_inviteActionError))
             {
-                <p class="error">@_inviteActionError</p>
+                <p class="ln-error">@_inviteActionError</p>
             }
         </section>
     }
 
-    @if (_groups.Count > 0)
-    {
-        <section class="panel">
-            <h2>@L["YourGroups"]</h2>
-            <p><a href="/groups">@L["ManageGroupsLink"]</a></p>
-        </section>
-    }
-    else
-    {
-        <section class="panel">
-            <p class="muted">@L["NoGroupsYet"] <a href="/groups">@L["CreateGroup"]</a></p>
-        </section>
-    }
-
-    @if (_groups.Count > 0)
-    {
-        <section class="panel">
-            <h2>@L["ViewFilter"]</h2>
-            <div class="filter-toggle" role="group" aria-label="@L["ViewFilter"]">
-                <button type="button" class="@FilterClass(HomeContentFilter.All)" @onclick="() => SetFilter(HomeContentFilter.All)">
-                    @L["FilterAll"]
-                </button>
-                <button type="button" class="@FilterClass(HomeContentFilter.Mine)" @onclick="() => SetFilter(HomeContentFilter.Mine)">
-                    @L["FilterMine"]
-                </button>
-                <button type="button" class="@FilterClass(HomeContentFilter.Shared)" @onclick="() => SetFilter(HomeContentFilter.Shared)">
-                    @L["FilterShared"]
-                </button>
-            </div>
-        </section>
-    }
-
-    <section class="panel">
-        <h2>@L["AddCategory"]</h2>
-        <EditForm Model="_form" OnValidSubmit="CreateCategoryAsync">
-            <div class="form-stack">
-                @if (_groups.Count > 0)
-                {
-                    <label class="field-label" for="category-owner">@L["SaveTo"]</label>
-                    <InputSelect id="category-owner" class="input" @bind-Value="_selectedOwnerKey">
-                        <option value="personal">@L["Personal"]</option>
-                        @foreach (var group in _groups)
-                        {
-                            <option value="@group.Id">@L.Format("GroupLabel", group.Name)</option>
-                        }
-                    </InputSelect>
-                }
-                <div class="form-row">
-                    <InputText class="input" @bind-Value="_form.Name" placeholder="@L["CategoryName"]" />
-                    <button class="btn primary" type="submit">@L["Create"]</button>
-                </div>
-            </div>
-            @if (!string.IsNullOrWhiteSpace(_error))
-            {
-                <p class="error">@_error</p>
-            }
-        </EditForm>
-    </section>
-
-    <section class="panel">
-        <h2>@L["SearchCategories"]</h2>
-        <InputText class="input search-input"
+    <div class="ln-search-bar">
+        <InputText class="ln-input"
                    @bind-Value="_searchTerm"
                    @bind-Value:after="OnSearchChanged"
                    placeholder="@L["SearchCategories"]" />
-    </section>
+    </div>
+
+    @if (_groups.Count > 0)
+    {
+        <div class="ln-tape-row" role="group" aria-label="@L["ViewFilter"]">
+            <button type="button" class="@FilterClass(HomeContentFilter.All)" @onclick="() => SetFilter(HomeContentFilter.All)">
+                @L["FilterAll"]
+            </button>
+            <button type="button" class="@FilterClass(HomeContentFilter.Mine)" @onclick="() => SetFilter(HomeContentFilter.Mine)">
+                @L["FilterMine"]
+            </button>
+            <button type="button" class="@FilterClass(HomeContentFilter.Shared)" @onclick="() => SetFilter(HomeContentFilter.Shared)">
+                @L["FilterShared"]
+            </button>
+        </div>
+    }
 
     @if (_favoriteCategories.Count > 0)
     {
-        <section class="panel">
-            <h2>@L["FavoriteCategories"]</h2>
-            <div class="card-grid">
+        <section>
+            <div class="ln-section-head">
+                <h2>@L["FavoriteCategories"]</h2>
+            </div>
+            <div class="ln-zone-grid">
                 @foreach (var category in _favoriteCategories)
                 {
                     <CategoryCard Category="category" />
@@ -114,15 +90,19 @@
         </section>
     }
 
-    <section class="panel">
-        <h2>@L["AllCategories"]</h2>
+    <section>
+        <div class="ln-section-head">
+            <h2>@L["AllCategories"]</h2>
+        </div>
         @if (_allCategories.Count == 0)
         {
-            <p class="muted">@(_hasAnyCategories ? L["NoCategorySearchResults"] : L["NoCategoriesYet"])</p>
+            <div class="ln-zone-empty">
+                <p class="ln-muted">@(_hasAnyCategories ? L["NoCategorySearchResults"] : L["NoCategoriesYet"])</p>
+            </div>
         }
         else
         {
-            <div class="card-grid">
+            <div class="ln-zone-grid">
                 @foreach (var category in _allCategories)
                 {
                     <CategoryCard Category="category" />
@@ -130,5 +110,41 @@
             </div>
         }
     </section>
-</section>
+
+    <section class="ln-board-section" id="add-category">
+        <h2>@L["AddCategory"]</h2>
+        <EditForm Model="_form" OnValidSubmit="CreateCategoryAsync">
+            <div class="ln-form-stack">
+                @if (_groups.Count > 0)
+                {
+                    <label class="ln-field-label" for="category-owner">@L["SaveTo"]</label>
+                    <InputSelect id="category-owner" class="ln-input" @bind-Value="_selectedOwnerKey">
+                        <option value="personal">@L["Personal"]</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group.Id">@L.Format("GroupLabel", group.Name)</option>
+                        }
+                    </InputSelect>
+                }
+                <div class="ln-form-row">
+                    <InputText class="ln-input" @bind-Value="_form.Name" placeholder="@L["CategoryName"]" />
+                    <button class="ln-btn ln-btn--primary" type="submit">@L["Create"]</button>
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="ln-error">@_error</p>
+            }
+        </EditForm>
+    </section>
+
+    @if (_groups.Count == 0)
+    {
+        <p class="ln-muted">@L["NoGroupsYet"] <a class="ln-link" href="/groups">@L["CreateGroup"]</a></p>
+    }
+    else
+    {
+        <p class="ln-muted"><a class="ln-link" href="/groups">@L["ManageGroupsLink"]</a></p>
+    }
+</div>
 </InteractiveShell>

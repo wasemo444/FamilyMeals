@@ -1,98 +1,51 @@
 @inherits LocalizedComponentBase
 
-
-
-<article class="card link-card">
-
+<article class="ln-link-card">
     @if (!string.IsNullOrWhiteSpace(PreviewImageSource))
-
     {
-
-        <img class="link-preview-image" src="@PreviewImageSource" alt="" loading="lazy" />
-
+        <div class="ln-link-card__media">
+            <img src="@PreviewImageSource" alt="" loading="lazy" />
+        </div>
     }
-
     else
-
     {
-
-        <div class="link-preview-placeholder" aria-hidden="true">
-
-            <span class="link-preview-icon">🔗</span>
-
-            <span class="muted">@L["PreviewUnavailable"]</span>
-
+        <div class="ln-link-card__media ln-link-card__placeholder" aria-hidden="true">
+            <span class="ln-link-card__placeholder-icon">🔗</span>
+            <span>@L["PreviewUnavailable"]</span>
         </div>
-
     }
 
-
-
-    <div class="link-card-body">
-
-        <div class="card-header">
-
+    <div class="ln-link-card__body">
+        <div class="ln-link-card__head">
             <div>
-
-                <h3 class="link-title">@DisplayTitle</h3>
-
+                <h3 class="ln-link-card__title">@DisplayTitle</h3>
                 @if (!string.IsNullOrWhiteSpace(Link.PreviewSiteName))
-
                 {
-
-                    <p class="muted site-name">@Link.PreviewSiteName</p>
-
+                    <p class="ln-link-card__site">@Link.PreviewSiteName</p>
                 }
-
             </div>
-
-            <div class="card-actions">
-
-                <button type="button" class="icon-btn" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
-
+            <div class="ln-zone-card__actions">
+                <button type="button" class="ln-icon-btn ln-icon-btn--favorite" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
                     @(Link.IsFavorite ? "★" : "☆")
-
                 </button>
-
-                <button type="button" class="icon-btn danger" title="@L["Delete"]" @onclick="ArchiveAsync">✕</button>
-
+                <button type="button" class="ln-icon-btn ln-icon-btn--danger" title="@L["Delete"]" @onclick="ArchiveAsync">✕</button>
             </div>
-
         </div>
-
-
 
         @if (!string.IsNullOrWhiteSpace(Link.Note))
-
         {
-
-            <p class="link-note">@Link.Note</p>
-
+            <p class="ln-link-card__note">@Link.Note</p>
         }
-
-
 
         @if (!string.IsNullOrWhiteSpace(Link.PreviewDescription))
-
         {
-
-            <p class="link-description">@Link.PreviewDescription</p>
-
+            <p class="ln-link-card__desc">@Link.PreviewDescription</p>
         }
 
+        <a class="ln-link-card__url" href="@Link.Url" target="_blank" rel="noopener noreferrer">@Link.Url</a>
 
-
-        <a class="link-url" href="@Link.Url" target="_blank" rel="noopener noreferrer">@Link.Url</a>
-
-
-
-        <a class="btn secondary" href="@Link.Url" target="_blank" rel="noopener noreferrer">
-
+        <a class="ln-btn ln-btn--ghost" href="@Link.Url" target="_blank" rel="noopener noreferrer">
             @L["Open"]
-
         </a>
-
     </div>
-
 </article>
-

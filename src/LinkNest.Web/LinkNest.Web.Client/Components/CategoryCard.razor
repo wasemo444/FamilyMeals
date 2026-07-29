@@ -1,20 +1,27 @@
 @inherits LocalizedComponentBase
 
-<article class="card category-card">
-    <div class="card-header">
-        <div class="card-title-group">
-            <a class="card-title" href="@($"/category/{Category.Id}")">@Category.Name</a>
-            @if (Category.IsShared)
-            {
-                <span class="shared-badge" title="@SharedLabel">@SharedLabel</span>
-            }
+<article class="ln-zone-card @(Category.IsShared ? "ln-zone-card--shared" : "ln-zone-card--personal")">
+    <div class="ln-zone-card__thumb" aria-hidden="true"></div>
+    <div class="ln-zone-card__body">
+        <div class="ln-zone-card__head">
+            <div>
+                <a class="ln-zone-card__title" href="@($"/category/{Category.Id}")">@Category.Name</a>
+                @if (Category.IsShared)
+                {
+                    <span class="ln-tape-badge ln-tape-badge--shared" title="@SharedLabel">@SharedLabel</span>
+                }
+                else
+                {
+                    <span class="ln-tape-badge ln-tape-badge--personal" title="@L["Personal"]">@L["Personal"]</span>
+                }
+            </div>
+            <div class="ln-zone-card__actions">
+                <button type="button" class="ln-icon-btn ln-icon-btn--favorite" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
+                    @(Category.IsFavorite ? "★" : "☆")
+                </button>
+                <button type="button" class="ln-icon-btn ln-icon-btn--danger" title="@L["Delete"]" @onclick="ArchiveAsync">✕</button>
+            </div>
         </div>
-        <div class="card-actions">
-            <button type="button" class="icon-btn" title="@FavoriteLabel" @onclick="ToggleFavoriteAsync">
-                @(Category.IsFavorite ? "★" : "☆")
-            </button>
-            <button type="button" class="icon-btn danger" title="@L["Delete"]" @onclick="ArchiveAsync">✕</button>
-        </div>
+        <p class="ln-zone-card__meta">@L.Format("LinksCount", LinkCount)</p>
     </div>
-    <p class="muted">@L.Format("LinksCount", LinkCount)</p>
 </article>

@@ -64,6 +64,7 @@ public static class ClientServiceCollectionExtensions
         services.AddScoped<IGroupService, GroupClient>();
         services.AddScoped<IAuthClient, AuthClient>();
         services.AddScoped<CultureService>();
+        services.AddScoped<ThemeService>();
         services.AddScoped<ILinkPreviewClient, LinkPreviewClient>();
 
         return services;

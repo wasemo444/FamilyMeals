@@ -1,10 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" style="color-scheme: dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#12141a" />
     <title>LinkNest</title>
     <base href="/" />
+    <script>
+        (function () {
+            try {
+                var k = "linknest-theme";
+                var t = localStorage.getItem(k);
+                if (t !== "light" && t !== "dark") {
+                    t = "dark";
+                    localStorage.setItem(k, t);
+                }
+                document.documentElement.setAttribute("data-theme", t);
+                document.documentElement.style.colorScheme = t;
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "dark");
+                document.documentElement.style.colorScheme = "dark";
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="_content/LinkNest.Shared/js/theme.js"></script>
+    <link rel="stylesheet" href="_content/LinkNest.Shared/css/linknest.css" />
     <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>

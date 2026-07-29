@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using LinkNest.Shared.Auth;
 using LinkNest.Shared.Services;
+using LinkNest.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -39,6 +40,9 @@ public partial class InteractiveShell : IDisposable
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private ThemeService ThemeService { get; set; } = default!;
 
     protected bool IsReady { get; private set; }
 
@@ -95,6 +99,11 @@ public partial class InteractiveShell : IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender && RendererInfo.IsInteractive)
+        {
+            await ThemeService.InitializeAsync();
+        }
+
         if (_cultureInitialized || _initialized)
         {
             return;
@@ -179,6 +188,21 @@ public partial class InteractiveShell : IDisposable
     {
         _cultureVersion++;
         base.OnCultureChanged();
+    }
+
+    protected string NavLinkClass(string href)
+    {
+        var relative = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var normalized = string.IsNullOrEmpty(relative) ? "/" : "/" + relative.Split('?', '#')[0];
+
+        if (href == "/")
+        {
+            return normalized == "/" ? "ln-nav-link--active" : string.Empty;
+        }
+
+        return normalized.StartsWith(href, StringComparison.OrdinalIgnoreCase)
+            ? "ln-nav-link--active"
+            : string.Empty;
     }
 
     public new void Dispose()
