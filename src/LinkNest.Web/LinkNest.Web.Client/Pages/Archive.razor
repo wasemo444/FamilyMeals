@@ -6,28 +6,31 @@
 <PageTitle>@L["Archive"]</PageTitle>
 
 <InteractiveShell>
-<section class="page">
-    <header class="page-header">
+<div class="ln-page">
+    <header class="ln-page-head">
         <h1>@L["ArchivedItems"]</h1>
-        <p class="muted">@L["ArchiveRetentionNotice"]</p>
+        <p class="ln-muted">@L["ArchiveRetentionNotice"]</p>
     </header>
 
     @if (_archivedCategories.Count == 0 && _archivedLinks.Count == 0)
     {
-        <p class="muted">@L["NoArchivedItems"]</p>
+        <div class="ln-empty-state">
+            <span class="ln-empty-state__icon" aria-hidden="true">◫</span>
+            <p class="ln-muted">@L["NoArchivedItems"]</p>
+        </div>
     }
     else
     {
         @if (_archivedCategories.Count > 0)
         {
-            <section class="panel">
-                <h2>@L["ArchivedCategories"]</h2>
-                <ul class="archive-list">
+            <section class="ln-panel">
+                <h2 class="ln-panel__title">@L["ArchivedCategories"]</h2>
+                <ul class="ln-list">
                     @foreach (var category in _archivedCategories)
                     {
-                        <li>
-                            <span>@category.Name</span>
-                            <button class="btn secondary" type="button" @onclick="() => RestoreCategoryAsync(category.Id)">
+                        <li class="ln-list__row">
+                            <span class="ln-list__main"><strong>@category.Name</strong></span>
+                            <button class="ln-btn" type="button" @onclick="() => RestoreCategoryAsync(category.Id)">
                                 @L["Restore"]
                             </button>
                         </li>
@@ -38,14 +41,14 @@
 
         @if (_archivedLinks.Count > 0)
         {
-            <section class="panel">
-                <h2>@L["ArchivedLinks"]</h2>
-                <ul class="archive-list">
+            <section class="ln-panel">
+                <h2 class="ln-panel__title">@L["ArchivedLinks"]</h2>
+                <ul class="ln-list">
                     @foreach (var link in _archivedLinks)
                     {
-                        <li>
-                            <span>@GetLinkLabel(link)</span>
-                            <button class="btn secondary" type="button" @onclick="() => RestoreLinkAsync(link.Id)">
+                        <li class="ln-list__row">
+                            <span class="ln-list__main"><strong>@GetLinkLabel(link)</strong></span>
+                            <button class="ln-btn" type="button" @onclick="() => RestoreLinkAsync(link.Id)">
                                 @L["Restore"]
                             </button>
                         </li>
@@ -54,5 +57,5 @@
             </section>
         }
     }
-</section>
+</div>
 </InteractiveShell>

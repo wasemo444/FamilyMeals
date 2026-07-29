@@ -2,11 +2,13 @@
 
 ## Goal
 
-Close auth and email-related gaps that were intentionally deferred from E2 (and PRDV2 §11) while the core register/login/group flows were built. E2 shipped minimal identity; email confirmation was added afterward with a dev-only logger instead of real delivery. This epic finishes those carry-over items so registration, confirmation, and password recovery work end-to-end in non-dev environments.
+Close auth and email-related gaps deferred from E2, finish E7 mobile follow-ups (H3/H4), and **deploy LinkNest to production** — hosted web + API + database on free/low-cost tiers where possible, with **Google Play** and **Apple App Store** publishing when developer accounts and platform targets are ready.
 
 ## Depends On
 
-E2 (minimal authentication and the `IEmailSender` / `EmailConfirmationService` abstractions must exist).
+E2 (minimal authentication and the `IEmailSender` / `EmailConfirmationService` abstractions must exist).  
+E7 (mobile app for store builds).  
+E8 recommended before public store listings (screenshots and responsive polish).
 
 ## Carry Over from E2 / PRDV2
 
@@ -44,7 +46,8 @@ Items explicitly listed as out of scope in E2 and deferred in PRDV2 §11:
 
 - Mobile-specific auth UX beyond what E7 already provides (token refresh, etc.).
 - Marketing/onboarding email templates beyond plain transactional HTML for confirm/reset.
-- Full production hosting/deployment runbooks (still deferred per PRDV2 §14) — only the email sender configuration contract is in scope.
+
+*(Production hosting, app store publishing, and deployment runbooks are **in scope** below — § Production hosting & store publishing.)*
 
 ## Likely Files/Areas
 
@@ -239,4 +242,186 @@ Smaller follow-ups from the E7 architecture review; safe to batch with H3/H4 or 
 ### Out of scope (E9 mobile section)
 
 - Server-side JWT revocation / refresh tokens (client-side clear on logout/expiry is sufficient for v2).
-- App store deployment, push notifications, offline sync (unchanged from E7 out of scope).
+- Push notifications, offline-first sync (unchanged from E7 out of scope).
+
+---
+
+## Production Hosting & Store Publishing
+
+**Goal:** Deploy LinkNest so real users can reach the **web app** and install **native mobile apps** from Google Play and the Apple App Store, using **lowest-cost / free-tier options** where viable. Document every step so the stack is reproducible without guesswork.
+
+**Depends on:** E7 (mobile clients exist), E9 SMTP section (email for register/reset in production), E9 H3 (Android for Play Store), and ideally E8 (polish before public store listing — recommended, not blocking for internal/beta deploy).
+
+### Architecture to host
+
+| Component | Role | Production notes |
+|-----------|------|------------------|
+| **PostgreSQL** | System of record | Managed DB; never expose 5432 publicly without firewall |
+| **LinkNest.Api** | REST + Identity + JWT | HTTPS only; env-based secrets (`Jwt__Secret`, connection string) |
+| **LinkNest.Web** | Blazor host + YARP proxy | Same origin for cookies; proxies `/api/*` to Api |
+| **LinkNest.Mobile** | Store binaries | Points at public API URL via `ApiBaseUrl` / `LINKNEST_API_BASE_URL` |
+
+Minimum production checklist:
+
+- [ ] HTTPS everywhere (TLS certificates — Let's Encrypt or platform-managed).
+- [ ] Shared **DataProtection** key path accessible by Api + Web (or single co-hosted process).
+- [ ] **JWT secret** and **DB credentials** in environment variables / secret store — not in git.
+- [ ] **SMTP** configured (§ SMTP above) for confirm/reset emails.
+- [ ] EF migrations applied on deploy (`FR-26`).
+- [ ] CORS not wide-open; mobile app calls Api directly with bearer tokens.
+- [ ] Rate limiting enabled on auth endpoints (already in Api).
+- [ ] Backups enabled on PostgreSQL (managed providers include this).
+
+---
+
+### Phase 1 — Web + API + database (free / low-cost options)
+
+Pick **one** stack; document the chosen provider in `docs/deployment.md` (create during implementation).
+
+#### Recommended free-friendly combinations
+
+| Provider | What you get (typical free tier) | Caveats |
+|----------|----------------------------------|---------|
+| **[Neon](https://neon.tech)** | PostgreSQL serverless, free tier | Pair with free web host below |
+| **[Supabase](https://supabase.com)** | PostgreSQL + dashboard, free tier | Use DB only; app stays on LinkNest.Api |
+| **[Render](https://render.com)** | Free web services + paid/free Postgres tiers | Free web **sleeps** after inactivity; cold starts |
+| **[Fly.io](https://fly.io)** | Containers + small Postgres allowance | Requires `fly.toml`; free allowance limited |
+| **[Railway](https://railway.app)** | Containers + Postgres | Trial credits; then usage-based |
+| **Oracle Cloud Always Free** | ARM VM (Docker Compose) | More ops work; run `docker compose` + reverse proxy yourself |
+| **Azure** | App Service F1 (limited), Container Apps trial | PostgreSQL usually **not** free — use Neon + Azure Web |
+
+**Suggested minimal-cost path (documented default):**
+
+1. **Database:** Neon or Supabase free PostgreSQL → connection string in Api/Web env.
+2. **Api + Web:** Single **Docker Compose** image or two containers on Render/Fly/Railway free tier.
+3. **TLS:** Platform-managed cert (Render/Fly) or Caddy/Traefik + Let's Encrypt on a VPS.
+4. **CI:** GitHub Actions (free for public repos) — build, test, deploy on push to `main`.
+
+#### What to implement in repo
+
+1. **`Dockerfile`** (or split `Dockerfile.api`, `Dockerfile.web`) — multi-stage publish for Release builds.
+2. **`docker-compose.prod.yml`** (optional) — Api + Web + external DB URL (no local postgres in prod compose if using Neon).
+3. **`.github/workflows/deploy.yml`** — build, run tests, push container, deploy (provider-specific).
+4. **`docs/deployment.md`** — env var table, first-time setup, rollback, migration steps.
+5. **Production `appsettings.Production.json`** placeholders — no secrets; document required env vars:
+   - `ConnectionStrings__DefaultConnection`
+   - `Jwt__Secret`
+   - `DataProtection__KeysPath` or shared volume mount
+   - `Auth__WebBaseUrl` (public web URL)
+   - `Email__*` / SMTP settings
+   - `LINKNEST_API_BASE_URL` for mobile builds (CI variable)
+
+#### Web acceptance criteria
+
+- [ ] Public HTTPS URL loads login and home after auth.
+- [ ] Register → confirmation email → login works with production SMTP.
+- [ ] Cookie auth works through Web proxy to Api.
+- [ ] PostgreSQL data persists across redeploys.
+- [ ] `dotnet test` passes in CI before deploy.
+
+---
+
+### Phase 2 — Google Play Store (Android)
+
+**Depends on:** E9 **H3** (`net10.0-android` target, signed release build).
+
+| Requirement | Details |
+|-------------|---------|
+| **Developer account** | [Google Play Console](https://play.google.com/console) — **$25 one-time** registration fee (not free). |
+| **Package name** | Already `com.linknest.mobile` in csproj — finalize before first upload (immutable after publish). |
+| **Signing** | Release keystore (`.keystore` / `.jks`); store in CI secrets, never in git. |
+| **Build output** | `dotnet publish -f net10.0-android -c Release` → **AAB** (Android App Bundle), not APK for store. |
+| **API URL** | Production `ApiBaseUrl` baked or configured — **HTTPS** required for production. |
+| **Store listing** | App name, short/full description, screenshots (phone + tablet), feature graphic, privacy policy URL. |
+| **Privacy policy** | Public HTTPS page describing data collected (email, links, groups) — required by Google. |
+| **Content rating** | Complete Play questionnaire (IARC). |
+| **Data safety form** | Declare auth, user content, encryption in transit. |
+
+#### Implementation tasks
+
+1. Add **Android release signing** to `LinkNest.Mobile.csproj` / `Directory.Build.props` (Release only, from env).
+2. Document **`dotnet publish`** command and Play Console upload steps in `docs/deployment.md`.
+3. Generate store screenshots after E8 responsive pass (phone + tablet).
+4. Internal testing track → closed testing → production rollout.
+
+#### Acceptance criteria
+
+- [ ] AAB uploads to Play Console without signing errors.
+- [ ] Internal test install from Play Store (or internal app sharing) logs in against production API.
+- [ ] App passes Play pre-launch report on reference devices (no critical crashes on login/home).
+
+---
+
+### Phase 3 — Apple App Store (iOS)
+
+**Note:** Current MAUI project targets **Windows only**. iOS requires additional work beyond H3 Android:
+
+| Requirement | Details |
+|-------------|---------|
+| **Developer account** | [Apple Developer Program](https://developer.apple.com/programs/) — **$99 USD/year** (not free). |
+| **Build environment** | **macOS** with Xcode required for signing and upload (GitHub Actions `macos-latest` runner or local Mac). |
+| **TFM** | Add `net10.0-ios` to `LinkNest.Mobile.csproj` + `Platforms/iOS/*` (same pattern as H3 Android). |
+| **Signing** | Distribution certificate + provisioning profile (App Store Connect). |
+| **Build output** | `dotnet publish -f net10.0-ios -c Release` → IPA → Transporter or `xcrun altool`. |
+| **App Store Connect** | Bundle ID `com.linknest.mobile`, listing, screenshots (6.7", 6.5", iPad if supported). |
+| **Privacy** | App Privacy nutrition labels; privacy policy URL (same as Google). |
+| **Review guidelines** | Demo account for Apple reviewers (`dev@…` or dedicated test user with sample data). |
+
+#### Implementation tasks
+
+1. Add **`net10.0-ios`** target and platform folder (mirror MAUI template).
+2. Configure **ApiBaseUrl** for production HTTPS API.
+3. CI job on `macos-latest`: restore MAUI workloads, publish IPA, upload to TestFlight.
+4. TestFlight internal → external beta → App Store submission.
+
+#### Acceptance criteria
+
+- [ ] TestFlight build installs on physical iPhone; login and bootstrap succeed against production API.
+- [ ] App Store submission accepted (or rejection issues documented and fixed).
+
+**If iOS is deferred:** Ship **Google Play + web** first; track iOS as E9 follow-up with explicit dependency on macOS CI and Apple Developer enrollment.
+
+---
+
+### Phase 4 — Windows (optional)
+
+Microsoft Store distribution for MAUI Windows apps is possible but **lower priority** than web + Play + App Store. Document sideload / MSIX packaging only if requested.
+
+---
+
+### Cost summary (realistic)
+
+| Item | Cost |
+|------|------|
+| Web + DB hosting | **$0–15/mo** on free tiers (Neon + Render/Fly); $0 if self-hosted on Oracle Free VM |
+| Google Play | **$25 one-time** |
+| Apple App Store | **$99/year** |
+| Custom domain (optional) | ~$10–15/year |
+| SMTP (SendGrid/SES free tiers) | Often **$0** at low volume |
+
+True **$0 ongoing** is possible for web+DB on free tiers; **store publishing always requires Google and/or Apple developer fees**.
+
+---
+
+### Likely files (hosting & stores)
+
+- `Dockerfile`, `docker-compose.prod.yml`
+- `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`
+- `docs/deployment.md` — hosting, env vars, migrations, store checklists
+- `src/LinkNest.Mobile/LinkNest.Mobile.csproj` — Android/iOS release signing properties
+- `src/LinkNest.Mobile/appsettings.Production.json` — production API URL template
+- Privacy policy page (static markdown hosted on web or GitHub Pages)
+
+### Manual test notes — production
+
+- End-to-end on production URL: register → email confirm → login → create category → add link → share in group.
+- Mobile app (release build) against production API — not localhost.
+- Verify JWT and cookies use HTTPS; HTTP redirects to HTTPS.
+- Load test smoke: cold start on free tier acceptable for beta.
+
+### Out of scope (hosting section)
+
+- Enterprise SSO, multi-region HA, Kubernetes (overkill for v2 scale).
+- Paid marketing, ASO agencies, localized store listings beyond EN/AR app UI.
+- Windows Store unless explicitly requested.
+

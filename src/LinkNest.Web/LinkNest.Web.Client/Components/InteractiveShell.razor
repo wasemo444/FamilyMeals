@@ -1,43 +1,68 @@
 @inherits LocalizedComponentBase
 
 <CascadingValue Value="_cultureVersion" Name="CultureVersion">
-    <header class="app-header" data-testid="app-header">
-        <a class="brand" href="/">@L["AppTitle"]</a>
-        <nav class="app-nav">
-            <a href="/">@L["Home"]</a>
-            <a href="/groups">@L["GroupsNav"]</a>
-            <a href="/archive">@L["Archive"]</a>
-        </nav>
-        <div class="app-auth">
-            <AuthorizeView>
-                <Authorized>
-                    <span class="muted">@GetDisplayName(context.User)</span>
-                    @if (UsesBearerToken)
-                    {
-                        <button class="btn" type="button" data-testid="logout-button" @onclick="LogoutAsync">@L["Logout"]</button>
-                    }
-                    else
-                    {
-                        <form method="post" action="/account/logout" class="logout-form">
-                            <button class="btn" type="submit" data-testid="logout-button">@L["Logout"]</button>
-                        </form>
-                    }
-                </Authorized>
-                <NotAuthorized>
-                    <a href="/login">@L["Login"]</a>
-                    <a href="/register">@L["Register"]</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
-        <LanguageSwitcher />
-    </header>
+    <div class="ln-app">
+        <header class="ln-header" data-testid="app-header">
+            <a class="ln-brand" href="/">Link<span>Nest</span></a>
 
-    @if (IsReady)
-    {
-        @ChildContent
-    }
-    else
-    {
-        <p class="muted loading">@L["LoadingPreview"]</p>
-    }
+            <nav class="ln-top-nav" aria-label="@L["Home"]">
+                <a href="/" class="@NavLinkClass("/")">@L["Home"]</a>
+                <a href="/groups" class="@NavLinkClass("/groups")">@L["GroupsNav"]</a>
+                <a href="/archive" class="@NavLinkClass("/archive")">@L["Archive"]</a>
+            </nav>
+
+            <div class="ln-header-actions">
+                <ThemeToggle />
+                <LanguageSwitcher />
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="ln-user-label">@GetDisplayName(context.User)</span>
+                        @if (UsesBearerToken)
+                        {
+                            <button class="ln-btn ln-btn--ghost" type="button" data-testid="logout-button" @onclick="LogoutAsync">@L["Logout"]</button>
+                        }
+                        else
+                        {
+                            <form method="post" action="/account/logout" class="logout-form">
+                                <button class="ln-btn ln-btn--ghost" type="submit" data-testid="logout-button">@L["Logout"]</button>
+                            </form>
+                        }
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="ln-auth-links">
+                            <a href="/login">@L["Login"]</a>
+                            <a href="/register">@L["Register"]</a>
+                        </div>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </header>
+
+        <main class="ln-main ln-board-surface">
+            @if (IsReady)
+            {
+                @ChildContent
+            }
+            else
+            {
+                <p class="ln-loading">@L["LoadingPreview"]</p>
+            }
+        </main>
+
+        <nav class="ln-bottom-nav" aria-label="@L["Home"]">
+            <a href="/" class="ln-bottom-nav__item @NavLinkClass("/")" style="grid-column: 1">
+                <span class="ln-bottom-nav__icon" aria-hidden="true">⌂</span>
+                <span>@L["Home"]</span>
+            </a>
+            <a href="/groups" class="ln-bottom-nav__item @NavLinkClass("/groups")" style="grid-column: 2">
+                <span class="ln-bottom-nav__icon" aria-hidden="true">◫</span>
+                <span>@L["GroupsNav"]</span>
+            </a>
+            <a href="/#add-category" class="ln-bottom-nav__fab" aria-label="@L["AddCategory"]">+</a>
+            <a href="/archive" class="ln-bottom-nav__item @NavLinkClass("/archive")" style="grid-column: 4">
+                <span class="ln-bottom-nav__icon" aria-hidden="true">▣</span>
+                <span>@L["Archive"]</span>
+            </a>
+        </nav>
+    </div>
 </CascadingValue>

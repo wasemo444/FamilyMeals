@@ -1,0 +1,41 @@
+html {
+    color-scheme: dark;
+}
+
+html[data-theme="light"] {
+    color-scheme: light;
+}
+
+body {
+    margin: 0;
+    font-family: var(--ln-font-ui);
+    font-size: var(--ln-text-sm);
+    line-height: 1.55;
+    background: var(--ln-board-bg);
+    color: var(--ln-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+:focus-visible {
+    outline: 2px solid var(--ln-focus);
+    outline-offset: 3px;
+}
+
+.ln-glass {
+    background: var(--ln-glass);
+    border: 1px solid var(--ln-glass-border);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.ln-board-surface {
+    background-color: var(--ln-board-bg);
+    background-image: var(--ln-board-mesh);
+    min-height: 100%;
+}

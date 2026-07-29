@@ -1,5 +1,6 @@
 using LinkNest.Shared.Auth;
 using LinkNest.Shared.Services;
+using LinkNest.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace LinkNest.Web.Client.Pages;
@@ -23,6 +24,9 @@ public partial class Login
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private ThemeService ThemeService { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
@@ -52,6 +56,14 @@ public partial class Login
         string.IsNullOrWhiteSpace(RegisteredEmail) ? string.Empty : RegisteredEmail;
 
     protected bool RememberMeChecked => false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeService.InitializeAsync();
+        }
+    }
 
     protected override void OnParametersSet()
     {

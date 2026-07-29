@@ -1,5 +1,14 @@
 ﻿@page "/not-found"
 @layout Layout.MainLayout
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<div class="ln-not-found">
+    <section class="ln-auth-card ln-not-found__card">
+        <div class="ln-auth-card__glow" aria-hidden="true"></div>
+        <p class="ln-not-found__code" aria-hidden="true">404</p>
+        <h1>Not Found</h1>
+        <p class="ln-muted">Sorry, the content you are looking for does not exist.</p>
+        <div class="ln-auth-actions" style="margin-top: var(--ln-space-5)">
+            <a class="ln-btn ln-btn--primary ln-btn--block" href="/">Go home</a>
+        </div>
+    </section>
+</div>

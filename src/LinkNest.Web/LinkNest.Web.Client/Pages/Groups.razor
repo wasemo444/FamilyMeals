@@ -7,70 +7,73 @@
 <PageTitle>@L["GroupsPageTitle"]</PageTitle>
 
 <InteractiveShell>
-<section class="page">
-    <a class="back-link" href="/">← @L["Home"]</a>
+<div class="ln-page">
+    <a class="ln-back" href="/">← @L["Home"]</a>
 
-    <header class="page-header">
+    <header class="ln-page-head">
         <h1>@L["GroupsPageTitle"]</h1>
-        <p class="muted">@L["GroupsPageDescription"]</p>
+        <p class="ln-muted">@L["GroupsPageDescription"]</p>
     </header>
 
     @if (_pendingInvites.Count > 0)
     {
-        <section class="panel">
+        <section class="ln-alert">
             <h2>@L["PendingInvites"]</h2>
             @foreach (var invite in _pendingInvites)
             {
-                <div class="invite-row">
+                <div class="ln-invite-row">
                     <p>@L.Format("InvitePrompt", invite.GroupName, invite.InvitedByDisplayName)</p>
-                    <div class="form-row">
-                        <button class="btn primary" type="button" @onclick="() => AcceptInviteAsync(invite.Id)">@L["AcceptInvite"]</button>
-                        <button class="btn" type="button" @onclick="() => DeclineInviteAsync(invite.Id)">@L["DeclineInvite"]</button>
+                    <div class="ln-form-row">
+                        <button class="ln-btn ln-btn--primary" type="button" @onclick="() => AcceptInviteAsync(invite.Id)">@L["AcceptInvite"]</button>
+                        <button class="ln-btn" type="button" @onclick="() => DeclineInviteAsync(invite.Id)">@L["DeclineInvite"]</button>
                     </div>
                 </div>
             }
             @if (!string.IsNullOrWhiteSpace(_inviteActionError))
             {
-                <p class="error">@_inviteActionError</p>
+                <p class="ln-error">@_inviteActionError</p>
             }
         </section>
     }
 
-    <section class="panel">
-        <h2>@L["CreateGroup"]</h2>
+    <section class="ln-panel">
+        <h2 class="ln-panel__title">@L["CreateGroup"]</h2>
         <EditForm Model="_groupForm" OnValidSubmit="CreateGroupAsync">
-            <div class="form-row">
-                <InputText class="input" @bind-Value="_groupForm.Name" placeholder="@L["GroupName"]" />
-                <button class="btn primary" type="submit">@L["Create"]</button>
+            <div class="ln-form-row">
+                <InputText class="ln-input" @bind-Value="_groupForm.Name" placeholder="@L["GroupName"]" />
+                <button class="ln-btn ln-btn--primary" type="submit">@L["Create"]</button>
             </div>
             @if (!string.IsNullOrWhiteSpace(_groupError))
             {
-                <p class="error">@_groupError</p>
+                <p class="ln-error">@_groupError</p>
             }
         </EditForm>
     </section>
 
-    <section class="panel">
-        <h2>@L["YourGroups"]</h2>
+    <section class="ln-panel">
+        <h2 class="ln-panel__title">@L["YourGroups"]</h2>
         @if (_groups.Count == 0)
         {
-            <p class="muted">@L["NoGroupsYet"]</p>
+            <div class="ln-empty-state">
+                <span class="ln-empty-state__icon" aria-hidden="true">◫</span>
+                <p class="ln-muted">@L["NoGroupsYet"]</p>
+            </div>
         }
         else
         {
-            <ul class="member-list">
+            <ul class="ln-list">
                 @foreach (var group in _groups)
                 {
-                    <li class="member-row">
-                        <div>
+                    <li class="ln-list__row">
+                        <div class="ln-list__main">
                             <strong>@group.Name</strong>
-                            <span class="role-badge">@RoleLabel(group.CurrentUserRole)</span>
+                            <span class="ln-role-badge">@RoleLabel(group.CurrentUserRole)</span>
                         </div>
-                        <a class="btn" href="/group/@group.Id">@L["ManageMembers"]</a>
+                        <a class="ln-btn" href="/group/@group.Id">@L["ManageMembers"]</a>
                     </li>
                 }
             </ul>
         }
     </section>
-</section>
+</div>
 </InteractiveShell>

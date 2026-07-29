@@ -6,57 +6,62 @@
 <PageTitle>@_pageTitle</PageTitle>
 
 <InteractiveShell>
-<section class="page">
-    <a class="back-link" href="/">← @L["Back"]</a>
+<div class="ln-page">
+    <a class="ln-back" href="/">← @L["Back"]</a>
 
     @if (_category is null)
     {
-        <p class="error">@L["CategoryNotFound"]</p>
+        <p class="ln-error">@L["CategoryNotFound"]</p>
     }
     else
     {
-        <header class="page-header">
-            <h1>@_category.Name</h1>
-            @if (_category.IsShared)
-            {
-                <span class="shared-badge">@SharedLabel</span>
-            }
+        <header class="ln-page-head">
+            <div class="ln-page-head__row">
+                <h1>@_category.Name</h1>
+                @if (_category.IsShared)
+                {
+                    <span class="ln-tape-badge ln-tape-badge--shared">@SharedLabel</span>
+                }
+                else
+                {
+                    <span class="ln-tape-badge ln-tape-badge--personal">@L["Personal"]</span>
+                }
+            </div>
         </header>
 
-        <section class="panel">
-            <h2>@L["AddLink"]</h2>
+        <section class="ln-panel">
+            <h2 class="ln-panel__title">@L["AddLink"]</h2>
             <EditForm Model="_form" OnValidSubmit="AddLinkAsync">
-                <div class="form-stack">
-                    <InputText class="input" @bind-Value="_form.TitleEn" placeholder="@L["LinkTitleEn"]" />
-                    <InputText class="input" @bind-Value="_form.TitleAr" placeholder="@L["LinkTitleAr"]" />
-                    <InputText class="input" @bind-Value="_form.Url" placeholder="@L["LinkUrl"]" />
-                    <InputTextArea class="input textarea" @bind-Value="_form.Note" placeholder="@L["LinkNote"]" rows="2" />
-                    <button class="btn primary" type="submit" disabled="@_isAdding">@L["AddLink"]</button>
+                <div class="ln-form-stack">
+                    <InputText class="ln-input" @bind-Value="_form.TitleEn" placeholder="@L["LinkTitleEn"]" />
+                    <InputText class="ln-input" @bind-Value="_form.TitleAr" placeholder="@L["LinkTitleAr"]" />
+                    <InputText class="ln-input" @bind-Value="_form.Url" placeholder="@L["LinkUrl"]" />
+                    <InputTextArea class="ln-input ln-textarea" @bind-Value="_form.Note" placeholder="@L["LinkNote"]" rows="2" />
+                    <button class="ln-btn ln-btn--primary" type="submit" disabled="@_isAdding">@L["AddLink"]</button>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(_error))
                 {
-                    <p class="error">@_error</p>
+                    <p class="ln-error">@_error</p>
                 }
                 @if (_isAdding)
                 {
-                    <p class="muted">@L["LoadingPreview"]</p>
+                    <p class="ln-muted">@L["LoadingPreview"]</p>
                 }
             </EditForm>
         </section>
 
-        <section class="panel">
-            <h2>@L["SearchLinks"]</h2>
-            <InputText class="input search-input"
+        <div class="ln-search-bar">
+            <InputText class="ln-input"
                        @bind-Value="_searchTerm"
                        @bind-Value:after="OnSearchChanged"
                        placeholder="@L["SearchLinks"]" />
-        </section>
+        </div>
 
         @if (_favoriteLinks.Count > 0)
         {
-            <section class="panel">
-                <h2>@L["FavoriteLinks"]</h2>
-                <div class="card-grid">
+            <section class="ln-panel">
+                <h2 class="ln-panel__title">@L["FavoriteLinks"]</h2>
+                <div class="ln-link-grid">
                     @foreach (var link in _favoriteLinks)
                     {
                         <LinkCard Link="link" />
@@ -65,15 +70,18 @@
             </section>
         }
 
-        <section class="panel">
-            <h2>@L["AllLinks"]</h2>
+        <section class="ln-panel">
+            <h2 class="ln-panel__title">@L["AllLinks"]</h2>
             @if (_allLinks.Count == 0)
             {
-                <p class="muted">@(string.IsNullOrWhiteSpace(_searchTerm) ? L["NoLinksYet"] : L["NoSearchResults"])</p>
+                <div class="ln-empty-state">
+                    <span class="ln-empty-state__icon" aria-hidden="true">⌁</span>
+                    <p class="ln-muted">@(string.IsNullOrWhiteSpace(_searchTerm) ? L["NoLinksYet"] : L["NoSearchResults"])</p>
+                </div>
             }
             else
             {
-                <div class="card-grid">
+                <div class="ln-link-grid">
                     @foreach (var link in _allLinks)
                     {
                         <LinkCard Link="link" />
@@ -82,5 +90,5 @@
             }
         </section>
     }
-</section>
+</div>
 </InteractiveShell>

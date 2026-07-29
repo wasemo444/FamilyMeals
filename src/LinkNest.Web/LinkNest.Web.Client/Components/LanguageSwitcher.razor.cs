@@ -12,8 +12,8 @@ public partial class LanguageSwitcher
 
     private string GetButtonClass(string cultureCode) =>
         CultureState.CultureCode.Equals(cultureCode, StringComparison.OrdinalIgnoreCase)
-            ? "lang-btn active"
-            : "lang-btn";
+            ? "ln-lang-btn ln-lang-btn--active"
+            : "ln-lang-btn";
 
     private async Task SetCultureAsync(string cultureCode)
     {

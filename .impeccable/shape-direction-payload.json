@@ -1,0 +1,34 @@
+{
+  "title": "LinkNest E8 — Visual World",
+  "question": "The roll assigned Workshop Pegboard: utilitarian labeled zones for categories, tagged hooks for links, tape colors for mine vs shared. Keep it, take a fused alternate, re-roll, steer, or play the category standard straight.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Workshop Pegboard",
+      "kicker": "THE ROLL",
+      "lineage": "Hardware-shop pegboard + stamped label tape",
+      "body": "Categories are bordered zones on a perforated board; links hang as tagged items on hooks. Personal vs group sharing reads as two label-tape colors (e.g. green vs cobalt). Operate-native: scannable zones, dense but legible, no decorative noise. Light = birch board + daylight; dark = workshop after-hours with a single fluorescent edge. First viewport: home grid of labeled zones with link counts; filter chips sit like tape strips above the board. Risk: can skew industrial if typography isn't warm enough — human hand-label energy is the fix.",
+      "hero": "https://impeccable.style/worlds/cards/games-toys-physics-play-brick-build-instructions-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/games-toys-physics-play-brick-build-instructions.webp"
+    },
+    {
+      "id": "challenger-split-flap",
+      "label": "Split-Flap Concourse",
+      "lineage": "Rail departure boards — fused for LinkNest",
+      "body": "Categories become platform columns; links are live departure rows that flip when updated. Mine/shared = row lamp color (white vs amber). Home is the board at rush hour — instant scan, zero ambiguity. Strong for bilingual RTL (columns mirror). Risk: motion-heavy; must respect prefers-reduced-motion with instant swaps.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse.webp"
+    },
+    {
+      "id": "challenger-talavera",
+      "label": "Talavera Courtyard",
+      "lineage": "Hand-painted tin-glazed tiles — fused for LinkNest",
+      "body": "Each category is a tile module on a courtyard wall; links are painted motifs inside. Shared group content gets a cobalt border rule; personal tiles stay cream-ground. Warm, human, distinctly non-AI. Risk: ornament density — must stay Operate-clear at small sizes.",
+      "hero": "https://impeccable.style/worlds/cards/clay-ceramics-fracture-talavera-courtyard-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/clay-ceramics-fracture-talavera-courtyard.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "steer": true
+}
