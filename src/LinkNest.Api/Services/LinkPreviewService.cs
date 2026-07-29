@@ -8,9 +8,9 @@ namespace LinkNest.Api.Services;
 /// Fetches Open Graph and HTML metadata from external URLs for link preview display.
 /// </summary>
 /// <remarks>
-/// URLs must pass <see cref="LinkPreviewUrlGuard"/> (public addresses only). Failures return <see langword="null"/> rather than throwing.
+/// URLs must pass <see cref="ISafeUrlFetcher"/> validation (public addresses only). Failures return <see langword="null"/> rather than throwing.
 /// </remarks>
-public sealed class LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger)
+public sealed class LinkPreviewService(ISafeUrlFetcher safeUrlFetcher, ILogger<LinkPreviewService> logger)
 {
     private const int MaxHtmlBytes = 256 * 1024;
     private const int MaxImageBytes = 5 * 1024 * 1024;
@@ -36,26 +36,19 @@ public sealed class LinkPreviewService(IHttpClientFactory httpClientFactory, ILo
     public async Task<LinkPreviewData?> FetchAsync(string url, CancellationToken cancellationToken = default)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            || !SafeUrlValidator.IsAllowedScheme(uri))
         {
             return null;
         }
 
-        if (!await LinkPreviewUrlGuard.IsAllowedPublicUrlAsync(uri, cancellationToken))
+        using var response = await safeUrlFetcher.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (response is null || !response.IsSuccessStatusCode)
         {
-            logger.LogWarning("Blocked link preview fetch for non-public URL {Url}", url);
             return null;
         }
 
         try
         {
-            var client = httpClientFactory.CreateClient(nameof(LinkPreviewService));
-            using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
             var html = await ReadHtmlAsync(response, cancellationToken);
             if (string.IsNullOrWhiteSpace(html))
             {
@@ -100,26 +93,19 @@ public sealed class LinkPreviewService(IHttpClientFactory httpClientFactory, ILo
         CancellationToken cancellationToken = default)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            || !SafeUrlValidator.IsAllowedScheme(uri))
         {
             return null;
         }
 
-        if (!await LinkPreviewUrlGuard.IsAllowedPublicUrlAsync(uri, cancellationToken))
+        using var response = await safeUrlFetcher.GetAsync(uri, cancellationToken: cancellationToken);
+        if (response is null || !response.IsSuccessStatusCode)
         {
-            logger.LogWarning("Blocked link preview fetch for non-public URL {Url}", url);
             return null;
         }
 
         try
         {
-            var client = httpClientFactory.CreateClient(nameof(LinkPreviewService));
-            using var response = await client.GetAsync(uri, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
             var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
             if (!contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
             {

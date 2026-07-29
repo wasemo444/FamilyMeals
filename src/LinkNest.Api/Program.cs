@@ -1,3 +1,4 @@
+using LinkNest.Api.V1Import;
 using LinkNest.Api.Data;
 using LinkNest.Api.Endpoints;
 using LinkNest.Api.Identity;
@@ -52,21 +53,27 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
+builder.Services.AddScoped<V1AppDataImportService>();
 builder.Services.AddScoped<IAppDataStore, EfAppDataStore>();
 builder.Services.AddScoped<IContentDataService, ContentDataService>();
 
-builder.Services.AddHttpClient(nameof(LinkPreviewService), client =>
+builder.Services.AddSingleton<ISafeUrlValidator, SafeUrlValidator>();
+builder.Services.AddSingleton<ISafeUrlFetcher, SafeUrlFetcher>();
+builder.Services.AddHttpClient(nameof(SafeUrlFetcher), client =>
 {
     client.Timeout = TimeSpan.FromSeconds(12);
     client.DefaultRequestHeaders.UserAgent.ParseAdd(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
     client.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 })
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    AllowAutoRedirect = true,
-    AutomaticDecompression = DecompressionMethods.All
-});
+.ConfigurePrimaryHttpMessageHandler(sp => new SafeRedirectHttpMessageHandler(
+    sp.GetRequiredService<ISafeUrlValidator>(),
+    new SocketsHttpHandler
+    {
+        AllowAutoRedirect = false,
+        AutomaticDecompression = DecompressionMethods.All,
+        ConnectCallback = SafeConnectionPinning.CreateConnectCallback()
+    }));
 builder.Services.AddSingleton<LinkPreviewService>();
 
 builder.Services.AddCors(options =>
@@ -102,6 +109,13 @@ app.MapCategoryEndpoints();
 app.MapLinkEndpoints();
 app.MapSettingsEndpoints();
 app.MapLinkPreviewEndpoints();
+
+var importExitCode = await V1ImportCommandRunner.TryRunAsync(args, app);
+if (importExitCode is int code)
+{
+    Environment.ExitCode = code;
+    return;
+}
 
 app.Run();
 
