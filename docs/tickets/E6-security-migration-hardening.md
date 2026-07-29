@@ -20,7 +20,7 @@ E3 (ownership model must exist as the migration target).
 - SSRF protection is covered by tests exercising at least: a private IP literal, a loopback URL, a non-http(s) scheme, and a normal public URL that should still succeed.
 - A migration tool/script exists that takes v1's exported JSON (or reads a provided localStorage-shaped payload) and imports it into PostgreSQL as personally-owned (`OwnerType = User`) categories/links for a specified user, preserving `IsFavorite`, timestamps, and archive state.
 - Migration tool is idempotent or clearly documented as run-once (no silent duplicate imports on re-run).
-- Validation Checklist rows #24 and #25 flip to "Implemented."
+- Validation Checklist rows #23 (SSRF) and #25 (v1 migration) flip to "Implemented." (#24 group-deletion FK behavior is E3/E5 scope, unchanged.)
 
 ## Out of Scope
 
@@ -31,7 +31,7 @@ E3 (ownership model must exist as the migration target).
 ## Likely Files/Areas
 
 - `src/LinkNest.Api/` — link preview fetcher (URL/IP validation logic, likely a dedicated `ISafeUrlFetcher` or similar), unit tests for the SSRF guard.
-- `src/LinkNest.Api/Migration/` (or a standalone console tool project) — v1 JSON → PostgreSQL import script.
+- `src/LinkNest.Api/V1Import/` — v1 JSON → PostgreSQL import script.
 
 ## Manual Test Notes
 

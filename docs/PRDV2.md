@@ -356,9 +356,9 @@ Notes on the new `LinkNest.Api` project:
 | 20 | Archive of a category cascades to its links regardless of ownership (private or shared) | Not started |
 | 21 | DB `CHECK` constraint rejects an `OwnerType`/`OwnerUserId`/`OwnerGroupId` mismatch (FR-40) | Not started |
 | 22 | Concurrent edits to the same shared category/link produce a detectable conflict, not a silent overwrite (FR-41) | Not started |
-| 23 | Link preview fetch blocks private/link-local/loopback/metadata IPs and unsafe redirects (FR-11) | Not started |
+| 23 | Link preview fetch blocks private/link-local/loopback/metadata IPs and unsafe redirects (FR-11) | Implemented |
 | 24 | Deleting a group is blocked (or requires reassignment/archiving first) while it still owns content, verifying `RESTRICT`/`NoAction` FK behavior (FR-42) | Not started |
-| 25 | V1 JSON/localStorage export imports successfully into PostgreSQL as private content for the importing user (FR-43) | Not started |
+| 25 | V1 JSON/localStorage export imports successfully into PostgreSQL as private content for the importing user (FR-43) | Implemented |
 
 ---
 

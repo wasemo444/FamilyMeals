@@ -6,7 +6,7 @@ namespace LinkNest.Api.Endpoints;
 /// Minimal API routes for fetching Open Graph metadata and preview images for external URLs.
 /// </summary>
 /// <remarks>
-/// Requires authentication. Blocked or unreachable URLs return <c>404 Not Found</c> (SSRF guard via <see cref="Services.LinkPreviewUrlGuard"/>).
+/// Requires authentication. Blocked or unreachable URLs return <c>404 Not Found</c> (SSRF guard via <see cref="Services.ISafeUrlFetcher"/>).
 /// </remarks>
 public static class LinkPreviewEndpoints
 {
