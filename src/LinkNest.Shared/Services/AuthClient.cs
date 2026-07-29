@@ -66,6 +66,43 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
         return await ReadUserAsync(response, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PostAsJsonAsync("/api/auth/forgot-password", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PostAsJsonAsync("/api/auth/reset-password", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task ResendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PostAsJsonAsync("/api/auth/resend-confirmation", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PatchAsJsonAsync("/api/auth/me", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return await ReadUserAsync(response, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to deserialize updated user.");
+    }
+
+    /// <inheritdoc />
+    public async Task DeactivateAccountAsync(DeactivateAccountRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PostAsJsonAsync("/api/auth/deactivate", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)
@@ -75,7 +112,10 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            throw new UnauthorizedAccessException("Invalid email or password.");
+            var body = await ReadResponseBodyAsync(response, cancellationToken);
+            var detail = TryReadProblemDetail(body ?? string.Empty)
+                ?? "Invalid email or password.";
+            throw new UnauthorizedAccessException(detail);
         }
 
         if (response.StatusCode == HttpStatusCode.TooManyRequests)

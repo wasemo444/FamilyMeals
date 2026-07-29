@@ -37,10 +37,24 @@ public static class IdentityServiceExtensions
     {
         services.Configure<IdentitySeedOptions>(configuration.GetSection(IdentitySeedOptions.SectionName));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+        services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<EmailOptions>, EmailConfigurationValidator>();
         services.AddSingleton<JwtTokenService>();
         services.AddScoped<IdentityDataSeeder>();
-        services.AddSingleton<IEmailSender, LoggingEmailSender>();
+
+        if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
+        {
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        }
+        else
+        {
+            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        }
+
         services.AddScoped<EmailConfirmationService>();
+        services.AddScoped<PasswordResetService>();
 
         var configuredPath = configuration["DataProtection:KeysPath"];
         EnsureDataProtectionKeysConfigured(configuredPath, environment);
@@ -67,7 +81,8 @@ public static class IdentityServiceExtensions
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<Data.AppDbContext>()
             .AddSignInManager()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IConfigureOptions<JwtOptions>, ConfigureJwtOptions>();

@@ -154,6 +154,12 @@
     font-weight: 600;
 }
 
+.ln-auth-footer {
+    margin: var(--ln-space-4) 0 0;
+    text-align: center;
+    font-size: var(--ln-text-xs);
+}
+
 @media (min-width: 768px) {
     .ln-auth-card {
         padding: var(--ln-space-7);

@@ -13,9 +13,9 @@
 
             <div class="ln-header-actions">
                 <ThemeToggle />
-                <LanguageSwitcher />
                 <AuthorizeView>
                     <Authorized>
+                        <a class="ln-btn ln-btn--ghost ln-settings-link" href="/settings" aria-label="@L["Settings"]" data-testid="settings-link">⚙</a>
                         <span class="ln-user-label">@GetDisplayName(context.User)</span>
                         @if (UsesBearerToken)
                         {

@@ -18,7 +18,24 @@ public sealed class EmailConfirmationService(
     /// <param name="cancellationToken">Token used to cancel the send operation.</param>
     /// <returns>A task that completes when the email has been dispatched.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the user has no email or username.</exception>
-    public async Task SendConfirmationEmailAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    public Task SendConfirmationEmailAsync(ApplicationUser user, CancellationToken cancellationToken = default) =>
+        SendConfirmationEmailInternalAsync(user, cancellationToken);
+
+    /// <summary>
+    /// Resends a confirmation email when the account exists, is active, and is not yet confirmed.
+    /// </summary>
+    public async Task ResendConfirmationEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByEmailAsync(email.Trim());
+        if (user is null || !user.IsActive || user.EmailConfirmed)
+        {
+            return;
+        }
+
+        await SendConfirmationEmailInternalAsync(user, cancellationToken);
+    }
+
+    private async Task SendConfirmationEmailInternalAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         var email = user.Email ?? user.UserName
             ?? throw new InvalidOperationException("User email is required to send confirmation.");

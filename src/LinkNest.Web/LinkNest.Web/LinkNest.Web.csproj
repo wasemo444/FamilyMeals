@@ -6,11 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LinkNest.Web.Client\LinkNest.Web.Client.csproj" />
-    <ProjectReference Include="..\..\LinkNest.Api\LinkNest.Api.csproj" />
+    <ProjectReference Include="..\..\LinkNest.Api\LinkNest.Api.csproj">
+      <ExcludeAssets>contentfiles</ExcludeAssets>
+    </ProjectReference>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>

@@ -36,9 +36,18 @@
                         @if (!string.IsNullOrWhiteSpace(_error))
                         {
                             <p class="ln-error" data-testid="login-error">@_error</p>
+                            @if (_showResendConfirmation)
+                            {
+                                <button class="ln-btn ln-btn--ghost ln-btn--block" type="button" data-testid="resend-confirmation" disabled="@_resending" @onclick="ResendConfirmationAsync">@L["ResendConfirmation"]</button>
+                            }
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_resendSuccess))
+                        {
+                            <p class="ln-success" data-testid="resend-success">@_resendSuccess</p>
                         }
                         <div class="ln-auth-actions">
                             <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="login-submit">@L["Login"]</button>
+                            <a class="ln-btn ln-btn--ghost ln-btn--block" href="/forgot-password">@L["ForgotPassword"]</a>
                             <a class="ln-btn ln-btn--ghost ln-btn--block" href="/register">@L["Register"]</a>
                         </div>
                     </EditForm>
@@ -63,14 +72,26 @@
                         @if (!string.IsNullOrWhiteSpace(_error))
                         {
                             <p class="ln-error" data-testid="login-error">@_error</p>
+                            @if (_showResendConfirmation)
+                            {
+                                <button class="ln-btn ln-btn--ghost ln-btn--block" type="button" data-testid="resend-confirmation" disabled="@_resending" @onclick="ResendConfirmationAsync">@L["ResendConfirmation"]</button>
+                            }
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_resendSuccess))
+                        {
+                            <p class="ln-success" data-testid="resend-success">@_resendSuccess</p>
                         }
                         <div class="ln-auth-actions">
                             <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="login-submit">@L["Login"]</button>
+                            <a class="ln-btn ln-btn--ghost ln-btn--block" href="/forgot-password">@L["ForgotPassword"]</a>
                             <a class="ln-btn ln-btn--ghost ln-btn--block" href="/register">@L["Register"]</a>
                         </div>
                     </form>
                 }
             </div>
         </section>
+        <p class="ln-auth-footer">
+            <a class="ln-link" href="/privacy">Privacy Policy</a>
+        </p>
     </main>
 </div>

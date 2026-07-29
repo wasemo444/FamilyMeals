@@ -1,0 +1,12 @@
+**/.git
+**/.vs
+**/.cursor
+**/bin
+**/obj
+**/node_modules
+**/*.user
+**/terminals
+**/agent-transcripts
+**/.env
+**/.env.*
+!**/.env.production.example

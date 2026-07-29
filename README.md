@@ -13,6 +13,8 @@ Start here for architecture, navigation, and class-level reference:
 
 Product requirements: [docs/PRDV2.md](docs/PRDV2.md)
 
+**Production hosting, SMTP, Docker, and store publishing:** [docs/deployment.md](docs/deployment.md)
+
 ## Prerequisites
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download)

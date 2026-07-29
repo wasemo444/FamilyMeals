@@ -1,10 +1,10 @@
+using System.Security.Claims;
 using LinkNest.Api.Identity;
 using LinkNest.Shared.Auth;
 using LinkNest.Shared.Services;
 using Microsoft.AspNetCore.Identity;
 
 namespace LinkNest.Web.Auth;
-
 /// <summary>
 /// <see cref="IAuthClient"/> implementation that signs in through ASP.NET Core Identity on the Web host.
 /// </summary>
@@ -41,9 +41,19 @@ public sealed class WebHostAuthClient(
 
         var normalizedEmail = request.Email.Trim();
         var user = await userManager.FindByEmailAsync(normalizedEmail);
+        if (user is null)
+        {
+            await signInManager.PasswordSignInAsync(normalizedEmail, request.Password, request.RememberMe, lockoutOnFailure: true);
+            throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+
+        if (!user.IsActive)
+        {
+            throw new UnauthorizedAccessException("This account has been deactivated.");
+        }
 
         var result = await signInManager.PasswordSignInAsync(
-            user?.UserName ?? normalizedEmail,
+            user.UserName ?? normalizedEmail,
             request.Password,
             request.RememberMe,
             lockoutOnFailure: true);
@@ -56,13 +66,12 @@ public sealed class WebHostAuthClient(
             });
         }
 
-        if (result.IsNotAllowed || !result.Succeeded)
+        if (result.IsNotAllowed)
         {
-            throw new UnauthorizedAccessException("Invalid email or password.");
+            throw new UnauthorizedAccessException("Please confirm your email address before signing in.");
         }
 
-        user ??= await userManager.FindByEmailAsync(normalizedEmail);
-        if (user is null)
+        if (!result.Succeeded)
         {
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
@@ -87,15 +96,56 @@ public sealed class WebHostAuthClient(
     }
 
     /// <inheritdoc />
-    public async Task<AuthUserInfo?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
+    public Task<AuthUserInfo?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
-        if (httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true)
+        var httpContext = httpContextAccessor.HttpContext;
+        if (httpContext?.User.Identity?.IsAuthenticated == true)
         {
-            var user = await userManager.GetUserAsync(httpContextAccessor.HttpContext.User);
-            return user is null ? null : ToAuthUserInfo(user);
+            return Task.FromResult(ToAuthUserInfoFromClaims(httpContext.User));
         }
 
-        return await apiAuthClient.GetCurrentUserAsync(cancellationToken);
+        return apiAuthClient.GetCurrentUserAsync(cancellationToken);
+    }
+    /// <inheritdoc />
+    public Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.ForgotPasswordAsync(request, cancellationToken);
+
+    /// <inheritdoc />
+    public Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.ResetPasswordAsync(request, cancellationToken);
+
+    /// <inheritdoc />
+    public Task ResendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.ResendConfirmationAsync(request, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.UpdateProfileAsync(request, cancellationToken);
+
+    /// <inheritdoc />
+    public Task DeactivateAccountAsync(DeactivateAccountRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.DeactivateAccountAsync(request, cancellationToken);
+
+    private static AuthUserInfo? ToAuthUserInfoFromClaims(ClaimsPrincipal principal)
+    {
+        var idValue = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(idValue, out var userId))
+        {
+            return null;
+        }
+
+        var email = principal.FindFirstValue(ClaimTypes.Email)
+            ?? principal.FindFirstValue(ClaimTypes.Name)
+            ?? string.Empty;
+
+        return new AuthUserInfo
+        {
+            Id = userId,
+            Email = email,
+            DisplayName = principal.FindFirstValue("DisplayName")
+                ?? principal.FindFirstValue(ClaimTypes.Name)
+                ?? email
+        };
     }
 
     private static AuthUserInfo ToAuthUserInfo(ApplicationUser user) => new()

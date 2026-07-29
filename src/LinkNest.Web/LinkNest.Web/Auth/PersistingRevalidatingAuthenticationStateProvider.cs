@@ -68,6 +68,6 @@ public sealed class PersistingRevalidatingAuthenticationStateProvider(
         using var _ = scope;
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await userManager.GetUserAsync(authenticationState.User);
-        return user is not null;
+        return user is not null && user.IsActive;
     }
 }
