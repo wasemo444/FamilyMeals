@@ -8,6 +8,12 @@ public sealed class EmailOptions
     /// <summary>Configuration section name (<c>Email</c>).</summary>
     public const string SectionName = "Email";
 
+    /// <summary>
+    /// When <see langword="true"/>, sends email via SMTP even in Development.
+    /// Otherwise Development and Testing log email bodies to the console.
+    /// </summary>
+    public bool UseSmtp { get; set; }
+
     /// <summary>SMTP transport settings used by <see cref="SmtpEmailSender"/>.</summary>
     public SmtpOptions Smtp { get; set; } = new();
 }

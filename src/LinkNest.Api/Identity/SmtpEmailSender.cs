@@ -29,16 +29,31 @@ public sealed class SmtpEmailSender(
 
         logger.LogInformation("Sending email to {Email} via SMTP host {Host}:{Port}", to, smtp.Host, smtp.Port);
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(smtp.Host, smtp.Port, GetSecureSocketOptions(smtp), cancellationToken);
-
-        if (!string.IsNullOrWhiteSpace(smtp.Username))
+        try
         {
-            await client.AuthenticateAsync(smtp.Username, smtp.Password, cancellationToken);
-        }
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtp.Host, smtp.Port, GetSecureSocketOptions(smtp), cancellationToken);
 
-        await client.SendAsync(message, cancellationToken);
-        await client.DisconnectAsync(true, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(smtp.Username))
+            {
+                await client.AuthenticateAsync(smtp.Username, smtp.Password, cancellationToken);
+            }
+
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
+
+            logger.LogInformation("Email delivered to {Email} with subject {Subject}", to, subject);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "SMTP send failed for {Email} via {Host}:{Port}. Check Email:Smtp settings and Brevo sender verification.",
+                to,
+                smtp.Host,
+                smtp.Port);
+            throw;
+        }
     }
 
     public static MimeMessage BuildMessage(SmtpOptions smtp, string to, string subject, string htmlBody)

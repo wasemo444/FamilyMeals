@@ -13,7 +13,7 @@ public sealed class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEm
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation(
-            "Email sent to {Email}. Subject: {Subject}. Body: {Body}",
+            "DEV MODE — email NOT sent via SMTP. Recipient: {Email}. Subject: {Subject}. Body: {Body}",
             to,
             subject,
             htmlBody);

@@ -9,6 +9,21 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "http-smtp": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5280",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Email__UseSmtp": "true",
+        "Email__Smtp__Host": "smtp-relay.brevo.com",
+        "Email__Smtp__Port": "587",
+        "Email__Smtp__UseStartTls": "true",
+        "Email__Smtp__FromName": "LinkNest",
+        "Auth__WebBaseUrl": "http://localhost:5084/"
+      }
     }
   }
 }

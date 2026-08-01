@@ -42,6 +42,7 @@ Read documents in this order based on task depth:
 | **[L3.md](L3.md)** | Deep | Debugging a specific class, edge cases, cross-references to XML doc comments |
 
 **Product requirements:** [PRDV2.md](PRDV2.md)  
+**Production hosting & SMTP:** [deployment.md](deployment.md)  
 **Epic tickets:** [docs/tickets/](tickets/) (E1–E9)
 
 ## Run Order (Local Dev)
@@ -51,6 +52,8 @@ Read documents in this order based on task depth:
 3. `dotnet run` in `src/LinkNest.Web/LinkNest.Web` — **http://localhost:5084**
 
 Default dev user: `dev@linknest.local` / `DevPassword1!`
+
+**Email (local):** By default, confirmation/reset links are **logged to the API console** — not sent. Set `Email__UseSmtp=true` + Brevo SMTP vars on the API, or use `--launch-profile http-smtp`. See [deployment.md](deployment.md#local-dev-smtp-brevo).
 
 **Mobile (E7):** After `dotnet workload restore`, run API then `dotnet run --project src/LinkNest.Mobile -f net10.0-windows10.0.19041.0`. See [README](../README.md#run-the-mobile-app-e7--windows).
 
@@ -67,6 +70,8 @@ Default dev user: `dev@linknest.local` / `DevPassword1!`
 | Browser form login/logout | `Web/Endpoints/AccountEndpoints.cs` |
 | JSON auth API | `Api/Endpoints/AuthEndpoints.cs` |
 | JWT / SmartAuth (mobile bearer) | `Api/Identity/IdentityServiceExtensions.cs`, `JwtTokenService.cs`, `ConfigureJwtOptions.cs` |
+| SMTP / transactional email | `Api/Identity/SmtpEmailSender.cs`, `EmailOptions.cs`, `EmailStartupDiagnostics.cs` |
+| Password reset / confirmation | `Api/Identity/PasswordResetService.cs`, `EmailConfirmationService.cs`, `AuthEndpoints.cs` |
 | Mobile bootstrap & token storage | `Mobile/MauiProgram.cs`, `Mobile/Services/MauiSecureTokenStore.cs`, `Shared/Auth/BearerTokenHandler.cs` |
 | Reverse proxy / cookie forward | `Web/ReverseProxy/` |
 | EF entities / migrations | `Api/Data/` |

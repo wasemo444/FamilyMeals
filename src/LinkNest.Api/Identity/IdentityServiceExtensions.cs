@@ -30,31 +30,52 @@ public static class IdentityServiceExtensions
     /// <param name="environment">Host environment for cookie security and key path defaults.</param>
     /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
     /// <exception cref="InvalidOperationException">Thrown when data protection keys are misconfigured outside development.</exception>
+    /// <param name="enableOutboundEmail">
+    /// When <see langword="false"/> (Web host), skips SMTP validation and uses log-only email.
+    /// The API host sends confirmation/reset mail and should leave this <see langword="true"/>.
+    /// </param>
     public static IServiceCollection AddLinkNestIdentity(
         this IServiceCollection services,
         IConfiguration configuration,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        bool enableOutboundEmail = true)
     {
         services.Configure<IdentitySeedOptions>(configuration.GetSection(IdentitySeedOptions.SectionName));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
-        services.AddOptions<EmailOptions>()
-            .Bind(configuration.GetSection(EmailOptions.SectionName))
-            .ValidateOnStart();
-        services.AddSingleton<IValidateOptions<EmailOptions>, EmailConfigurationValidator>();
+
+        var emailOptionsBuilder = services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName));
+
+        if (enableOutboundEmail)
+        {
+            emailOptionsBuilder.ValidateOnStart();
+            services.AddSingleton<IValidateOptions<EmailOptions>, EmailConfigurationValidator>();
+        }
+
         services.AddSingleton<JwtTokenService>();
         services.AddScoped<IdentityDataSeeder>();
 
-        if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
+        if (enableOutboundEmail)
         {
-            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+            var useSmtp = configuration.GetValue<bool>($"{EmailOptions.SectionName}:UseSmtp")
+                || (!environment.IsDevelopment() && !environment.IsEnvironment("Testing"));
+
+            if (useSmtp)
+            {
+                services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            }
+            else
+            {
+                services.AddSingleton<IEmailSender, LoggingEmailSender>();
+            }
+
+            services.AddScoped<EmailConfirmationService>();
+            services.AddScoped<PasswordResetService>();
         }
         else
         {
-            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
         }
-
-        services.AddScoped<EmailConfirmationService>();
-        services.AddScoped<PasswordResetService>();
 
         var configuredPath = configuration["DataProtection:KeysPath"];
         EnsureDataProtectionKeysConfigured(configuredPath, environment);

@@ -36,7 +36,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-builder.Services.AddLinkNestIdentity(builder.Configuration, builder.Environment);
+builder.Services.AddLinkNestIdentity(builder.Configuration, builder.Environment, enableOutboundEmail: false);
 builder.Services.AddScoped<ArchiveMaintenanceService>();
 builder.Services.AddScoped<OwnershipBackfillService>();
 builder.Services.AddCascadingAuthenticationState();
@@ -85,7 +85,10 @@ else if (!app.Environment.IsEnvironment("Testing"))
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+var webBaseUrl = app.Configuration["WebBaseUrl"] ?? app.Configuration["Auth:WebBaseUrl"] ?? string.Empty;
+if (!app.Environment.IsDevelopment()
+    && !app.Environment.IsEnvironment("Testing")
+    && webBaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
 {
     app.UseHttpsRedirection();
 }

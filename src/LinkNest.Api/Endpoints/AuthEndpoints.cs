@@ -87,7 +87,18 @@ public static class AuthEndpoints
 
         if (authOptions.Value.RequireConfirmedEmail)
         {
-            await emailConfirmationService.SendConfirmationEmailAsync(user);
+            try
+            {
+                await emailConfirmationService.SendConfirmationEmailAsync(user);
+            }
+            catch (Exception)
+            {
+                await userManager.DeleteAsync(user);
+                return Results.Problem(
+                    title: "Email delivery failed",
+                    detail: "Account was not created because the confirmation email could not be sent. Check API SMTP settings and try again.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
         }
 
         return Results.Created(
