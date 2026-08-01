@@ -21,12 +21,20 @@ Public URL for users: **Web only**. The API can stay internal (`http://api:8080`
 ### 1. Database (Neon — free tier)
 
 1. Create a project at [neon.tech](https://neon.tech).
-2. Copy the PostgreSQL connection string.
+2. Copy the PostgreSQL connection string (URI format is fine).
 3. Apply migrations once from your machine:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection = "<neon-connection-string>"
+$env:ConnectionStrings__DefaultConnection = '<paste-neon-connection-string-here>'
 dotnet ef database update --project src/LinkNest.Api/LinkNest.Api.csproj
+```
+
+Use **single quotes** around the Neon URI so PowerShell does not treat `&` as a command separator.
+
+LinkNest converts Neon/libpq URIs (`postgresql://...?sslmode=require`) to Npgsql format automatically. If you prefer, use ADO.NET format directly:
+
+```powershell
+$env:ConnectionStrings__DefaultConnection = 'Host=ep-xxx.neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require'
 ```
 
 ### 2. SMTP (Brevo — free ~300 emails/day)

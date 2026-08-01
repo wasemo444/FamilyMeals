@@ -1,5 +1,6 @@
 using LinkNest.Api.Data;
 using LinkNest.Api.Identity;
+using LinkNest.Shared.Configuration;
 using LinkNest.Api.Services;
 using LinkNest.Api.Startup;
 using LinkNest.Web.Auth;
@@ -15,8 +16,9 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+var connectionString = ConnectionStringNormalizer.Normalize(
+    builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured."));
 
 var useSqliteForTesting = builder.Environment.IsEnvironment("Testing");
 
