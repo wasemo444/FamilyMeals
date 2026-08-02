@@ -9,6 +9,7 @@ using LinkNest.Web.Components;
 using LinkNest.Shared.Services;
 using LinkNest.Web.Endpoints;
 using LinkNest.Web.ReverseProxy;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,13 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AuthClient>();
 builder.Services.AddScoped<IAuthClient, WebHostAuthClient>();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents()
@@ -82,6 +90,11 @@ else if (!app.Environment.IsEnvironment("Testing"))
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
+}
+
+if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+{
+    app.UseForwardedHeaders();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);

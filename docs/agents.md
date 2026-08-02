@@ -43,7 +43,7 @@ Read documents in this order based on task depth:
 
 **Product requirements:** [PRDV2.md](PRDV2.md)  
 **Production hosting & SMTP:** [deployment.md](deployment.md)  
-**Epic tickets:** [docs/tickets/](tickets/) (E1–E9)
+**Epic tickets:** [docs/tickets/](tickets/) (E1–E10)
 
 ## Run Order (Local Dev)
 

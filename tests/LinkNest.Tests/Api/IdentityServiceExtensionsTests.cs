@@ -1,4 +1,5 @@
 using LinkNest.Api.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 
@@ -47,6 +48,44 @@ public class IdentityServiceExtensionsTests
 
         // Assert
         Assert.Equal(Path.Combine(expectedRoot, "LinkNest", "DataProtection-Keys"), path);
+    }
+
+    [Fact]
+    public void EnsureDataProtectionKeysConfigured_InProductionWithDatabaseStorage_SkipsPathValidation()
+    {
+        // Arrange
+        var environment = new FakeHostEnvironment { EnvironmentName = Environments.Production };
+
+        // Act
+        var act = () => IdentityServiceExtensions.EnsureDataProtectionKeysConfigured(
+            null,
+            environment,
+            useDatabase: true);
+
+        // Assert
+        act();
+    }
+
+    [Theory]
+    [InlineData("Database", true)]
+    [InlineData("database", true)]
+    [InlineData("FileSystem", false)]
+    [InlineData(null, false)]
+    public void UsesDatabaseStorage_ReturnsExpectedResult(string? storageMode, bool expected)
+    {
+        // Arrange
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["DataProtection:Storage"] = storageMode
+            })
+            .Build();
+
+        // Act
+        var result = IdentityServiceExtensions.UsesDatabaseStorage(configuration);
+
+        // Assert
+        Assert.Equal(expected, result);
     }
 
     [Fact]

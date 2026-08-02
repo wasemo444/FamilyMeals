@@ -1,7 +1,9 @@
+using LinkNest.Api.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
@@ -77,14 +79,7 @@ public static class IdentityServiceExtensions
             services.AddSingleton<IEmailSender, LoggingEmailSender>();
         }
 
-        var configuredPath = configuration["DataProtection:KeysPath"];
-        EnsureDataProtectionKeysConfigured(configuredPath, environment);
-        var dataProtectionPath = ResolveDataProtectionPath(configuredPath, environment);
-
-        Directory.CreateDirectory(dataProtectionPath);
-        services.AddDataProtection()
-            .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath))
-            .SetApplicationName("LinkNest");
+        ConfigureDataProtection(services, configuration, environment);
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
@@ -164,14 +159,48 @@ public static class IdentityServiceExtensions
     }
 
     /// <summary>
+    /// Returns whether Data Protection keys are stored in PostgreSQL instead of the filesystem.
+    /// </summary>
+    public static bool UsesDatabaseStorage(IConfiguration configuration) =>
+        string.Equals(
+            configuration["DataProtection:Storage"],
+            DataProtectionStorageMode.Database,
+            StringComparison.OrdinalIgnoreCase);
+
+    private static void ConfigureDataProtection(
+        IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        var dataProtection = services.AddDataProtection().SetApplicationName("LinkNest");
+
+        if (UsesDatabaseStorage(configuration))
+        {
+            dataProtection.PersistKeysToDbContext<AppDbContext>();
+            return;
+        }
+
+        var configuredPath = configuration["DataProtection:KeysPath"];
+        EnsureDataProtectionKeysConfigured(configuredPath, environment, useDatabase: false);
+        var dataProtectionPath = ResolveDataProtectionPath(configuredPath, environment);
+
+        Directory.CreateDirectory(dataProtectionPath);
+        dataProtection.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath));
+    }
+
+    /// <summary>
     /// Validates that a shared data protection key path is configured for non-development environments.
     /// </summary>
     /// <param name="configuredPath">Raw path from configuration (may contain environment variables).</param>
     /// <param name="environment">Host environment.</param>
+    /// <param name="useDatabase">When <see langword="true"/>, filesystem path validation is skipped.</param>
     /// <exception cref="InvalidOperationException">Thrown when production/testing requires a key path but none is valid.</exception>
-    public static void EnsureDataProtectionKeysConfigured(string? configuredPath, IHostEnvironment environment)
+    public static void EnsureDataProtectionKeysConfigured(
+        string? configuredPath,
+        IHostEnvironment environment,
+        bool useDatabase = false)
     {
-        if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
+        if (useDatabase || environment.IsDevelopment() || environment.IsEnvironment("Testing"))
         {
             return;
         }
