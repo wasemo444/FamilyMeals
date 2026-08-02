@@ -72,6 +72,19 @@ public class EmailConfigurationValidatorTests
         Assert.True(result.Succeeded);
     }
 
+    [Fact]
+    public void Validate_InDevelopmentWithUseSmtp_FailsWhenMisconfigured()
+    {
+        var validator = new EmailConfigurationValidator(new FakeHostEnvironment
+        {
+            EnvironmentName = Environments.Development
+        });
+
+        var result = validator.Validate(null, new EmailOptions { UseSmtp = true });
+
+        Assert.False(result.Succeeded);
+    }
+
     private sealed class FakeHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
     {
         public string EnvironmentName { get; set; } = Environments.Development;

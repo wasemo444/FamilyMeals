@@ -31,9 +31,9 @@ public sealed class IdentityDataSeeder(
         if (environment.IsProduction()
             && string.Equals(options.DefaultUserPassword, IdentitySeedOptions.DefaultDevPassword, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(
-                "Default dev seed password cannot be used in Production. " +
-                "Set IdentitySeed:DefaultUserPassword via environment or user secrets.");
+            logger.LogInformation(
+                "Skipping default user seed in Production (IdentitySeed:DefaultUserPassword not configured).");
+            return;
         }
 
         var existing = await userManager.FindByIdAsync(WellKnownUsers.DefaultUserId.ToString());

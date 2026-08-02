@@ -1,5 +1,6 @@
 using LinkNest.Api.V1Import;
 using LinkNest.Api.Data;
+using LinkNest.Shared.Configuration;
 using LinkNest.Api.Endpoints;
 using LinkNest.Api.Identity;
 using LinkNest.Api.Middleware;
@@ -13,8 +14,9 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+var connectionString = ConnectionStringNormalizer.Normalize(
+    builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured."));
 
 var useSqliteForTesting = builder.Environment.IsEnvironment("Testing");
 
@@ -88,6 +90,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+EmailStartupDiagnostics.Log(app.Configuration, app.Environment, app.Logger);
+
+var emailSender = app.Services.GetRequiredService<IEmailSender>();
+app.Logger.LogInformation(
+    "Email delivery mode: {Mode}",
+    emailSender is SmtpEmailSender ? "SMTP (real email)" : "Log only (copy links from API console)");
 
 if (!app.Configuration.GetValue<bool>("Database:SkipInitialization"))
 {

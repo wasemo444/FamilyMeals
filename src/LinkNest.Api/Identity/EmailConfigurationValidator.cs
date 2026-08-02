@@ -18,7 +18,7 @@ public sealed class EmailConfigurationValidator : IValidateOptions<EmailOptions>
     /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, EmailOptions options)
     {
-        if (_environment.IsDevelopment() || _environment.IsEnvironment("Testing"))
+        if (!ShouldValidateSmtp(options))
         {
             return ValidateOptionsResult.Success;
         }
@@ -28,6 +28,10 @@ public sealed class EmailConfigurationValidator : IValidateOptions<EmailOptions>
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(errors);
     }
+
+    private bool ShouldValidateSmtp(EmailOptions options) =>
+        options.UseSmtp
+        || (!_environment.IsDevelopment() && !_environment.IsEnvironment("Testing"));
 
     /// <summary>
     /// Returns human-readable configuration errors for SMTP settings.

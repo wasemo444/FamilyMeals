@@ -1,0 +1,28 @@
+# Fly.io — LinkNest Web (public HTTPS; proxies /api/* to linknest-api.internal)
+# Deploy: fly deploy --config fly.web.toml --app linknest-web
+
+app = 'linknest-web'
+primary_region = 'ams'
+
+[build]
+  dockerfile = 'Dockerfile.web'
+
+[env]
+  ASPNETCORE_ENVIRONMENT = 'Production'
+  DataProtection__Storage = 'Database'
+  ReverseProxy__ApiBaseAddress = 'http://linknest-api.internal:8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [[http_service.checks]]
+    grace_period = '20s'
+    interval = '30s'
+    method = 'GET'
+    timeout = '5s'
+    path = '/'

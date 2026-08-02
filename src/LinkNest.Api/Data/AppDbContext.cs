@@ -1,5 +1,6 @@
 using LinkNest.Api.Data.Entities;
 using LinkNest.Api.Identity;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +12,10 @@ namespace LinkNest.Api.Data;
 /// </summary>
 /// <remarks>
 /// Entity configurations are applied from this assembly via <see cref="ModelBuilder.ApplyConfigurationsFromAssembly"/>.
+/// Also stores ASP.NET Data Protection keys when <see cref="DataProtectionStorageMode.Database"/> is enabled.
 /// </remarks>
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
 {
     /// <summary>Meal category rows, including soft-delete and ownership columns.</summary>
     public DbSet<ContentCategoryEntity> Categories => Set<ContentCategoryEntity>();
@@ -32,6 +34,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     /// <summary>Singleton application settings row.</summary>
     public DbSet<AppSettingsEntity> AppSettings => Set<AppSettingsEntity>();
+
+    /// <inheritdoc />
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

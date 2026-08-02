@@ -68,14 +68,37 @@ The Web client proxies API calls through the Web host at the same origin (`/api/
 
 Open **http://localhost:5084** in your browser (or the HTTPS URL shown in the console).
 
-### Authentication (E2)
+### Authentication (E2 + E9)
 
 - Register at `/register` or log in at `/login`.
 - Default dev user (seeded on first run): `dev@linknest.local` / `DevPassword1!`
 - Protected pages and `/api/*` data endpoints require authentication (web: cookie; mobile: JWT bearer); unauthenticated requests return **401**.
 - Log out from the shell header menu.
+- **Forgot password:** `/forgot-password` → reset link by email → `/reset-password`.
+- **Settings:** `/settings` — display name, language, deactivate account.
 - **DataProtection keys:** In Development, API and Web default to `%LOCALAPPDATA%/LinkNest/DataProtection-Keys` (see `appsettings.Development.json`). Both hosts must resolve to the **same directory** or auth cookies will not decrypt. In Production, set `LINKNEST_DATA_PROTECTION_KEYS_PATH` (legacy `MFM_DATA_PROTECTION_KEYS_PATH` is also accepted).
 - **Ownership (E3+):** categories and links are scoped per user and group membership. See [docs/agents.md](docs/agents.md) and [docs/L2.md](docs/L2.md).
+
+### Email (confirmation & password reset)
+
+By default in **Development**, the API **logs** emails to the console instead of sending them. Look for a line like:
+
+```
+DEV MODE — email NOT sent via SMTP. Recipient: ...
+```
+
+Copy the confirmation or reset link from that log and open it in your browser.
+
+**To send real email locally via Brevo**, set env vars on the **API** terminal (see [docs/deployment.md](docs/deployment.md#local-dev-smtp-brevo)) or use the `http-smtp` launch profile with user-secrets. On startup the API logs:
+
+```
+Email config: UseSmtp=True, ... EffectiveMode=SMTP
+Email delivery mode: SMTP (real email)
+```
+
+If you see `EffectiveMode=LogOnly`, SMTP is not enabled — check `Email__UseSmtp=true` and that you restarted the API after setting env vars.
+
+**Production / Docker:** SMTP is used automatically (`ASPNETCORE_ENVIRONMENT=Production`). See [docs/deployment.md](docs/deployment.md).
 
 ### Build the whole solution (optional)
 
@@ -147,6 +170,22 @@ The `-v` flag removes the Docker volume and wipes the database. Use `docker comp
 - Do not run multiple `dotnet workload install` or `workload restore` commands at the same time (Windows MSI error `0x652`).
 - Close Visual Studio, wait for installers to finish, then run `dotnet workload repair` once, followed by `dotnet workload restore src/LinkNest.Mobile/LinkNest.Mobile.csproj`.
 
+**Email not arriving (local dev)**
+
+- Default Development mode **does not send email** — copy the link from the **API** console log, or enable SMTP (see [Email](#email-confirmation--password-reset) above).
+- SMTP runs on the **API** only (port 5280), not the Web host.
+- On API startup, check `Email delivery mode:` — must say `SMTP (real email)` for Brevo delivery.
+- Brevo **From address** must be verified under **Senders & IP** (not any random email).
+- Brevo **SMTP login** is on **Settings → SMTP & API → SMTP** tab (may differ from your account email).
+
+**Neon connection string / EF migrations fail**
+
+Neon provides `postgresql://...?sslmode=require` URIs. LinkNest converts these automatically. Use single quotes in PowerShell. See [docs/deployment.md](docs/deployment.md#1-database-neon--free-tier).
+
+**Reset test users**
+
+Run `scripts/reset-users.sql` in the Neon SQL Editor (or local `psql`) to delete all users and start fresh. See [docs/deployment.md](docs/deployment.md#reset-test-users).
+
 ## Access the database
 
 SSMS does not work with PostgreSQL. Use **pgAdmin**, **DBeaver**, **Azure Data Studio** (PostgreSQL extension), or `psql`:
@@ -174,7 +213,7 @@ If you have an existing dev database or Docker volume from before the LinkNest r
 | `LinkNest.Api` | REST API, EF Core, PostgreSQL, link preview fetch |
 | `LinkNest.Shared` | Models, `ContentDataService`, API client, RESX strings |
 | `LinkNest.Web` | ASP.NET Core Blazor host (`src/LinkNest.Web/LinkNest.Web/`) — YARP proxy, form login |
-| `LinkNest.Web.Client` | Interactive pages (Home, Category, Archive, Groups, Share, Login, Register, …) |
+| `LinkNest.Web.Client` | Interactive pages (Home, Category, Archive, Groups, Share, Login, Register, Settings, …) |
 | `LinkNest.Mobile` | MAUI Blazor Hybrid (Windows; Android deferred — see E9 H3) |
 | `LinkNest.Tests` | Unit and integration tests |
 | `LinkNest.E2E.Tests` | Playwright end-to-end tests |

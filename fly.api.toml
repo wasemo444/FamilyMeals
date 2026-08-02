@@ -1,0 +1,24 @@
+# Fly.io — LinkNest API (internal only; no public traffic)
+# Deploy: fly deploy --config fly.api.toml --app linknest-api
+#
+# After first deploy, remove public IPs so only linknest-web can reach this app:
+#   fly ips list --app linknest-api
+#   fly ips release <public-ipv4-or-ipv6> --app linknest-api
+
+app = 'linknest-api'
+primary_region = 'ams'
+
+[build]
+  dockerfile = 'Dockerfile.api'
+
+[env]
+  ASPNETCORE_ENVIRONMENT = 'Production'
+  DataProtection__Storage = 'Database'
+
+[http_service]
+  internal_port = 8080
+  force_https = false
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
