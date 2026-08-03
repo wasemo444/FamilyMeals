@@ -18,7 +18,8 @@ var connectionString = ConnectionStringNormalizer.Normalize(
     builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured."));
 
-var useSqliteForTesting = builder.Environment.IsEnvironment("Testing");
+var useSqliteForTesting = builder.Environment.IsEnvironment("Testing")
+    || builder.Environment.IsEnvironment("ProductionTesting");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -78,18 +79,57 @@ builder.Services.AddHttpClient(nameof(SafeUrlFetcher), client =>
     }));
 builder.Services.AddSingleton<LinkPreviewService>();
 
+builder.Services.Configure<CorsOptions>(builder.Configuration.GetSection(CorsOptions.SectionName));
+
+var useDevelopmentCors = builder.Environment.IsDevelopment()
+    || builder.Environment.IsEnvironment("Testing");
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("WebClient", policy => policy
-        .WithOrigins(
-            "http://localhost:5084",
-            "https://localhost:7039")
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials());
+    options.AddPolicy("WebClient", policy =>
+    {
+        if (useDevelopmentCors)
+        {
+            policy.WithOrigins(
+                    "http://localhost:5084",
+                    "https://localhost:7039")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+        else
+        {
+            var allowedOrigins = builder.Configuration
+                .GetSection(CorsOptions.SectionName)
+                .Get<CorsOptions>()?
+                .GetAllowedOrigins() ?? [];
+
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins);
+            }
+
+            policy.AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
 });
 
 var app = builder.Build();
+
+if (!useDevelopmentCors)
+{
+    var corsOrigins = builder.Configuration
+        .GetSection(CorsOptions.SectionName)
+        .Get<CorsOptions>()?
+        .GetAllowedOrigins() ?? [];
+    if (corsOrigins.Length == 0)
+    {
+        app.Logger.LogWarning(
+            "Cors:AllowedOrigins is empty in {Environment}. Browser clients on Cloudflare Pages will fail CORS until Cors__AllowedOrigins is set.",
+            app.Environment.EnvironmentName);
+    }
+}
 
 EmailStartupDiagnostics.Log(app.Configuration, app.Environment, app.Logger);
 
@@ -110,6 +150,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ContentDataLoadMiddleware>();
 
+app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapBootstrapEndpoints();
 app.MapGroupEndpoints();
