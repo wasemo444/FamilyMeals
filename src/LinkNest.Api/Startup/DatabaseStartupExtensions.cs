@@ -43,7 +43,7 @@ public static class DatabaseStartupExtensions
                 throw;
             }
         }
-        else if (app.Environment.IsEnvironment("Testing"))
+        else if (app.Environment.IsEnvironment("Testing") || app.Environment.IsEnvironment("ProductionTesting"))
         {
             using var scope = app.Services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreatedAsync();

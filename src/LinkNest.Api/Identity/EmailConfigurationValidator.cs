@@ -31,7 +31,9 @@ public sealed class EmailConfigurationValidator : IValidateOptions<EmailOptions>
 
     private bool ShouldValidateSmtp(EmailOptions options) =>
         options.UseSmtp
-        || (!_environment.IsDevelopment() && !_environment.IsEnvironment("Testing"));
+        || (!_environment.IsDevelopment()
+            && !_environment.IsEnvironment("Testing")
+            && !_environment.IsEnvironment("ProductionTesting"));
 
     /// <summary>
     /// Returns human-readable configuration errors for SMTP settings.

@@ -55,7 +55,7 @@ public sealed class EmailConfirmationService(
     }
 
     /// <summary>
-    /// Builds the absolute confirmation URL pointing at the web host's confirm-email page.
+    /// Builds the absolute confirmation URL pointing at the static web client's confirm-email page.
     /// </summary>
     /// <param name="userId">The user's unique identifier.</param>
     /// <param name="token">The URL-encoded confirmation token from Identity.</param>
@@ -64,6 +64,6 @@ public sealed class EmailConfirmationService(
     {
         var webBaseUrl = authOptions.Value.WebBaseUrl.TrimEnd('/');
         var encodedToken = Uri.EscapeDataString(token);
-        return $"{webBaseUrl}/account/confirm-email?userId={userId}&code={encodedToken}";
+        return $"{webBaseUrl}/confirm-email?userId={userId}&code={encodedToken}";
     }
 }

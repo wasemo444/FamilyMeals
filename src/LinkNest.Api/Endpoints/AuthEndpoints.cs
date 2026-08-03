@@ -35,6 +35,7 @@ public static class AuthEndpoints
         group.MapPost("/forgot-password", ForgotPasswordAsync);
         group.MapPost("/reset-password", ResetPasswordAsync);
         group.MapPost("/resend-confirmation", ResendConfirmationAsync);
+        group.MapPost("/confirm-email", ConfirmEmailAsync);
         group.MapPost("/deactivate", DeactivateAccountAsync).RequireAuthorization();
 
         return endpoints;
@@ -320,6 +321,43 @@ public static class AuthEndpoints
         return Results.Ok(new { message = "If an unconfirmed account exists for that email, a confirmation link has been sent." });
     }
 
+    private static async Task<IResult> ConfirmEmailAsync(
+        ConfirmEmailRequest request,
+        UserManager<ApplicationUser> userManager)
+    {
+        if (request.UserId == Guid.Empty || string.IsNullOrWhiteSpace(request.Code))
+        {
+            return Results.BadRequest(new { error = "User id and code are required." });
+        }
+
+        var user = await userManager.FindByIdAsync(request.UserId.ToString());
+        if (user is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["Code"] = ["Confirmation link is invalid or expired."]
+            });
+        }
+
+        if (!user.IsActive)
+        {
+            return Results.Problem(
+                detail: "This account has been deactivated.",
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Account deactivated");
+        }
+
+        var result = await userManager.ConfirmEmailAsync(user, request.Code);
+        if (!result.Succeeded)
+        {
+            return Results.ValidationProblem(result.Errors.ToDictionary(
+                error => error.Code,
+                error => new[] { error.Description }));
+        }
+
+        return Results.Ok(new { message = "Email confirmed." });
+    }
+
     private static async Task<IResult> DeactivateAccountAsync(
         DeactivateAccountRequest request,
         ClaimsPrincipal principal,
@@ -376,7 +414,7 @@ public static class AuthEndpoints
     {
         if (user is null)
         {
-            return null;
+            return Results.Unauthorized();
         }
 
         if (!user.IsActive)

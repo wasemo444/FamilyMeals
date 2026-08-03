@@ -60,7 +60,7 @@ public static class IdentityServiceExtensions
         if (enableOutboundEmail)
         {
             var useSmtp = configuration.GetValue<bool>($"{EmailOptions.SectionName}:UseSmtp")
-                || (!environment.IsDevelopment() && !environment.IsEnvironment("Testing"));
+                || (!environment.IsDevelopment() && !IsIntegrationTestEnvironment(environment));
 
             if (useSmtp)
             {
@@ -127,7 +127,7 @@ public static class IdentityServiceExtensions
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Path = "/";
-                options.Cookie.SecurePolicy = environment.IsDevelopment() || environment.IsEnvironment("Testing")
+                options.Cookie.SecurePolicy = environment.IsDevelopment() || IsIntegrationTestEnvironment(environment)
                     ? CookieSecurePolicy.SameAsRequest
                     : CookieSecurePolicy.Always;
                 options.SlidingExpiration = true;
@@ -157,6 +157,9 @@ public static class IdentityServiceExtensions
 
         return services;
     }
+
+    private static bool IsIntegrationTestEnvironment(IHostEnvironment environment) =>
+        environment.IsEnvironment("Testing") || environment.IsEnvironment("ProductionTesting");
 
     /// <summary>
     /// Returns whether Data Protection keys are stored in PostgreSQL instead of the filesystem.
@@ -200,7 +203,7 @@ public static class IdentityServiceExtensions
         IHostEnvironment environment,
         bool useDatabase = false)
     {
-        if (useDatabase || environment.IsDevelopment() || environment.IsEnvironment("Testing"))
+        if (useDatabase || environment.IsDevelopment() || IsIntegrationTestEnvironment(environment))
         {
             return;
         }

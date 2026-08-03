@@ -24,8 +24,18 @@ public static class AccountEndpoints
         endpoints.MapPost("/account/login", LoginAsync).DisableAntiforgery();
         endpoints.MapPost("/account/logout", LogoutAsync).DisableAntiforgery();
         endpoints.MapGet("/account/confirm-email", ConfirmEmailAsync);
+        // E10: Api emails link to /confirm-email; redirect keeps cookie Web (Paths A–C) working until WASM ships.
+        endpoints.MapGet("/confirm-email", RedirectToAccountConfirmEmailAsync);
 
         return endpoints;
+    }
+
+    private static IResult RedirectToAccountConfirmEmailAsync(
+        [FromQuery] Guid userId,
+        [FromQuery] string code)
+    {
+        var encodedCode = Uri.EscapeDataString(code);
+        return Results.Redirect($"/account/confirm-email?userId={userId}&code={encodedCode}");
     }
 
     private static async Task<IResult> ConfirmEmailAsync(
