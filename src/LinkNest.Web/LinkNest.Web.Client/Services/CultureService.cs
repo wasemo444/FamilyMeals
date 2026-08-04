@@ -97,7 +97,7 @@ public sealed class CultureService(    IJSRuntime jsRuntime,
     {
         if (_module is null)
         {
-            _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/storage.js");
+            _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "/_content/LinkNest.Shared/js/storage.js");
         }
 
         return _module;

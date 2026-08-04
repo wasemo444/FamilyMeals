@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <Content Include="..\LinkNest.Web\LinkNest.Web\wwwroot\app.css" Link="wwwroot\css\app.css" />
-    <Content Include="..\LinkNest.Web\LinkNest.Web\wwwroot\js\storage.js" Link="wwwroot\js\storage.js" />
+    <Content Include="..\LinkNest.Shared\wwwroot\js\storage.js" Link="wwwroot\js\storage.js" />
   </ItemGroup>
 
   <ItemGroup>

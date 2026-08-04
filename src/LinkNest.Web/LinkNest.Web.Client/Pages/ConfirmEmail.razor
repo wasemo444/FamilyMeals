@@ -1,0 +1,39 @@
+@page "/confirm-email"
+@rendermode AutoRenderMode
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inherits LocalizedComponentBase
+
+<PageTitle>@L["ConfirmEmail"]</PageTitle>
+
+<div class="ln-auth">
+    <header class="ln-auth__toolbar">
+        <a class="ln-brand" href="/">Link<span>Nest</span></a>
+        <div class="ln-auth__actions">
+            <ThemeToggle />
+            <LanguageSwitcher />
+        </div>
+    </header>
+
+    <main class="ln-auth__main">
+        <section class="ln-auth-card" aria-labelledby="confirm-heading">
+            <div class="ln-auth-card__glow" aria-hidden="true"></div>
+
+            <header class="ln-auth-card__header">
+                <div class="ln-auth-card__icon" aria-hidden="true">✉</div>
+                <h1 id="confirm-heading">@L["ConfirmEmail"]</h1>
+            </header>
+
+            <div class="ln-auth-card__body">
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="ln-error" data-testid="confirm-email-error">@_error</p>
+                    <a class="ln-btn ln-btn--ghost ln-btn--block" href="/login">@L["BackToLogin"]</a>
+                }
+                else
+                {
+                    <p class="ln-muted" data-testid="confirm-email-loading">@L["ConfirmEmailInProgress"]</p>
+                }
+            </div>
+        </section>
+    </main>
+</div>

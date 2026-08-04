@@ -88,6 +88,13 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
     }
 
     /// <inheritdoc />
+    public async Task ConfirmEmailAsync(ConfirmEmailRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.PostAsJsonAsync("/api/auth/confirm-email", request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
         var response = await Http.PatchAsJsonAsync("/api/auth/me", request, cancellationToken);

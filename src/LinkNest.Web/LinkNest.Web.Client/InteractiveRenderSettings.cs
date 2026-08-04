@@ -23,4 +23,15 @@ public static class InteractiveRenderSettings
         AutoRenderMode = null;
         RegisterRenderMode = null;
     }
+
+    /// <summary>
+    /// Clears render modes for standalone Blazor WebAssembly (entire app runs in WASM).
+    /// Do not use InteractiveWebAssembly render modes here — those apply to Blazor Web App hosts only.
+    /// </summary>
+    public static void ConfigureStaticWebRenderModes()
+    {
+        PageRenderMode = null;
+        AutoRenderMode = null;
+        RegisterRenderMode = null;
+    }
 }
