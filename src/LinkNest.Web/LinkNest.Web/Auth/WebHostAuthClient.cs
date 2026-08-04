@@ -119,6 +119,10 @@ public sealed class WebHostAuthClient(
         apiAuthClient.ResendConfirmationAsync(request, cancellationToken);
 
     /// <inheritdoc />
+    public Task ConfirmEmailAsync(ConfirmEmailRequest request, CancellationToken cancellationToken = default) =>
+        apiAuthClient.ConfirmEmailAsync(request, cancellationToken);
+
+    /// <inheritdoc />
     public Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default) =>
         apiAuthClient.UpdateProfileAsync(request, cancellationToken);
 

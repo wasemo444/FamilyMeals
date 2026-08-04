@@ -1,3 +1,4 @@
+using LinkNest.Shared.Auth;
 using LinkNest.Shared.Resources;
 using LinkNest.Shared.Services;
 using LinkNest.Web.Client.Services;
@@ -78,6 +79,30 @@ public static class ClientServiceCollectionExtensions
         services.AddSingleton<IClientAuthMode, WebClientAuthMode>();
         services.AddSingleton<IAuthStateNotifier, WebAuthStateNotifier>();
         services.AddSingleton<ISecureTokenStore, WebSecureTokenStore>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers client services for standalone Blazor WASM with JWT bearer auth (Cloudflare Pages).
+    /// </summary>
+    public static IServiceCollection AddLinkNestStaticWebClientServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? baseAddress = null)
+    {
+        services.AddSingleton<IClientAuthMode, StaticWebClientAuthMode>();
+        services.AddScoped<ISecureTokenStore, BrowserSecureTokenStore>();
+
+        services.AddLinkNestCoreClientServices(
+            configuration,
+            baseAddress,
+            linkNestApi =>
+            {
+                linkNestApi.AddHttpMessageHandler<BearerTokenHandler>();
+                linkNestApi.AddHttpMessageHandler<UnauthorizedSessionHandler>();
+            });
+
+        services.AddLinkNestBearerAuth();
         return services;
     }
 }

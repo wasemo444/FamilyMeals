@@ -10,7 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LinkNest.Web.Client\LinkNest.Web.Client.csproj" />
+    <ProjectReference Include="..\LinkNest.Web.Client\LinkNest.Web.Client.csproj">
+      <AdditionalProperties>StaticWebAssetProjectMode=Default</AdditionalProperties>
+    </ProjectReference>
     <ProjectReference Include="..\..\LinkNest.Api\LinkNest.Api.csproj">
       <ExcludeAssets>contentfiles</ExcludeAssets>
     </ProjectReference>

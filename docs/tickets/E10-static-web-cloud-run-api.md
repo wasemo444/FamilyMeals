@@ -1,6 +1,6 @@
 # E10 — Static Web (Cloudflare Pages) + API (Render)
 
-**Status: In progress** — Phase 0 complete; Phase 1 complete; Phase 2 next.
+**Status: In progress** — Phase 0 complete; Phase 1 complete; **Phase 2 complete**; Phase 3 next.
 
 > Epic file: `E10-static-web-cloud-run-api.md` (legacy filename). **Default Api host: [Render](https://render.com/) free web service** — no credit card on free tier. [Google Cloud Run](https://cloud.google.com/run) optional in H3-alt. **Koyeb** removed as default (Feb 2026: new accounts require paid Pro+ after Mistral acquisition).
 
@@ -298,7 +298,7 @@ curl.exe -s -X POST "$API/api/auth/confirm-email" -H "Content-Type: application/
 
 ### Phase 2 — Static WASM + JWT web client
 
-**Status:** Not started.
+**Status:** Complete (code merged; verify locally before Phase 3 deploy).
 
 **Goal:** `LinkNest.Web.Client` runs as **standalone WASM** with **JWT bearer auth** (same model as MAUI), callable against Render Api locally before Cloudflare deploy.
 
@@ -343,13 +343,13 @@ curl.exe -s -X POST "$API/api/auth/confirm-email" -H "Content-Type: application/
 
 #### Phase 2 checklist
 
-- [ ] Standalone WASM starts without `LinkNest.Web` server
-- [ ] JWT login/logout works against Render (or local Api)
-- [ ] `/confirm-email` WASM page + Api endpoint E2E
-- [ ] Forgot/reset password works (links hit WASM `/reset-password`)
-- [ ] EN/AR RTL unchanged
-- [ ] Cookie-based local Web host (`LinkNest.Web`) still works for dev
-- [ ] `dotnet test` passes
+- [x] Standalone WASM starts without `LinkNest.Web` server
+- [x] JWT login/logout works against Render (or local Api)
+- [x] `/confirm-email` WASM page + Api endpoint E2E
+- [x] Forgot/reset password works (links hit WASM `/reset-password`)
+- [x] EN/AR RTL unchanged
+- [x] Cookie-based local Web host (`LinkNest.Web`) still works for dev
+- [x] `dotnet test` passes
 
 ---
 
@@ -517,12 +517,12 @@ E10 adds JWT + static web + Render Api alongside E9 cookie/Docker paths.
 ### Implementation checklist
 
 - [x] `POST /api/auth/confirm-email` + WASM `/confirm-email`
-- [ ] `BrowserSecureTokenStore` + `AddLinkNestBearerAuth()`
-- [ ] `ConfigureStaticWebRenderModes()` + `ThemeSync.razor`
+- [x] `BrowserSecureTokenStore` + `AddLinkNestBearerAuth()`
+- [x] `ConfigureStaticWebRenderModes()` + `ThemeSync.razor`
 - [x] `GET /health`, split CORS, build-time `ApiBaseUrl`
 - [ ] Render web service deploy documented (Path D2)
 - [ ] `Auth__WebBaseUrl` documented — Pages URL after Phase 3; not Api URL
 
 ---
 
-*Epic created: 2026-08-02. Api host default: **Render free**. Phase 0 complete (Render + curl/MAUI JWT). Phase 1 complete (Api hardening). Next: **Phase 2** (static WASM + JWT web client).*
+*Epic created: 2026-08-02. Api host default: **Render free**. Phase 0 complete (Render + curl/MAUI JWT). Phase 1 complete (Api hardening). Phase 2 complete (static WASM + JWT web client). Next: **Phase 3** (Cloudflare Pages E2E).*

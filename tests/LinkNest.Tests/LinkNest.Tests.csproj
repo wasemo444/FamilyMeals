@@ -27,6 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\LinkNest.Shared\LinkNest.Shared.csproj" />
     <ProjectReference Include="..\..\src\LinkNest.Api\LinkNest.Api.csproj" />
+    <ProjectReference Include="..\..\src\LinkNest.Web\LinkNest.Web.Client\LinkNest.Web.Client.csproj" />
   </ItemGroup>
 
 </Project>

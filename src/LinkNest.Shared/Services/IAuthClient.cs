@@ -64,6 +64,11 @@ public interface IAuthClient
     Task ResendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Confirms a user's email address using a token from email.
+    /// </summary>
+    Task ConfirmEmailAsync(ConfirmEmailRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates the authenticated user's display name.
     /// </summary>
     Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default);

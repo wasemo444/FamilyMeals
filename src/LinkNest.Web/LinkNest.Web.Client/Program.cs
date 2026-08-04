@@ -1,12 +1,20 @@
+using LinkNest.Shared.Auth;
 using LinkNest.Web.Client;
-using Microsoft.AspNetCore.Components.Authorization;
+using LinkNest.Web.Client.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
+InteractiveRenderSettings.ConfigureStaticWebRenderModes();
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
+builder.RootComponents.Add<Routes>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthenticationStateDeserialization();
-builder.Services.AddLinkNestClientServices(builder.Configuration, builder.HostEnvironment.BaseAddress);
+builder.Services.AddTransient<BearerTokenHandler>();
+builder.Services.AddLinkNestStaticWebClientServices(builder.Configuration, builder.HostEnvironment.BaseAddress);
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+await host.RunAsync();

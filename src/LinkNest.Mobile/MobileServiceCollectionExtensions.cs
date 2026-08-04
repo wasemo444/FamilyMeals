@@ -19,13 +19,7 @@ public static class MobileServiceCollectionExtensions
     {
         services.AddSingleton<IClientAuthMode, MobileClientAuthMode>();
         services.AddSingleton<ISecureTokenStore, MauiSecureTokenStore>();
-        services.AddTransient<UnauthorizedSessionHandler>();
-        services.AddScoped<JwtAuthenticationStateProvider>();
-        services.AddScoped<AuthenticationStateProvider>(sp =>
-            sp.GetRequiredService<JwtAuthenticationStateProvider>());
-        services.AddScoped<IAuthStateNotifier>(sp =>
-            sp.GetRequiredService<JwtAuthenticationStateProvider>());
-        return services;
+        return services.AddLinkNestBearerAuth();
     }
 
     /// <summary>

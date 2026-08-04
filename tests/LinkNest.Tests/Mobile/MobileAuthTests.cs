@@ -195,6 +195,9 @@ public class JwtAuthenticationStateProviderTests
         public Task ResendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
+        public Task ConfirmEmailAsync(ConfirmEmailRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
         public Task<AuthUserInfo> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
