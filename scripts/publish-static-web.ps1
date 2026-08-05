@@ -7,10 +7,11 @@
     Example: https://linknest-api.onrender.com
 
 .PARAMETER OutputPath
-    Directory for publish output (default: ./publish/static-web).
+    Directory for the Cloudflare-ready site root (default: ./publish/static-web).
+    Contains index.html at the top level — upload this folder's contents to Pages.
 
 .EXAMPLE
-    ./scripts/publish-static-web.ps1 -ApiBaseUrl "https://linknest-api.onrender.com"
+    ./scripts/publish-static-web.ps1 -ApiBaseUrl "https://familymeals-dyrq.onrender.com"
 #>
 param(
     [string]$ApiBaseUrl = "",
@@ -26,11 +27,38 @@ if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $repoRoot "publish/static-web"
 }
 
-$publishArgs = @(
-    "publish", $clientProject,
-    "-c", "Release",
-    "-o", $OutputPath
-)
+$stagingPath = Join-Path ([System.IO.Path]::GetTempPath()) ("linknest-static-web-" + [Guid]::NewGuid().ToString("n"))
+
+function Publish-Client {
+    param([string]$PublishOutput)
+
+    $publishArgs = @(
+        "publish", $clientProject,
+        "-c", "Release",
+        "-o", $PublishOutput
+    )
+
+    & dotnet @publishArgs
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
+function Copy-SiteRoot {
+    param(
+        [string]$SourceWwwroot,
+        [string]$Destination
+    )
+
+    if (-not (Test-Path (Join-Path $SourceWwwroot "index.html"))) {
+        throw "Publish did not produce wwwroot/index.html at $SourceWwwroot"
+    }
+
+    if (Test-Path $Destination) {
+        Remove-Item $Destination -Recurse -Force
+    }
+
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+    Copy-Item -Path (Join-Path $SourceWwwroot "*") -Destination $Destination -Recurse -Force
+}
 
 if (-not [string]::IsNullOrWhiteSpace($ApiBaseUrl)) {
     $normalized = $ApiBaseUrl.TrimEnd('/')
@@ -43,23 +71,34 @@ if (-not [string]::IsNullOrWhiteSpace($ApiBaseUrl)) {
     }
 
     try {
-        & dotnet @publishArgs
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        Publish-Client -PublishOutput $stagingPath
+        Copy-SiteRoot -SourceWwwroot (Join-Path $stagingPath "wwwroot") -Destination $OutputPath
     }
     finally {
         if ($null -ne $appsettingsBackup) {
             Set-Content $appsettingsPath $appsettingsBackup -Encoding utf8 -NoNewline
         }
+        if (Test-Path $stagingPath) {
+            Remove-Item $stagingPath -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 else {
-    & dotnet @publishArgs
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    try {
+        Publish-Client -PublishOutput $stagingPath
+        Copy-SiteRoot -SourceWwwroot (Join-Path $stagingPath "wwwroot") -Destination $OutputPath
+    }
+    finally {
+        if (Test-Path $stagingPath) {
+            Remove-Item $stagingPath -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 Write-Host ""
 Write-Host "Static web published to: $OutputPath"
-Write-Host "Upload the contents of wwwroot (or publish folder) to Cloudflare Pages."
+Write-Host "Cloudflare Pages: upload the contents of that folder (index.html at the root)."
+Write-Host "Git-connected Pages build output directory: publish/static-web"
 if (-not [string]::IsNullOrWhiteSpace($ApiBaseUrl)) {
     Write-Host "ApiBaseUrl: $ApiBaseUrl"
 }
