@@ -23,6 +23,7 @@
       "System.ComponentModel.TypeConverter.EnableUnsafeBinaryFormatterInDesigntimeLicenseContextSerialization": false,
       "System.ComponentModel.TypeDescriptor.IsComObjectDescriptorSupported": false,
       "System.Data.DataSet.XmlSerializationIsSupported": false,
+      "System.Diagnostics.Debugger.IsSupported": false,
       "System.Diagnostics.Metrics.Meter.IsSupported": false,
       "System.Diagnostics.Tracing.EventSource.IsSupported": false,
       "System.GC.Server": true,
