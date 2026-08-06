@@ -17,7 +17,27 @@ public static class HealthEndpoints
     {
         endpoints.MapGet("/health", () => Results.Ok(new { status = "ok" }));
         endpoints.MapGet("/health/ready", ReadyAsync);
+        endpoints.MapGet("/health/db", DbInfoAsync);
         return endpoints;
+    }
+
+    private static async Task<IResult> DbInfoAsync(AppDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        var userCount = await dbContext.Users.CountAsync(cancellationToken);
+
+        return Results.Ok(new
+        {
+            status = "ok",
+            database = connection.Database,
+            host = connection.DataSource,
+            userCount
+        });
     }
 
     private static async Task<IResult> ReadyAsync(AppDbContext dbContext, CancellationToken cancellationToken)

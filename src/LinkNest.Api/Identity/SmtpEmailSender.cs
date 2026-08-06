@@ -31,7 +31,10 @@ public sealed class SmtpEmailSender(
 
         try
         {
-            using var client = new SmtpClient();
+            using var client = new SmtpClient
+            {
+                Timeout = 30_000
+            };
             await client.ConnectAsync(smtp.Host, smtp.Port, GetSecureSocketOptions(smtp), cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(smtp.Username))

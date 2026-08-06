@@ -53,6 +53,7 @@ public partial class Register
         _submitting = true;
         _error = null;
         _validationErrors = [];
+        StateHasChanged();
 
         if (!string.Equals(_form.Password, _form.ConfirmPassword, StringComparison.Ordinal))
         {
@@ -79,6 +80,14 @@ public partial class Register
         catch (UnauthorizedAccessException)
         {
             _error = L["RegisterFailed"];
+        }
+        catch (TaskCanceledException)
+        {
+            _error = L["RegisterTimeout"];
+        }
+        catch (HttpRequestException)
+        {
+            _error = L["RegisterNetworkError"];
         }
         catch (Exception)
         {
