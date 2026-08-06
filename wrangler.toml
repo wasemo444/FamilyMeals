@@ -1,0 +1,16 @@
+# Cloudflare Workers — static Blazor WASM (SPA mode).
+# `_redirects` is ignored by Workers; SPA fallback is configured here instead.
+#
+# Deploy:
+#   ./scripts/publish-static-web.ps1 -ApiBaseUrl "https://familymeals-dyrq.onrender.com"
+#   npx wrangler deploy
+#
+# Or use Pages (respects _redirects):
+#   npx wrangler pages deploy publish/static-web --project-name=linknestapplication
+
+name = "linknestapplication"
+compatibility_date = "2026-08-05"
+
+[assets]
+directory = "./publish/static-web"
+not_found_handling = "single-page-application"

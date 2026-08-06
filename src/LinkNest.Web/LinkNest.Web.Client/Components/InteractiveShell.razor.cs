@@ -78,7 +78,9 @@ public partial class InteractiveShell : IDisposable
         {
             try
             {
-                _currentUser = await AuthClient.GetCurrentUserAsync() ?? CreateUserFromClaims(authState.User);
+                _currentUser = UsesBearerToken
+                    ? CreateUserFromClaims(authState.User)
+                    : await AuthClient.GetCurrentUserAsync() ?? CreateUserFromClaims(authState.User);
                 await DataService.InitializeAsync();
             }
             catch (UnauthorizedAccessException)

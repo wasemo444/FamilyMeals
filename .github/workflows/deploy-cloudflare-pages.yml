@@ -1,0 +1,48 @@
+name: Deploy Cloudflare Pages
+
+# Blazor WASM must be built with .NET — Cloudflare's default Git "build command"
+# UI does not include the SDK. This workflow publishes locally in CI and uploads
+# the static site with Wrangler.
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: Render Api URL baked into appsettings.json
+        required: true
+        default: https://familymeals-dyrq.onrender.com
+  push:
+    branches: [main, master, E10-Phase-3]
+    paths:
+      - "src/LinkNest.Web/LinkNest.Web.Client/**"
+      - "src/LinkNest.Shared/**"
+      - "scripts/publish-static-web.sh"
+      - ".github/workflows/deploy-cloudflare-pages.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish static WASM
+        env:
+          OUTPUT_PATH: ${{ github.workspace }}/publish/static-web
+        run: |
+          chmod +x ./scripts/publish-static-web.sh
+          ./scripts/publish-static-web.sh "${{ github.event.inputs.api_base_url || 'https://familymeals-dyrq.onrender.com' }}"
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy publish/static-web --project-name=linknestapplication --branch=${{ github.ref_name }}

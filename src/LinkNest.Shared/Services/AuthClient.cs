@@ -137,6 +137,17 @@ public sealed class AuthClient(IHttpClientFactory httpClientFactory) : IAuthClie
             });
         }
 
+        if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+        {
+            var unavailableBody = await ReadResponseBodyAsync(response, cancellationToken);
+            var unavailableMessage = TryReadProblemDetail(unavailableBody ?? string.Empty)
+                ?? "Service temporarily unavailable. Please try again.";
+            throw new AuthValidationException(new Dictionary<string, string[]>
+            {
+                ["error"] = [unavailableMessage]
+            });
+        }
+
         var responseBody = await ReadResponseBodyAsync(response, cancellationToken);
         if (string.IsNullOrWhiteSpace(responseBody))
         {

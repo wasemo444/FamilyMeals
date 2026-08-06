@@ -33,6 +33,7 @@ public partial class Register
     private readonly RegisterRequest _form = new();
     private string? _error;
     private IReadOnlyList<string> _validationErrors = [];
+    private bool _submitting;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -44,12 +45,19 @@ public partial class Register
 
     private async Task RegisterAsync()
     {
+        if (_submitting)
+        {
+            return;
+        }
+
+        _submitting = true;
         _error = null;
         _validationErrors = [];
 
         if (!string.Equals(_form.Password, _form.ConfirmPassword, StringComparison.Ordinal))
         {
             _validationErrors = [L["PasswordsDoNotMatch"]];
+            _submitting = false;
             return;
         }
 
@@ -75,6 +83,10 @@ public partial class Register
         catch (Exception)
         {
             _error = L["RegisterFailed"];
+        }
+        finally
+        {
+            _submitting = false;
         }
     }
 }
