@@ -46,7 +46,8 @@ public static class AuthEndpoints
         UserManager<ApplicationUser> userManager,
         EmailConfirmationService emailConfirmationService,
         IOptions<AuthOptions> authOptions,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        ILoggerFactory loggerFactory)
     {
         if (!authOptions.Value.AllowRegistration && !environment.IsDevelopment())
         {
@@ -81,6 +82,17 @@ public static class AuthEndpoints
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
+            var logger = loggerFactory.CreateLogger("LinkNest.Auth.Register");
+            var existing = await userManager.FindByEmailAsync(user.Email!);
+            if (existing is not null)
+            {
+                logger.LogWarning(
+                    "Registration rejected for {Email}: duplicate. Existing user {UserId}, EmailConfirmed={EmailConfirmed}.",
+                    user.Email,
+                    existing.Id,
+                    existing.EmailConfirmed);
+            }
+
             return Results.ValidationProblem(result.Errors.ToDictionary(
                 error => error.Code,
                 error => new[] { error.Description }));

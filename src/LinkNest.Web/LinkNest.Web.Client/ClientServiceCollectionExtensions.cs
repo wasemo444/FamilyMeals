@@ -57,6 +57,7 @@ public static class ClientServiceCollectionExtensions
         var linkNestApiBuilder = services.AddHttpClient("LinkNestApi", client =>
         {
             client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
+            client.Timeout = TimeSpan.FromSeconds(120);
         });
 
         configureLinkNestApi?.Invoke(linkNestApiBuilder);
