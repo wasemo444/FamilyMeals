@@ -11,6 +11,9 @@ internal static class EmailStartupDiagnostics
     public static void Log(IConfiguration configuration, IHostEnvironment environment, ILogger logger)
     {
         var useSmtp = configuration.GetValue<bool>($"{EmailOptions.SectionName}:UseSmtp");
+        var provider = configuration[$"{EmailOptions.SectionName}:Provider"] ?? EmailProviders.Smtp;
+        var brevoApiKeyConfigured = !string.IsNullOrWhiteSpace(
+            configuration[$"{EmailOptions.SectionName}:BrevoApi:ApiKey"]);
         var host = configuration[$"{EmailOptions.SectionName}:Smtp:Host"];
         var port = configuration.GetValue<int>($"{EmailOptions.SectionName}:Smtp:Port");
         var username = configuration[$"{EmailOptions.SectionName}:Smtp:Username"];
@@ -18,11 +21,14 @@ internal static class EmailStartupDiagnostics
         var passwordConfigured = !string.IsNullOrWhiteSpace(
             configuration[$"{EmailOptions.SectionName}:Smtp:Password"]);
 
-        var willUseSmtp = useSmtp
-            || (!environment.IsDevelopment() && !environment.IsEnvironment("Testing"));
+        var useBrevoApi = brevoApiKeyConfigured
+            || string.Equals(provider, EmailProviders.BrevoApi, StringComparison.OrdinalIgnoreCase);
+        var willUseSmtp = !useBrevoApi
+            && (useSmtp || (!environment.IsDevelopment() && !environment.IsEnvironment("Testing")));
 
         logger.LogInformation(
-            "Email config: UseSmtp={UseSmtp}, Environment={Environment}, Host={Host}, Port={Port}, UsernameSet={UsernameSet}, FromAddress={FromAddress}, PasswordSet={PasswordSet}, EffectiveMode={Mode}",
+            "Email config: Provider={Provider}, UseSmtp={UseSmtp}, Environment={Environment}, Host={Host}, Port={Port}, UsernameSet={UsernameSet}, FromAddress={FromAddress}, PasswordSet={PasswordSet}, BrevoApiKeySet={BrevoApiKeySet}, EffectiveMode={Mode}",
+            provider,
             useSmtp,
             environment.EnvironmentName,
             string.IsNullOrWhiteSpace(host) ? "(empty)" : host,
@@ -30,12 +36,19 @@ internal static class EmailStartupDiagnostics
             !string.IsNullOrWhiteSpace(username),
             string.IsNullOrWhiteSpace(fromAddress) ? "(empty)" : fromAddress,
             passwordConfigured,
-            willUseSmtp ? "SMTP" : "LogOnly");
+            brevoApiKeyConfigured,
+            useBrevoApi ? "BrevoApi" : willUseSmtp ? "SMTP" : "LogOnly");
 
         if (willUseSmtp && (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(fromAddress)))
         {
             logger.LogWarning(
                 "SMTP mode is enabled but Email:Smtp:Host or Email:Smtp:FromAddress is missing. Email sends will fail at runtime.");
+        }
+
+        if (useBrevoApi && string.IsNullOrWhiteSpace(fromAddress))
+        {
+            logger.LogWarning(
+                "Brevo API mode is enabled but Email:Smtp:FromAddress is missing. Email sends will fail at runtime.");
         }
     }
 }

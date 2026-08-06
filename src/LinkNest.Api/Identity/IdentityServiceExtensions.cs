@@ -59,10 +59,32 @@ public static class IdentityServiceExtensions
 
         if (enableOutboundEmail)
         {
-            var useSmtp = configuration.GetValue<bool>($"{EmailOptions.SectionName}:UseSmtp")
-                || (!environment.IsDevelopment() && !IsIntegrationTestEnvironment(environment));
+            var emailSection = $"{EmailOptions.SectionName}";
+            var useBrevoApi = !string.IsNullOrWhiteSpace(configuration[$"{emailSection}:BrevoApi:ApiKey"])
+                || string.Equals(
+                    configuration[$"{emailSection}:Provider"],
+                    EmailProviders.BrevoApi,
+                    StringComparison.OrdinalIgnoreCase);
 
-            if (useSmtp)
+            var useSmtp = !useBrevoApi
+                && (configuration.GetValue<bool>($"{emailSection}:UseSmtp")
+                    || (!environment.IsDevelopment() && !IsIntegrationTestEnvironment(environment)));
+
+            if (useBrevoApi)
+            {
+                services.AddHttpClient<BrevoApiEmailSender>(client =>
+                {
+                    client.BaseAddress = new Uri("https://api.brevo.com/");
+                    client.Timeout = TimeSpan.FromSeconds(30);
+                });
+                services.AddHttpClient<BrevoApiConnectivityChecker>(client =>
+                {
+                    client.BaseAddress = new Uri("https://api.brevo.com/");
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                });
+                services.AddSingleton<IEmailSender, BrevoApiEmailSender>();
+            }
+            else if (useSmtp)
             {
                 services.AddSingleton<IEmailSender, SmtpEmailSender>();
                 services.AddSingleton<SmtpConnectivityChecker>();

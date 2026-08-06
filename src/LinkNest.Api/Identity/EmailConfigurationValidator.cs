@@ -18,9 +18,14 @@ public sealed class EmailConfigurationValidator : IValidateOptions<EmailOptions>
     /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, EmailOptions options)
     {
-        if (!ShouldValidateSmtp(options))
+        if (!ShouldValidate(options))
         {
             return ValidateOptionsResult.Success;
+        }
+
+        if (options.UsesBrevoApi())
+        {
+            return ValidateBrevoApi(options);
         }
 
         var errors = GetConfigurationErrors(options.Smtp);
@@ -29,8 +34,28 @@ public sealed class EmailConfigurationValidator : IValidateOptions<EmailOptions>
             : ValidateOptionsResult.Fail(errors);
     }
 
-    private bool ShouldValidateSmtp(EmailOptions options) =>
+    private static ValidateOptionsResult ValidateBrevoApi(EmailOptions options)
+    {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(options.BrevoApi.ApiKey))
+        {
+            errors.Add("Email:BrevoApi:ApiKey must be configured.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Smtp.FromAddress))
+        {
+            errors.Add("Email:Smtp:FromAddress must be configured.");
+        }
+
+        return errors.Count == 0
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(errors);
+    }
+
+    private bool ShouldValidate(EmailOptions options) =>
         options.UseSmtp
+        || options.UsesBrevoApi()
         || (!_environment.IsDevelopment()
             && !_environment.IsEnvironment("Testing")
             && !_environment.IsEnvironment("ProductionTesting"));

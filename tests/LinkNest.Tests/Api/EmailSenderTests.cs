@@ -85,6 +85,35 @@ public class EmailConfigurationValidatorTests
         Assert.False(result.Succeeded);
     }
 
+    [Fact]
+    public void Validate_BrevoApiWithApiKey_SucceedsWhenFromAddressSet()
+    {
+        var validator = new EmailConfigurationValidator(new FakeHostEnvironment
+        {
+            EnvironmentName = Environments.Production
+        });
+
+        var result = validator.Validate(null, new EmailOptions
+        {
+            Provider = EmailProviders.BrevoApi,
+            BrevoApi = new BrevoApiOptions { ApiKey = "test-key" },
+            Smtp = new SmtpOptions { FromAddress = "noreply@example.com" }
+        });
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void UsesBrevoApi_WhenApiKeyConfigured_ReturnsTrue()
+    {
+        var options = new EmailOptions
+        {
+            BrevoApi = new BrevoApiOptions { ApiKey = "test-key" }
+        };
+
+        Assert.True(options.UsesBrevoApi());
+    }
+
     private sealed class FakeHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
     {
         public string EnvironmentName { get; set; } = Environments.Development;
