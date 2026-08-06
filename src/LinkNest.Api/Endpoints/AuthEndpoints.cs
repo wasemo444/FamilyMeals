@@ -113,9 +113,16 @@ public static class AuthEndpoints
                     user.Email);
 
                 await userManager.DeleteAsync(user);
+                var detail = ex switch
+                {
+                    InvalidOperationException operationException =>
+                        $"Account was not created because the confirmation email could not be sent. {operationException.Message}",
+                    _ =>
+                        "Account was not created because the confirmation email could not be sent. Check API email settings and try again."
+                };
                 return Results.Problem(
                     title: "Email delivery failed",
-                    detail: "Account was not created because the confirmation email could not be sent. Check API SMTP settings and try again.",
+                    detail: detail,
                     statusCode: StatusCodes.Status503ServiceUnavailable);
             }
         }

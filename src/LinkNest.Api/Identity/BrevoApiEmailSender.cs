@@ -50,7 +50,7 @@ public sealed class BrevoApiEmailSender(
             to,
             options.Smtp.FromAddress);
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "v3/smtp/email")
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(httpClient.BaseAddress!, "v3/smtp/email"))
         {
             Content = JsonContent.Create(payload)
         };

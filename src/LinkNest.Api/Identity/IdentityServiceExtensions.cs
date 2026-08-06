@@ -72,7 +72,7 @@ public static class IdentityServiceExtensions
 
             if (useBrevoApi)
             {
-                services.AddHttpClient<BrevoApiEmailSender>(client =>
+                services.AddHttpClient<IEmailSender, BrevoApiEmailSender>(client =>
                 {
                     client.BaseAddress = new Uri("https://api.brevo.com/");
                     client.Timeout = TimeSpan.FromSeconds(30);
@@ -82,7 +82,6 @@ public static class IdentityServiceExtensions
                     client.BaseAddress = new Uri("https://api.brevo.com/");
                     client.Timeout = TimeSpan.FromSeconds(15);
                 });
-                services.AddSingleton<IEmailSender, BrevoApiEmailSender>();
             }
             else if (useSmtp)
             {
