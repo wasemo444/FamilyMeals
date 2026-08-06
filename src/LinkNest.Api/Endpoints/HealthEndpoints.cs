@@ -1,4 +1,5 @@
 using LinkNest.Api.Data;
+using LinkNest.Api.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace LinkNest.Api.Endpoints;
@@ -18,7 +19,36 @@ public static class HealthEndpoints
         endpoints.MapGet("/health", () => Results.Ok(new { status = "ok" }));
         endpoints.MapGet("/health/ready", ReadyAsync);
         endpoints.MapGet("/health/db", DbInfoAsync);
+        endpoints.MapGet("/health/email", EmailAsync);
         return endpoints;
+    }
+
+    private static async Task<IResult> EmailAsync(
+        SmtpConnectivityChecker smtpChecker,
+        CancellationToken cancellationToken)
+    {
+        var result = await smtpChecker.CheckAsync(cancellationToken);
+        if (result.Ok)
+        {
+            return Results.Ok(new
+            {
+                status = "ok",
+                host = result.Host,
+                port = result.Port,
+                fromAddress = result.FromAddress
+            });
+        }
+
+        return Results.Problem(
+            title: "SMTP check failed",
+            detail: result.Message,
+            statusCode: StatusCodes.Status503ServiceUnavailable,
+            extensions: new Dictionary<string, object?>
+            {
+                ["host"] = result.Host,
+                ["port"] = result.Port,
+                ["fromAddress"] = result.FromAddress
+            });
     }
 
     private static async Task<IResult> DbInfoAsync(AppDbContext dbContext, CancellationToken cancellationToken)
