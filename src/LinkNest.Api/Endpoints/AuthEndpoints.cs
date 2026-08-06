@@ -104,8 +104,14 @@ public static class AuthEndpoints
             {
                 await emailConfirmationService.SendConfirmationEmailAsync(user);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                var logger = loggerFactory.CreateLogger("LinkNest.Auth.Register");
+                logger.LogError(
+                    ex,
+                    "Registration rolled back for {Email}: confirmation email could not be sent.",
+                    user.Email);
+
                 await userManager.DeleteAsync(user);
                 return Results.Problem(
                     title: "Email delivery failed",

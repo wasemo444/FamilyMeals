@@ -65,6 +65,7 @@ public static class IdentityServiceExtensions
             if (useSmtp)
             {
                 services.AddSingleton<IEmailSender, SmtpEmailSender>();
+                services.AddSingleton<SmtpConnectivityChecker>();
             }
             else
             {
