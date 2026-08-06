@@ -1,6 +1,7 @@
 using LinkNest.Api.Data;
 using LinkNest.Api.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LinkNest.Api.Endpoints;
 
@@ -24,15 +25,38 @@ public static class HealthEndpoints
     }
 
     private static async Task<IResult> EmailAsync(
-        SmtpConnectivityChecker smtpChecker,
+        IServiceProvider services,
+        IOptions<EmailOptions> emailOptions,
         CancellationToken cancellationToken)
     {
-        var result = await smtpChecker.CheckAsync(cancellationToken);
+        SmtpCheckResult result;
+        if (emailOptions.Value.UsesBrevoApi())
+        {
+            var brevoChecker = services.GetRequiredService<BrevoApiConnectivityChecker>();
+            result = await brevoChecker.CheckAsync(cancellationToken);
+        }
+        else
+        {
+            var smtpChecker = services.GetService<SmtpConnectivityChecker>();
+            if (smtpChecker is null)
+            {
+                return Results.Ok(new
+                {
+                    status = "ok",
+                    provider = "LogOnly",
+                    message = "Email is logged to the console in this environment."
+                });
+            }
+
+            result = await smtpChecker.CheckAsync(cancellationToken);
+        }
+
         if (result.Ok)
         {
             return Results.Ok(new
             {
                 status = "ok",
+                provider = emailOptions.Value.UsesBrevoApi() ? EmailProviders.BrevoApi : EmailProviders.Smtp,
                 host = result.Host,
                 port = result.Port,
                 fromAddress = result.FromAddress
@@ -40,11 +64,12 @@ public static class HealthEndpoints
         }
 
         return Results.Problem(
-            title: "SMTP check failed",
+            title: "Email check failed",
             detail: result.Message,
             statusCode: StatusCodes.Status503ServiceUnavailable,
             extensions: new Dictionary<string, object?>
             {
+                ["provider"] = emailOptions.Value.UsesBrevoApi() ? EmailProviders.BrevoApi : EmailProviders.Smtp,
                 ["host"] = result.Host,
                 ["port"] = result.Port,
                 ["fromAddress"] = result.FromAddress
