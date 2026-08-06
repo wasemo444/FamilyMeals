@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="_content/LinkNest.Shared/css/linknest.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="LinkNest.Web.Client.styles.css" />
+    <script type="importmap"></script>
     <style>
         .loading-progress { position: relative; display: block; width: 4rem; height: 4rem; margin: 20vh auto 1rem; }
         .loading-progress circle { fill: none; stroke: #2f7d4b; stroke-width: 0.25rem; transform-origin: 50% 50%; transform: rotate(-90deg); }
@@ -57,7 +58,7 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>
-    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script src="_content/LinkNest.Shared/js/pwa.js"></script>
 </body>
 

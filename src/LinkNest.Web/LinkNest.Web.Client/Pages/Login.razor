@@ -46,7 +46,7 @@
                             <p class="ln-success" data-testid="resend-success">@_resendSuccess</p>
                         }
                         <div class="ln-auth-actions">
-                            <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="login-submit">@L["Login"]</button>
+                            <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="login-submit" disabled="@_submitting">@(_submitting ? L["PleaseWait"] : L["Login"])</button>
                             <a class="ln-btn ln-btn--ghost ln-btn--block" href="/forgot-password">@L["ForgotPassword"]</a>
                             <a class="ln-btn ln-btn--ghost ln-btn--block" href="/register">@L["Register"]</a>
                         </div>
@@ -89,9 +89,10 @@
                     </form>
                 }
             </div>
+
+            <footer class="ln-auth-card__footer">
+                <a class="ln-link" href="/privacy">Privacy Policy</a>
+            </footer>
         </section>
-        <p class="ln-auth-footer">
-            <a class="ln-link" href="/privacy">Privacy Policy</a>
-        </p>
     </main>
 </div>

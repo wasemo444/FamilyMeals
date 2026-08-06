@@ -58,6 +58,7 @@ public partial class Login
     private string? _resendSuccess;
     private bool _showResendConfirmation;
     private bool _resending;
+    private bool _submitting;
 
     protected bool UsesBearerToken => ClientAuthMode.UsesBearerToken;
 
@@ -109,6 +110,12 @@ public partial class Login
 
     private async Task LoginWithTokenAsync()
     {
+        if (_submitting)
+        {
+            return;
+        }
+
+        _submitting = true;
         _error = null;
         _resendSuccess = null;
         _showResendConfirmation = false;
@@ -138,6 +145,10 @@ public partial class Login
         catch (Exception)
         {
             _error = L["LoginFailed"];
+        }
+        finally
+        {
+            _submitting = false;
         }
     }
 

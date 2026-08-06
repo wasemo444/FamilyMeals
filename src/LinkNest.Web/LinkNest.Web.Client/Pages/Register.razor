@@ -43,14 +43,15 @@
                         <p class="ln-error" data-testid="register-error">@_error</p>
                     }
                     <div class="ln-auth-actions">
-                        <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="register-submit">@L["Register"]</button>
+                        <button class="ln-btn ln-btn--primary ln-btn--block" type="submit" data-testid="register-submit" disabled="@_submitting">@(_submitting ? L["PleaseWait"] : L["Register"])</button>
                         <a class="ln-btn ln-btn--ghost ln-btn--block" href="/login">@L["Login"]</a>
                     </div>
                 </EditForm>
             </div>
+
+            <footer class="ln-auth-card__footer">
+                <a class="ln-link" href="/privacy">Privacy Policy</a>
+            </footer>
         </section>
-        <p class="ln-auth-footer">
-            <a class="ln-link" href="/privacy">Privacy Policy</a>
-        </p>
     </main>
 </div>
